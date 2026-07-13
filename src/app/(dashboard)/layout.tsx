@@ -11,7 +11,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="min-h-screen flex flex-col bg-surface-muted text-text-primary">
-      <header className="sticky top-0 z-40 bg-black border-b border-[#141a20] px-space-4 py-space-3">
+      <header className="sticky top-0 z-40 bg-black border-b order-text-secondary px-space-4 py-space-3">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <Link href="/" className="text-xl font-bold tracking-tight text-white hover:opacity-90">
             Lernio

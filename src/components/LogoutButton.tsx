@@ -27,7 +27,7 @@ export default function LogoutButton() {
     <button
       onClick={handleLogout}
       disabled={loading}
-      className="flex items-center space-x-1 rounded-radius-xs bg-[#141a20] px-space-2 py-space-1 text-text-inverse hover:bg-surface-strong focus-visible:ring-1 focus-visible:ring-surface-raised outline-none transition-all duration-instant disabled:opacity-50"
+      className="flex items-center space-x-1 rounded-radius-xs bg-text-secondary px-space-2 py-space-1 text-text-inverse hover:bg-surface-strong focus-visible:ring-1 focus-visible:ring-surface-raised outline-none transition-all duration-instant disabled:opacity-50"
       aria-label="Logout"
     >
       {loading ? (

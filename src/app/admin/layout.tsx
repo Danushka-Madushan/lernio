@@ -18,14 +18,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   return (
     <div className="min-h-screen flex flex-col bg-surface-muted font-sans text-text-primary">
       {/* Primary top bar — same style as dashboard */}
-      <header className="sticky top-0 z-40 bg-black border-b border-[#141a20] px-space-4 py-space-3">
+      <header className="sticky top-0 z-40 bg-black border-b border-text-secondary px-space-4 py-space-3">
         <div className="max-w-6xl mx-auto flex justify-between items-center">
           <div className="flex items-center space-x-space-4">
             <Link href="/" className="text-xl font-bold tracking-tight text-white hover:opacity-90">
               Lernio
             </Link>
             {/* Admin sub-nav */}
-            <nav className="hidden sm:flex items-center space-x-space-3 text-xs border-l border-[#141a20] pl-space-3">
+            <nav className="hidden sm:flex items-center space-x-space-3 text-xs border-l border-text-secondary pl-space-3">
               <Link
                 href="/admin/videos"
                 className="text-text-tertiary hover:text-surface-raised font-semibold transition-colors duration-instant focus-visible:outline-none focus-visible:text-surface-raised"

@@ -81,7 +81,7 @@ export default async function DashboardPage({
             >
               <Link
                 href={`/video/${vid.id}`}
-                className="relative aspect-video bg-[#0a0e12] flex items-center justify-center text-text-tertiary select-none group/thumb overflow-hidden block"
+                className="relative aspect-video bg-text-primary flex items-center justify-center text-text-tertiary select-none group/thumb overflow-hidden"
               >
                 {vid.cloudflareR2ThumbnailKey ? (
                   // eslint-disable-next-line @next/next/no-img-element
@@ -91,7 +91,7 @@ export default async function DashboardPage({
                     className="absolute inset-0 w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-300"
                   />
                 ) : (
-                  <div className="absolute inset-0 bg-gradient-to-br from-neutral-800 to-black" />
+                  <div className="absolute inset-0 bg-linear-to-br from-neutral-800 to-black" />
                 )}
                 {/* Play icon overlay on hover */}
                 <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity duration-200">

@@ -170,7 +170,7 @@ export default function CustomPlayer({ videoId }: CustomPlayerProps) {
       onContextMenu={(e) => e.preventDefault()}
       onMouseMove={resetControlsTimer}
       onMouseEnter={resetControlsTimer}
-      className="relative flex items-center justify-center w-full aspect-video bg-black rounded-radius-md overflow-hidden border border-[#141a20] group select-none"
+      className="relative flex items-center justify-center w-full aspect-video bg-black rounded-radius-md overflow-hidden border border-text-secondary group select-none"
     >
       {/* ── Buffering spinner (shows while canplay not yet fired) ── */}
       {isBuffering && !error && (
@@ -220,7 +220,7 @@ export default function CustomPlayer({ videoId }: CustomPlayerProps) {
       {/* ── Custom controls overlay (auto-hides on idle) ── */}
       <div
         className={`absolute bottom-0 left-0 right-0 px-3 pb-3 pt-8
-          bg-gradient-to-t from-black/85 via-black/40 to-transparent
+          bg-linear-to-t from-black/85 via-black/40 to-transparent
           flex flex-col gap-2
           transition-opacity duration-300
           ${showControls || !isPlaying ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}

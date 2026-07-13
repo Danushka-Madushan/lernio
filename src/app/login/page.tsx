@@ -53,7 +53,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md rounded-radius-md border border-[#141a20] bg-black p-space-6 shadow-2xl transition-all duration-instant">
+    <div className="w-full max-w-md rounded-radius-md border border-text-secondary bg-black p-space-6 shadow-2xl transition-all duration-instant">
       <div className="mb-space-5 text-center">
         <h1 className="text-2xl font-semibold tracking-tight text-white select-none">
           Lernio Video
@@ -90,7 +90,7 @@ function LoginForm() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               disabled={loading}
-              className="w-full rounded-radius-xs border border-[#141a20] bg-[#141a20] py-space-2 pl-space-5 pr-space-2 text-text-inverse placeholder-text-tertiary text-xs outline-none transition-all duration-instant focus:border-surface-raised focus:ring-1 focus:ring-surface-raised disabled:opacity-50"
+              className="w-full rounded-radius-xs border border-text-secondary bg-text-secondary py-space-2 pl-space-5 pr-space-2 text-text-inverse placeholder-text-tertiary text-xs outline-none transition-all duration-instant focus:border-surface-raised focus:ring-1 focus:ring-surface-raised disabled:opacity-50"
               placeholder="Enter username"
               required
               autoComplete="username"
@@ -115,7 +115,7 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
-              className="w-full rounded-radius-xs border border-[#141a20] bg-[#141a20] py-space-2 pl-space-5 pr-space-5 text-text-inverse placeholder-text-tertiary text-xs outline-none transition-all duration-instant focus:border-surface-raised focus:ring-1 focus:ring-surface-raised disabled:opacity-50"
+              className="w-full rounded-radius-xs border border-text-secondary bg-text-secondary py-space-2 pl-space-5 pr-space-5 text-text-inverse placeholder-text-tertiary text-xs outline-none transition-all duration-instant focus:border-surface-raised focus:ring-1 focus:ring-surface-raised disabled:opacity-50"
               placeholder="Enter password"
               required
               autoComplete="current-password"
@@ -151,9 +151,9 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#0a0e12] px-space-3 font-sans">
+    <div className="flex min-h-screen items-center justify-center bg-text-primary px-space-3 font-sans">
       <Suspense fallback={
-        <div className="w-full max-w-md rounded-radius-md border border-[#141a20] bg-black p-space-6 flex items-center justify-center">
+        <div className="w-full max-w-md rounded-radius-md border border-text-secondary bg-black p-space-6 flex items-center justify-center">
           <Loader2 className="animate-spin text-surface-raised" size={24} />
         </div>
       }>
