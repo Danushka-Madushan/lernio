@@ -25,7 +25,6 @@ interface VideoDetailsProps {
   video: VideoType;
   initialComments: CommentType[];
   initialHasLiked: boolean;
-  presignedUrl: string;
   currentUsername: string;
 }
 
@@ -33,7 +32,6 @@ export default function VideoDetails({
   video,
   initialComments,
   initialHasLiked,
-  presignedUrl,
   currentUsername,
 }: VideoDetailsProps) {
   // Likes State
@@ -136,7 +134,7 @@ export default function VideoDetails({
   return (
     <div className="space-y-space-4">
       {/* Secure Video Player */}
-      <CustomPlayer srcUrl={presignedUrl} />
+      <CustomPlayer videoId={video.id} />
 
       {/* Video Info Section */}
       <div className="bg-white rounded-radius-md border border-surface-strong p-space-4 space-y-space-3">

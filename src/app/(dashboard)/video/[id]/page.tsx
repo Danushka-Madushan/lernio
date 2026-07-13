@@ -3,9 +3,6 @@ import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
-import { s3, bucketName } from '@/lib/r2';
-import { GetObjectCommand } from '@aws-sdk/client-s3';
-import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import VideoDetails from '@/components/VideoDetails';
 
 export default async function VideoPage({
@@ -22,22 +19,18 @@ export default async function VideoPage({
     redirect(`/login?callbackUrl=/video/${id}`);
   }
 
-  // 1. Fetch Video details
+  // 1. Fetch video details
   const video = await db.video.findUnique({
     where: { id },
     include: {
       comments: {
         include: {
-          user: {
-            select: { username: true },
-          },
+          user: { select: { username: true } },
         },
         orderBy: { createdAt: 'desc' },
       },
       _count: {
-        select: {
-          likes: true,
-        },
+        select: { likes: true },
       },
     },
   });
@@ -46,55 +39,34 @@ export default async function VideoPage({
     notFound();
   }
 
-  // 2. Increment view count in Supabase
+  // 2. Increment view count (best-effort — don't fail the page on duplicate)
   try {
     await db.$transaction([
       db.view.create({
-        data: {
-          userId: user.id,
-          videoId: video.id,
-        },
+        data: { userId: user!.id, videoId: video.id },
       }),
       db.video.update({
         where: { id: video.id },
-        data: {
-          viewsCount: { increment: 1 },
-        },
+        data: { viewsCount: { increment: 1 } },
       }),
     ]);
   } catch (err) {
-    console.error('Failed to log view in transaction:', err);
+    console.error('View tracking error:', err);
   }
 
-  // 3. Generate presigned URL (valid for 5 minutes)
-  let presignedUrl = '';
-  try {
-    const getCommand = new GetObjectCommand({
-      Bucket: bucketName,
-      Key: video.cloudflareR2Key,
-    });
-    presignedUrl = await getSignedUrl(s3, getCommand, { expiresIn: 300 });
-  } catch (err) {
-    console.error('Failed to sign play URL from R2:', err);
-  }
-
-  // 4. Check if current user liked this video
+  // 3. Check if current user already liked this video
   const userHasLiked = await db.like.findUnique({
     where: {
-      userId_videoId: {
-        userId: user.id,
-        videoId: video.id,
-      },
+      userId_videoId: { userId: user!.id, videoId: video.id },
     },
   });
 
-  // Structure initial data payload
   const initialVideoData = {
     id: video.id,
     title: video.title,
     description: video.description,
     grade: video.grade,
-    viewsCount: video.viewsCount + 1, // Add the current view
+    viewsCount: video.viewsCount + 1,
     likesCount: video._count.likes,
     createdAt: video.createdAt.toISOString(),
   };
@@ -112,8 +84,7 @@ export default async function VideoPage({
         video={initialVideoData}
         initialComments={initialComments}
         initialHasLiked={!!userHasLiked}
-        presignedUrl={presignedUrl}
-        currentUsername={user.username}
+        currentUsername={user!.username}
       />
     </div>
   );
