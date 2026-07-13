@@ -1,275 +1,363 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import ResumableUploader from '@/components/ResumableUploader';
-import { Plus, Trash, Film, Loader2, CheckCircle2 } from 'lucide-react';
+import React, { useState, useEffect, useCallback } from 'react';
+import Link from 'next/link';
+import {
+  Trash2,
+  Pencil,
+  Film,
+  Loader2,
+  Plus,
+  Check,
+  X,
+  Eye,
+  ChevronDown,
+} from 'lucide-react';
 import { Grade } from '@/generated/client/enums';
 
 interface Video {
   id: string;
   title: string;
-  grade: string;
-  cloudflareR2Key: string;
+  description: string | null;
+  grade: Grade;
   viewsCount: number;
   createdAt: string;
 }
 
+const GRADE_LABELS: Record<Grade, string> = {
+  GRADE_6: 'Grade 6',
+  GRADE_7: 'Grade 7',
+  GRADE_8: 'Grade 8',
+  GRADE_9: 'Grade 9',
+  GRADE_10: 'Grade 10',
+  GRADE_11: 'Grade 11',
+};
+
+// ── Inline Edit Row ────────────────────────────────────────────────────────────
+function EditableRow({
+  video,
+  onSave,
+  onCancel,
+}: {
+  video: Video;
+  onSave: (id: string, data: { title: string; description: string | null; grade: Grade }) => Promise<void>;
+  onCancel: () => void;
+}) {
+  const [title, setTitle] = useState(video.title);
+  const [description, setDescription] = useState(video.description ?? '');
+  const [grade, setGrade] = useState<Grade>(video.grade);
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!title.trim()) return;
+    setSaving(true);
+    await onSave(video.id, {
+      title: title.trim(),
+      description: description.trim() || null,
+      grade,
+    });
+    setSaving(false);
+  };
+
+  return (
+    <tr className="bg-surface-muted/40 border-b border-surface-strong">
+      {/* Title */}
+      <td className="py-2 px-3" colSpan={1}>
+        <input
+          autoFocus
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          className="w-full text-xs border border-surface-strong rounded px-2 py-1 outline-none focus:ring-1 focus:ring-black bg-white"
+          placeholder="Video title"
+        />
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          rows={2}
+          placeholder="Description (optional)"
+          className="mt-1 w-full text-xs border border-surface-strong rounded px-2 py-1 outline-none focus:ring-1 focus:ring-black bg-white resize-none text-text-tertiary"
+        />
+      </td>
+
+      {/* Grade */}
+      <td className="py-2 px-3">
+        <div className="relative">
+          <select
+            value={grade}
+            onChange={(e) => setGrade(e.target.value as Grade)}
+            className="appearance-none w-full text-xs border border-surface-strong rounded px-2 py-1 pr-6 outline-none focus:ring-1 focus:ring-black bg-white"
+          >
+            {Object.entries(GRADE_LABELS).map(([val, label]) => (
+              <option key={val} value={val}>
+                {label}
+              </option>
+            ))}
+          </select>
+          <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-text-tertiary" />
+        </div>
+      </td>
+
+      {/* Views (read-only during edit) */}
+      <td className="py-2 px-3 text-xs text-text-tertiary">{video.viewsCount.toLocaleString()}</td>
+
+      {/* Date (read-only) */}
+      <td className="py-2 px-3 text-xs text-text-tertiary">
+        {new Date(video.createdAt).toLocaleDateString()}
+      </td>
+
+      {/* Actions */}
+      <td className="py-2 px-3">
+        <div className="flex items-center justify-end gap-2">
+          <button
+            onClick={handleSave}
+            disabled={saving || !title.trim()}
+            className="flex items-center gap-1 text-[11px] bg-black text-white px-2 py-1 rounded hover:bg-neutral-800 disabled:opacity-50 transition-colors"
+          >
+            {saving ? <Loader2 size={10} className="animate-spin" /> : <Check size={10} />}
+            Save
+          </button>
+          <button
+            onClick={onCancel}
+            disabled={saving}
+            className="flex items-center gap-1 text-[11px] text-text-tertiary border border-surface-strong px-2 py-1 rounded hover:text-text-primary hover:border-surface-raised transition-colors"
+          >
+            <X size={10} />
+            Cancel
+          </button>
+        </div>
+      </td>
+    </tr>
+  );
+}
+
+// ── Main Page ──────────────────────────────────────────────────────────────────
 export default function VideosAdminPage() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState('');
-  const [success, setSuccess] = useState('');
+  const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  // Form states
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [grade, setGrade] = useState<Grade>(Grade.GRADE_6);
-  const [cloudflareR2Key, setCloudflareR2Key] = useState('');
+  const showToast = (msg: string, type: 'ok' | 'err' = 'ok') => {
+    setToast({ msg, type });
+    setTimeout(() => setToast(null), 3500);
+  };
 
-  const fetchVideos = async () => {
+  const fetchVideos = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('/api/videos');
       const data = await res.json();
-      if (res.ok) {
-        setVideos(data.videos);
-      } else {
-        setError(data.error || 'Failed to fetch video catalog');
-      }
-    } catch (err) {
-      setError('Connection error fetching video catalog');
+      if (res.ok) setVideos(data.videos);
+      else showToast(data.error || 'Failed to load catalog', 'err');
+    } catch {
+      showToast('Connection error fetching catalog', 'err');
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchVideos();
-  }, []);
+  }, [fetchVideos]);
 
-  const handleUploadSuccess = (r2Key: string) => {
-    setCloudflareR2Key(r2Key);
-    setSuccess('Video file uploaded to Cloudflare R2! Provide meta and save.');
-  };
-
-  const handleSaveVideo = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim() || !cloudflareR2Key || !grade) {
-      setError('Title, grade, and video file are required.');
-      return;
-    }
-
-    setSaving(true);
-    setError('');
-    setSuccess('');
-
+  const handleSave = async (
+    id: string,
+    data: { title: string; description: string | null; grade: Grade }
+  ) => {
     try {
-      const res = await fetch('/api/videos', {
-        method: 'POST',
+      const res = await fetch(`/api/videos/${id}`, {
+        method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          title: title.trim(),
-          description: description.trim() || null,
-          grade,
-          cloudflareR2Key,
-        }),
+        body: JSON.stringify(data),
       });
-
-      const data = await res.json();
-
+      const json = await res.json();
       if (res.ok) {
-        setSuccess(`Video metadata for '${title}' saved successfully.`);
-        setTitle('');
-        setDescription('');
-        setCloudflareR2Key('');
-        fetchVideos();
+        // Optimistic update
+        setVideos((prev) =>
+          prev.map((v) =>
+            v.id === id
+              ? { ...v, title: data.title, description: data.description, grade: data.grade }
+              : v
+          )
+        );
+        setEditingId(null);
+        showToast(`"${data.title}" updated.`);
       } else {
-        setError(data.error || 'Failed to save video metadata');
+        showToast(json.error || 'Failed to update video.', 'err');
       }
-    } catch (err) {
-      setError('Connection error saving video details');
-    } finally {
-      setSaving(false);
+    } catch {
+      showToast('Connection error while saving.', 'err');
     }
   };
 
-  const handleDeleteVideo = async (videoId: string, videoTitle: string) => {
-    if (!confirm(`Are you sure you want to permanently delete: ${videoTitle}? (This deletes database entries and the R2 source file)`)) {
+  const handleDelete = async (video: Video) => {
+    if (
+      !confirm(
+        `Permanently delete "${video.title}"?\n\nThis removes the database record AND the Cloudflare R2 file. This cannot be undone.`
+      )
+    )
       return;
-    }
 
+    setDeletingId(video.id);
     try {
-      const res = await fetch(`/api/videos/${videoId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/videos/${video.id}`, { method: 'DELETE' });
       if (res.ok) {
-        setSuccess(`Video '${videoTitle}' deleted.`);
-        fetchVideos();
+        setVideos((prev) => prev.filter((v) => v.id !== video.id));
+        showToast(`"${video.title}" deleted.`);
       } else {
-        const data = await res.json();
-        alert(data.error || 'Failed to delete video');
+        const json = await res.json();
+        showToast(json.error || 'Failed to delete.', 'err');
       }
-    } catch (err) {
-      alert('Connection error deleting video');
+    } catch {
+      showToast('Connection error while deleting.', 'err');
+    } finally {
+      setDeletingId(null);
     }
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-space-4">
-      {/* Left panel: Add Video */}
-      <div className="bg-white p-space-4 rounded-radius-md border border-surface-strong space-y-space-3 lg:col-span-1 h-fit">
-        <h2 className="text-md font-semibold text-text-primary flex items-center space-x-1">
-          <Film size={18} />
-          <span>Publish Educational Video</span>
-        </h2>
-
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 rounded-radius-xs p-space-2 text-xs">
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="bg-green-50 border border-green-200 text-green-600 rounded-radius-xs p-space-2 text-xs">
-            {success}
-          </div>
-        )}
-
-        {/* 1. File Uploader first */}
-        {!cloudflareR2Key ? (
-          <ResumableUploader onSuccess={handleUploadSuccess} />
-        ) : (
-          <div className="bg-green-50 border border-green-200 text-green-700 rounded-radius-xs p-space-3 text-xs flex items-center space-x-2">
-            <CheckCircle2 size={16} />
-            <div className="flex-1">
-              <span className="font-semibold block">File successfully staged</span>
-              <span className="block text-[10px] break-all">{cloudflareR2Key}</span>
-            </div>
-            <button
-              onClick={() => setCloudflareR2Key('')}
-              className="text-[10px] text-red-500 underline"
-            >
-              Reset
-            </button>
-          </div>
-        )}
-
-        {/* 2. Metadata details */}
-        <form onSubmit={handleSaveVideo} className="space-y-space-3 pt-space-2 border-t border-surface-strong/30">
-          <div>
-            <label className="block text-xs text-text-tertiary mb-1" htmlFor="title">
-              Video Title
-            </label>
-            <input
-              id="title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              disabled={saving}
-              placeholder="e.g. Grade 10 Math - Lesson 1"
-              className="w-full rounded-radius-xs border border-surface-strong bg-white px-space-2 py-space-1.5 text-xs outline-none focus:ring-1 focus:ring-black"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs text-text-tertiary mb-1" htmlFor="description">
-              Description (Optional)
-            </label>
-            <textarea
-              id="description"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              disabled={saving}
-              placeholder="Provide a short overview"
-              rows={3}
-              className="w-full rounded-radius-xs border border-surface-strong bg-white px-space-2 py-space-1.5 text-xs outline-none focus:ring-1 focus:ring-black resize-none"
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs text-text-tertiary mb-1" htmlFor="grade">
-              Assign Grade Band
-            </label>
-            <select
-              id="grade"
-              value={grade}
-              onChange={(e) => setGrade(e.target.value as Grade)}
-              disabled={saving}
-              className="w-full rounded-radius-xs border border-surface-strong bg-white px-space-2 py-space-1.5 text-xs outline-none focus:ring-1 focus:ring-black"
-            >
-              <option value={Grade.GRADE_6}>Grade 6</option>
-              <option value={Grade.GRADE_7}>Grade 7</option>
-              <option value={Grade.GRADE_8}>Grade 8</option>
-              <option value={Grade.GRADE_9}>Grade 9</option>
-              <option value={Grade.GRADE_10}>Grade 10</option>
-              <option value={Grade.GRADE_11}>Grade 11</option>
-            </select>
-          </div>
-
-          <button
-            type="submit"
-            disabled={saving || !cloudflareR2Key}
-            className="w-full flex justify-center items-center space-x-1 bg-black hover:bg-surface-strong hover:text-black text-white text-xs font-semibold py-space-2 rounded-radius-xs transition-colors duration-instant disabled:opacity-50"
-          >
-            {saving ? (
-              <Loader2 className="animate-spin" size={14} />
-            ) : (
-              <>
-                <Plus size={14} />
-                <span>Save & Publish Video</span>
-              </>
-            )}
-          </button>
-        </form>
+    <div className="space-y-space-4">
+      {/* Header row */}
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <Film size={18} className="text-text-tertiary" />
+          <h1 className="text-sm font-semibold text-text-primary">Video Catalog</h1>
+          {!loading && (
+            <span className="text-[11px] text-text-tertiary bg-surface-muted px-2 py-0.5 rounded-full">
+              {videos.length} {videos.length === 1 ? 'video' : 'videos'}
+            </span>
+          )}
+        </div>
+        <Link
+          href="/admin/videos/upload"
+          className="flex items-center gap-1.5 bg-black hover:bg-neutral-800 text-white text-xs font-semibold px-3 py-1.5 rounded-radius-xs transition-colors"
+        >
+          <Plus size={13} />
+          Upload New Video
+        </Link>
       </div>
 
-      {/* Right panel: Videos list */}
-      <div className="bg-white p-space-4 rounded-radius-md border border-surface-strong lg:col-span-2 space-y-space-3">
-        <h2 className="text-md font-semibold text-text-primary">Staged Video Catalog</h2>
+      {/* Toast */}
+      {toast && (
+        <div
+          className={`text-xs px-space-3 py-space-2 rounded-radius-xs border ${
+            toast.type === 'ok'
+              ? 'bg-green-50 border-green-200 text-green-700'
+              : 'bg-red-50 border-red-200 text-red-600'
+          }`}
+        >
+          {toast.msg}
+        </div>
+      )}
 
+      {/* Table */}
+      <div className="bg-white rounded-radius-md border border-surface-strong overflow-hidden">
         {loading ? (
-          <div className="flex justify-center py-space-6">
+          <div className="flex justify-center items-center py-16">
             <Loader2 className="animate-spin text-text-tertiary" size={24} />
           </div>
         ) : videos.length === 0 ? (
-          <p className="text-xs text-text-tertiary py-space-4 text-center">No video lessons published yet.</p>
+          <div className="flex flex-col items-center justify-center py-16 gap-3 text-text-tertiary">
+            <Film size={32} className="opacity-30" />
+            <p className="text-xs">No videos published yet.</p>
+            <Link
+              href="/admin/videos/upload"
+              className="text-xs text-surface-raised underline hover:text-black"
+            >
+              Upload your first video →
+            </Link>
+          </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
-                <tr className="border-b border-surface-strong text-text-tertiary">
-                  <th className="py-2">Lesson Title</th>
-                  <th className="py-2">Grade</th>
-                  <th className="py-2">Views</th>
-                  <th className="py-2">Published On</th>
-                  <th className="py-2 text-right">Actions</th>
+                <tr className="border-b border-surface-strong bg-surface-muted/40 text-text-tertiary text-[11px] uppercase tracking-wider">
+                  <th className="py-2.5 px-3 font-medium">Lesson Title</th>
+                  <th className="py-2.5 px-3 font-medium">Grade</th>
+                  <th className="py-2.5 px-3 font-medium">
+                    <span className="flex items-center gap-1"><Eye size={10} /> Views</span>
+                  </th>
+                  <th className="py-2.5 px-3 font-medium">Published</th>
+                  <th className="py-2.5 px-3 font-medium text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-surface-muted">
-                {videos.map((video) => (
-                  <tr key={video.id} className="hover:bg-surface-muted/55">
-                    <td className="py-2 font-medium text-text-primary">{video.title}</td>
-                    <td className="py-2">
-                      <span className="bg-surface-strong px-2 py-0.5 rounded text-[10px]">
-                        {video.grade.replace('GRADE_', 'Grade ')}
-                      </span>
-                    </td>
-                    <td className="py-2 text-text-secondary">{video.viewsCount}</td>
-                    <td className="py-2 text-text-tertiary">
-                      {new Date(video.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="py-2 text-right">
-                      <button
-                        onClick={() => handleDeleteVideo(video.id, video.title)}
-                        className="inline-flex items-center space-x-0.5 text-red-500 hover:text-red-700 hover:underline"
-                        title="Delete Video"
-                      >
-                        <Trash size={12} />
-                        <span>Remove</span>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {videos.map((video) =>
+                  editingId === video.id ? (
+                    <EditableRow
+                      key={video.id}
+                      video={video}
+                      onSave={handleSave}
+                      onCancel={() => setEditingId(null)}
+                    />
+                  ) : (
+                    <tr
+                      key={video.id}
+                      className="hover:bg-surface-muted/30 transition-colors group"
+                    >
+                      {/* Title + description */}
+                      <td className="py-2.5 px-3 max-w-xs">
+                        <span className="font-medium text-text-primary truncate block">
+                          {video.title}
+                        </span>
+                        {video.description && (
+                          <span className="text-[11px] text-text-tertiary truncate block mt-0.5">
+                            {video.description}
+                          </span>
+                        )}
+                      </td>
+
+                      {/* Grade badge */}
+                      <td className="py-2.5 px-3">
+                        <span className="bg-surface-strong text-text-secondary px-2 py-0.5 rounded text-[11px] font-medium">
+                          {GRADE_LABELS[video.grade]}
+                        </span>
+                      </td>
+
+                      {/* Views */}
+                      <td className="py-2.5 px-3 text-text-secondary">
+                        {video.viewsCount.toLocaleString()}
+                      </td>
+
+                      {/* Date */}
+                      <td className="py-2.5 px-3 text-text-tertiary">
+                        {new Date(video.createdAt).toLocaleDateString('en-GB', {
+                          day: '2-digit',
+                          month: 'short',
+                          year: 'numeric',
+                        })}
+                      </td>
+
+                      {/* Actions */}
+                      <td className="py-2.5 px-3">
+                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => setEditingId(video.id)}
+                            className="flex items-center gap-1 text-[11px] text-text-secondary border border-surface-strong px-2 py-1 rounded hover:border-black hover:text-text-primary transition-colors"
+                            title="Edit video metadata"
+                          >
+                            <Pencil size={10} />
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(video)}
+                            disabled={deletingId === video.id}
+                            className="flex items-center gap-1 text-[11px] text-red-500 border border-red-200 px-2 py-1 rounded hover:bg-red-50 hover:border-red-400 transition-colors disabled:opacity-50"
+                            title="Delete video"
+                          >
+                            {deletingId === video.id ? (
+                              <Loader2 size={10} className="animate-spin" />
+                            ) : (
+                              <Trash2 size={10} />
+                            )}
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  )
+                )}
               </tbody>
             </table>
           </div>

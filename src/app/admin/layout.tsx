@@ -33,6 +33,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                 Videos
               </Link>
               <Link
+                href="/admin/videos/upload"
+                className="text-text-tertiary hover:text-surface-raised font-semibold transition-colors duration-instant focus-visible:outline-none focus-visible:text-surface-raised"
+              >
+                Upload
+              </Link>
+              <Link
                 href="/admin/users"
                 className="text-text-tertiary hover:text-surface-raised font-semibold transition-colors duration-instant focus-visible:outline-none focus-visible:text-surface-raised"
               >
