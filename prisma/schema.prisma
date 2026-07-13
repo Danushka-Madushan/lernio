@@ -1,0 +1,83 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/client"
+}
+
+enum Role {
+  ADMIN
+  STUDENT
+}
+
+enum Grade {
+  GRADE_6
+  GRADE_7
+  GRADE_8
+  GRADE_9
+  GRADE_10
+  GRADE_11
+}
+
+model User {
+  id             String   @id @default(uuid())
+  username       String   @unique
+  hashedPassword String
+  role           Role     @default(STUDENT)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  comments Comment[]
+  likes    Like[]
+  views    View[]
+}
+
+model Video {
+  id              String   @id @default(uuid())
+  title           String
+  description     String?
+  cloudflareR2Key String
+  grade           Grade
+  viewsCount      Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  comments Comment[]
+  likes    Like[]
+  views    View[]
+}
+
+model Comment {
+  id        String   @id @default(uuid())
+  content   String
+  userId    String
+  videoId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+}
+
+model Like {
+  id        String   @id @default(uuid())
+  userId    String
+  videoId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, videoId])
+}
+
+model View {
+  id        String   @id @default(uuid())
+  userId    String
+  videoId   String
+  createdAt DateTime @default(now())
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+}
