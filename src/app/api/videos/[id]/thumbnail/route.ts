@@ -28,6 +28,10 @@ export async function GET(
       return new NextResponse('Thumbnail not found', { status: 404 });
     }
 
+    if (video.cloudflareR2ThumbnailKey.startsWith('http://') || video.cloudflareR2ThumbnailKey.startsWith('https://')) {
+      return NextResponse.redirect(video.cloudflareR2ThumbnailKey);
+    }
+
     const command = new GetObjectCommand({
       Bucket: bucketName,
       Key: video.cloudflareR2ThumbnailKey,

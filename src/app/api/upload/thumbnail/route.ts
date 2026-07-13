@@ -1,9 +1,6 @@
 import { NextResponse } from 'next/server';
 import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
-import { PutObjectCommand } from '@aws-sdk/client-s3';
-import { s3, bucketName } from '@/lib/r2';
-import { randomUUID } from 'crypto';
 
 export async function POST(request: Request) {
   const cookieStore = await cookies();
@@ -14,6 +11,11 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
+  const imgbbApiKey = process.env.IMGBB_API_KEY;
+  if (!imgbbApiKey) {
+    return NextResponse.json({ error: 'ImgBB API key is not configured on the server' }, { status: 500 });
+  }
+
   try {
     const formData = await request.formData();
     const file = formData.get('file') as File | null;
@@ -22,28 +24,33 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'No file uploaded' }, { status: 400 });
     }
 
-    // Basic file validation
     if (!file.type.startsWith('image/')) {
       return NextResponse.json({ error: 'Only image files are allowed' }, { status: 400 });
     }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const fileExtension = file.name.split('.').pop() || 'jpg';
-    const key = `thumbnails/${randomUUID()}.${fileExtension}`;
+    // Prepare payload for ImgBB API
+    const imgbbFormData = new FormData();
+    imgbbFormData.append('image', file);
 
-    // Upload directly to Cloudflare R2
-    const command = new PutObjectCommand({
-      Bucket: bucketName,
-      Key: key,
-      Body: buffer,
-      ContentType: file.type,
+    const imgbbResponse = await fetch(`https://api.imgbb.com/1/upload?key=${imgbbApiKey}`, {
+      method: 'POST',
+      body: imgbbFormData,
     });
 
-    await s3.send(command);
+    const data = await imgbbResponse.json();
 
-    return NextResponse.json({ success: true, key });
+    if (!imgbbResponse.ok || !data.success) {
+      console.error('ImgBB API error response:', data);
+      return NextResponse.json({ error: data.error?.message || 'Failed to upload to ImgBB' }, { status: 502 });
+    }
+
+    // Return the direct URL of the uploaded image
+    return NextResponse.json({
+      success: true,
+      key: data.data.url, // Directly return the image URL
+    });
   } catch (error: any) {
     console.error('Thumbnail upload error:', error);
-    return NextResponse.json({ error: 'Failed to upload thumbnail' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to process thumbnail upload' }, { status: 500 });
   }
 }
