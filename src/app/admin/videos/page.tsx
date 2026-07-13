@@ -15,6 +15,7 @@ import {
   Image as ImageIcon,
 } from 'lucide-react';
 import { Grade } from '@/generated/client/enums';
+import ThumbnailUploader from '@/components/ThumbnailUploader';
 
 interface Video {
   id: string;
@@ -49,41 +50,10 @@ function EditableRow({
   const [description, setDescription] = useState(video.description ?? '');
   const [grade, setGrade] = useState<Grade>(video.grade);
   const [thumbnailKey, setThumbnailKey] = useState<string | null>(video.cloudflareR2ThumbnailKey);
-  const [thumbnailUploading, setThumbnailUploading] = useState(false);
-  const [thumbnailPreview, setThumbnailPreview] = useState(
-    video.cloudflareR2ThumbnailKey ? `/api/videos/${video.id}/thumbnail` : ''
-  );
   const [saving, setSaving] = useState(false);
 
-  const handleThumbnailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setThumbnailPreview(URL.createObjectURL(file));
-    setThumbnailUploading(true);
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const res = await fetch('/api/upload/thumbnail', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setThumbnailKey(data.key);
-      } else {
-        alert(data.error || 'Failed to upload thumbnail');
-        setThumbnailPreview(video.cloudflareR2ThumbnailKey ? `/api/videos/${video.id}/thumbnail` : '');
-      }
-    } catch {
-      alert('Error uploading thumbnail');
-      setThumbnailPreview(video.cloudflareR2ThumbnailKey ? `/api/videos/${video.id}/thumbnail` : '');
-    } finally {
-      setThumbnailUploading(false);
-    }
+  const handleThumbnailSuccess = (url: string) => {
+    setThumbnailKey(url || null);
   };
 
   const handleSave = async () => {
@@ -118,22 +88,12 @@ function EditableRow({
             className="w-full text-xs border border-surface-strong rounded px-2 py-1 outline-none focus:ring-1 focus:ring-black bg-white resize-none text-text-tertiary"
           />
           {/* Thumbnail editor inside row */}
-          <div className="flex items-center space-x-2 pt-1">
-            <label className="text-[10px] font-semibold text-text-tertiary uppercase">Thumbnail:</label>
-            <input
-              type="file"
-              accept="image/*"
-              onChange={handleThumbnailChange}
-              disabled={thumbnailUploading}
-              className="text-[10px] text-text-tertiary file:py-0.5 file:px-1.5 file:rounded file:border file:border-surface-strong file:text-[10px] file:bg-white file:text-text-primary hover:file:bg-surface-strong cursor-pointer"
+          <div className="pt-1 space-y-1">
+            <p className="text-[10px] font-semibold text-text-tertiary uppercase">Cover Thumbnail</p>
+            <ThumbnailUploader
+              onSuccess={handleThumbnailSuccess}
+              existingPreview={video.cloudflareR2ThumbnailKey ? `/api/videos/${video.id}/thumbnail` : undefined}
             />
-            {thumbnailUploading && <Loader2 size={10} className="animate-spin text-text-tertiary" />}
-            {thumbnailPreview && (
-              <div className="w-10 h-6 border border-surface-strong overflow-hidden rounded bg-black">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={thumbnailPreview} alt="Preview" className="w-full h-full object-cover" />
-              </div>
-            )}
           </div>
         </div>
       </td>
@@ -169,7 +129,7 @@ function EditableRow({
         <div className="flex items-center justify-end gap-2">
           <button
             onClick={handleSave}
-            disabled={saving || thumbnailUploading || !title.trim()}
+            disabled={saving || !title.trim()}
             className="flex items-center gap-1 text-[11px] bg-black text-white px-2 py-1 rounded hover:bg-neutral-800 disabled:opacity-50 transition-colors"
           >
             {saving ? <Loader2 size={10} className="animate-spin" /> : <Check size={10} />}

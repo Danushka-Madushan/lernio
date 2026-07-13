@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback } from 'react';
 import ResumableUploader from '@/components/ResumableUploader';
+import ThumbnailUploader from '@/components/ThumbnailUploader';
 import { Plus, Loader2, CheckCircle2, Film, ArrowLeft } from 'lucide-react';
 import { Grade } from '@/generated/client/enums';
 import Link from 'next/link';
@@ -13,14 +14,11 @@ export default function VideoUploadPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Form states
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [grade, setGrade] = useState<Grade>(Grade.GRADE_6);
   const [cloudflareR2Key, setCloudflareR2Key] = useState('');
   const [thumbnailKey, setThumbnailKey] = useState('');
-  const [thumbnailUploading, setThumbnailUploading] = useState(false);
-  const [thumbnailPreview, setThumbnailPreview] = useState('');
 
   const handleUploadSuccess = useCallback((r2Key: string) => {
     setCloudflareR2Key(r2Key);
@@ -28,39 +26,9 @@ export default function VideoUploadPage() {
     setSuccess('');
   }, []);
 
-  const handleThumbnailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Client-side preview
-    const previewUrl = URL.createObjectURL(file);
-    setThumbnailPreview(previewUrl);
-    setThumbnailUploading(true);
-    setError('');
-
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      const res = await fetch('/api/upload/thumbnail', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await res.json();
-      if (res.ok) {
-        setThumbnailKey(data.key);
-      } else {
-        setError(data.error || 'Failed to upload thumbnail image.');
-        setThumbnailPreview('');
-      }
-    } catch {
-      setError('Connection error uploading thumbnail.');
-      setThumbnailPreview('');
-    } finally {
-      setThumbnailUploading(false);
-    }
-  };
+  const handleThumbnailSuccess = useCallback((url: string) => {
+    setThumbnailKey(url);
+  }, []);
 
   const handleSaveVideo = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -136,7 +104,7 @@ export default function VideoUploadPage() {
           </div>
         )}
 
-        {/* Step 1 – File Upload */}
+        {/* Step 1 – Video File */}
         <div className="space-y-space-2">
           <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
             Step 1 — Upload Video File
@@ -199,26 +167,10 @@ export default function VideoUploadPage() {
             </div>
 
             <div>
-              <label className="block text-xs text-text-tertiary mb-1" htmlFor="upload-thumbnail">
-                Cover Thumbnail <span className="text-text-tertiary font-normal">(optional)</span>
+              <label className="block text-xs text-text-tertiary mb-1">
+                Cover Thumbnail <span className="text-text-tertiary font-normal">(optional — JPG/PNG, 16:9)</span>
               </label>
-              <div className="flex items-center space-x-3">
-                <input
-                  id="upload-thumbnail"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleThumbnailChange}
-                  disabled={saving || thumbnailUploading}
-                  className="text-xs text-text-tertiary file:mr-2 file:py-1 file:px-2 file:rounded file:border file:border-surface-strong file:text-xs file:bg-white file:text-text-primary hover:file:bg-surface-strong cursor-pointer"
-                />
-                {thumbnailUploading && <Loader2 className="animate-spin text-text-tertiary" size={14} />}
-              </div>
-              {thumbnailPreview && (
-                <div className="mt-2 relative w-32 aspect-video rounded border border-surface-strong overflow-hidden bg-black">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={thumbnailPreview} alt="Thumbnail preview" className="w-full h-full object-cover" />
-                </div>
-              )}
+              <ThumbnailUploader onSuccess={handleThumbnailSuccess} />
             </div>
 
             <div>
