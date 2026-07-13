@@ -39,6 +39,7 @@ export type VideoMinAggregateOutputType = {
   title: string | null
   description: string | null
   cloudflareR2Key: string | null
+  cloudflareR2ThumbnailKey: string | null
   grade: $Enums.Grade | null
   viewsCount: number | null
   createdAt: Date | null
@@ -50,6 +51,7 @@ export type VideoMaxAggregateOutputType = {
   title: string | null
   description: string | null
   cloudflareR2Key: string | null
+  cloudflareR2ThumbnailKey: string | null
   grade: $Enums.Grade | null
   viewsCount: number | null
   createdAt: Date | null
@@ -61,6 +63,7 @@ export type VideoCountAggregateOutputType = {
   title: number
   description: number
   cloudflareR2Key: number
+  cloudflareR2ThumbnailKey: number
   grade: number
   viewsCount: number
   createdAt: number
@@ -82,6 +85,7 @@ export type VideoMinAggregateInputType = {
   title?: true
   description?: true
   cloudflareR2Key?: true
+  cloudflareR2ThumbnailKey?: true
   grade?: true
   viewsCount?: true
   createdAt?: true
@@ -93,6 +97,7 @@ export type VideoMaxAggregateInputType = {
   title?: true
   description?: true
   cloudflareR2Key?: true
+  cloudflareR2ThumbnailKey?: true
   grade?: true
   viewsCount?: true
   createdAt?: true
@@ -104,6 +109,7 @@ export type VideoCountAggregateInputType = {
   title?: true
   description?: true
   cloudflareR2Key?: true
+  cloudflareR2ThumbnailKey?: true
   grade?: true
   viewsCount?: true
   createdAt?: true
@@ -202,6 +208,7 @@ export type VideoGroupByOutputType = {
   title: string
   description: string | null
   cloudflareR2Key: string
+  cloudflareR2ThumbnailKey: string | null
   grade: $Enums.Grade
   viewsCount: number
   createdAt: Date
@@ -236,6 +243,7 @@ export type VideoWhereInput = {
   title?: Prisma.StringFilter<"Video"> | string
   description?: Prisma.StringNullableFilter<"Video"> | string | null
   cloudflareR2Key?: Prisma.StringFilter<"Video"> | string
+  cloudflareR2ThumbnailKey?: Prisma.StringNullableFilter<"Video"> | string | null
   grade?: Prisma.EnumGradeFilter<"Video"> | $Enums.Grade
   viewsCount?: Prisma.IntFilter<"Video"> | number
   createdAt?: Prisma.DateTimeFilter<"Video"> | Date | string
@@ -250,6 +258,7 @@ export type VideoOrderByWithRelationInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   cloudflareR2Key?: Prisma.SortOrder
+  cloudflareR2ThumbnailKey?: Prisma.SortOrderInput | Prisma.SortOrder
   grade?: Prisma.SortOrder
   viewsCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -267,6 +276,7 @@ export type VideoWhereUniqueInput = Prisma.AtLeast<{
   title?: Prisma.StringFilter<"Video"> | string
   description?: Prisma.StringNullableFilter<"Video"> | string | null
   cloudflareR2Key?: Prisma.StringFilter<"Video"> | string
+  cloudflareR2ThumbnailKey?: Prisma.StringNullableFilter<"Video"> | string | null
   grade?: Prisma.EnumGradeFilter<"Video"> | $Enums.Grade
   viewsCount?: Prisma.IntFilter<"Video"> | number
   createdAt?: Prisma.DateTimeFilter<"Video"> | Date | string
@@ -281,6 +291,7 @@ export type VideoOrderByWithAggregationInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrderInput | Prisma.SortOrder
   cloudflareR2Key?: Prisma.SortOrder
+  cloudflareR2ThumbnailKey?: Prisma.SortOrderInput | Prisma.SortOrder
   grade?: Prisma.SortOrder
   viewsCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -300,6 +311,7 @@ export type VideoScalarWhereWithAggregatesInput = {
   title?: Prisma.StringWithAggregatesFilter<"Video"> | string
   description?: Prisma.StringNullableWithAggregatesFilter<"Video"> | string | null
   cloudflareR2Key?: Prisma.StringWithAggregatesFilter<"Video"> | string
+  cloudflareR2ThumbnailKey?: Prisma.StringNullableWithAggregatesFilter<"Video"> | string | null
   grade?: Prisma.EnumGradeWithAggregatesFilter<"Video"> | $Enums.Grade
   viewsCount?: Prisma.IntWithAggregatesFilter<"Video"> | number
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"Video"> | Date | string
@@ -311,6 +323,7 @@ export type VideoCreateInput = {
   title: string
   description?: string | null
   cloudflareR2Key: string
+  cloudflareR2ThumbnailKey?: string | null
   grade: $Enums.Grade
   viewsCount?: number
   createdAt?: Date | string
@@ -325,6 +338,7 @@ export type VideoUncheckedCreateInput = {
   title: string
   description?: string | null
   cloudflareR2Key: string
+  cloudflareR2ThumbnailKey?: string | null
   grade: $Enums.Grade
   viewsCount?: number
   createdAt?: Date | string
@@ -339,6 +353,7 @@ export type VideoUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cloudflareR2Key?: Prisma.StringFieldUpdateOperationsInput | string
+  cloudflareR2ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   grade?: Prisma.EnumGradeFieldUpdateOperationsInput | $Enums.Grade
   viewsCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -353,6 +368,7 @@ export type VideoUncheckedUpdateInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cloudflareR2Key?: Prisma.StringFieldUpdateOperationsInput | string
+  cloudflareR2ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   grade?: Prisma.EnumGradeFieldUpdateOperationsInput | $Enums.Grade
   viewsCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -367,6 +383,7 @@ export type VideoCreateManyInput = {
   title: string
   description?: string | null
   cloudflareR2Key: string
+  cloudflareR2ThumbnailKey?: string | null
   grade: $Enums.Grade
   viewsCount?: number
   createdAt?: Date | string
@@ -378,6 +395,7 @@ export type VideoUpdateManyMutationInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cloudflareR2Key?: Prisma.StringFieldUpdateOperationsInput | string
+  cloudflareR2ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   grade?: Prisma.EnumGradeFieldUpdateOperationsInput | $Enums.Grade
   viewsCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -389,6 +407,7 @@ export type VideoUncheckedUpdateManyInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cloudflareR2Key?: Prisma.StringFieldUpdateOperationsInput | string
+  cloudflareR2ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   grade?: Prisma.EnumGradeFieldUpdateOperationsInput | $Enums.Grade
   viewsCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -400,6 +419,7 @@ export type VideoCountOrderByAggregateInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
   cloudflareR2Key?: Prisma.SortOrder
+  cloudflareR2ThumbnailKey?: Prisma.SortOrder
   grade?: Prisma.SortOrder
   viewsCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -415,6 +435,7 @@ export type VideoMaxOrderByAggregateInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
   cloudflareR2Key?: Prisma.SortOrder
+  cloudflareR2ThumbnailKey?: Prisma.SortOrder
   grade?: Prisma.SortOrder
   viewsCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -426,6 +447,7 @@ export type VideoMinOrderByAggregateInput = {
   title?: Prisma.SortOrder
   description?: Prisma.SortOrder
   cloudflareR2Key?: Prisma.SortOrder
+  cloudflareR2ThumbnailKey?: Prisma.SortOrder
   grade?: Prisma.SortOrder
   viewsCount?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
@@ -504,6 +526,7 @@ export type VideoCreateWithoutCommentsInput = {
   title: string
   description?: string | null
   cloudflareR2Key: string
+  cloudflareR2ThumbnailKey?: string | null
   grade: $Enums.Grade
   viewsCount?: number
   createdAt?: Date | string
@@ -517,6 +540,7 @@ export type VideoUncheckedCreateWithoutCommentsInput = {
   title: string
   description?: string | null
   cloudflareR2Key: string
+  cloudflareR2ThumbnailKey?: string | null
   grade: $Enums.Grade
   viewsCount?: number
   createdAt?: Date | string
@@ -546,6 +570,7 @@ export type VideoUpdateWithoutCommentsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cloudflareR2Key?: Prisma.StringFieldUpdateOperationsInput | string
+  cloudflareR2ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   grade?: Prisma.EnumGradeFieldUpdateOperationsInput | $Enums.Grade
   viewsCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -559,6 +584,7 @@ export type VideoUncheckedUpdateWithoutCommentsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cloudflareR2Key?: Prisma.StringFieldUpdateOperationsInput | string
+  cloudflareR2ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   grade?: Prisma.EnumGradeFieldUpdateOperationsInput | $Enums.Grade
   viewsCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -572,6 +598,7 @@ export type VideoCreateWithoutLikesInput = {
   title: string
   description?: string | null
   cloudflareR2Key: string
+  cloudflareR2ThumbnailKey?: string | null
   grade: $Enums.Grade
   viewsCount?: number
   createdAt?: Date | string
@@ -585,6 +612,7 @@ export type VideoUncheckedCreateWithoutLikesInput = {
   title: string
   description?: string | null
   cloudflareR2Key: string
+  cloudflareR2ThumbnailKey?: string | null
   grade: $Enums.Grade
   viewsCount?: number
   createdAt?: Date | string
@@ -614,6 +642,7 @@ export type VideoUpdateWithoutLikesInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cloudflareR2Key?: Prisma.StringFieldUpdateOperationsInput | string
+  cloudflareR2ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   grade?: Prisma.EnumGradeFieldUpdateOperationsInput | $Enums.Grade
   viewsCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -627,6 +656,7 @@ export type VideoUncheckedUpdateWithoutLikesInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cloudflareR2Key?: Prisma.StringFieldUpdateOperationsInput | string
+  cloudflareR2ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   grade?: Prisma.EnumGradeFieldUpdateOperationsInput | $Enums.Grade
   viewsCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -640,6 +670,7 @@ export type VideoCreateWithoutViewsInput = {
   title: string
   description?: string | null
   cloudflareR2Key: string
+  cloudflareR2ThumbnailKey?: string | null
   grade: $Enums.Grade
   viewsCount?: number
   createdAt?: Date | string
@@ -653,6 +684,7 @@ export type VideoUncheckedCreateWithoutViewsInput = {
   title: string
   description?: string | null
   cloudflareR2Key: string
+  cloudflareR2ThumbnailKey?: string | null
   grade: $Enums.Grade
   viewsCount?: number
   createdAt?: Date | string
@@ -682,6 +714,7 @@ export type VideoUpdateWithoutViewsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cloudflareR2Key?: Prisma.StringFieldUpdateOperationsInput | string
+  cloudflareR2ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   grade?: Prisma.EnumGradeFieldUpdateOperationsInput | $Enums.Grade
   viewsCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -695,6 +728,7 @@ export type VideoUncheckedUpdateWithoutViewsInput = {
   title?: Prisma.StringFieldUpdateOperationsInput | string
   description?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   cloudflareR2Key?: Prisma.StringFieldUpdateOperationsInput | string
+  cloudflareR2ThumbnailKey?: Prisma.NullableStringFieldUpdateOperationsInput | string | null
   grade?: Prisma.EnumGradeFieldUpdateOperationsInput | $Enums.Grade
   viewsCount?: Prisma.IntFieldUpdateOperationsInput | number
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
@@ -757,6 +791,7 @@ export type VideoSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = 
   title?: boolean
   description?: boolean
   cloudflareR2Key?: boolean
+  cloudflareR2ThumbnailKey?: boolean
   grade?: boolean
   viewsCount?: boolean
   createdAt?: boolean
@@ -772,6 +807,7 @@ export type VideoSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   title?: boolean
   description?: boolean
   cloudflareR2Key?: boolean
+  cloudflareR2ThumbnailKey?: boolean
   grade?: boolean
   viewsCount?: boolean
   createdAt?: boolean
@@ -783,6 +819,7 @@ export type VideoSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensi
   title?: boolean
   description?: boolean
   cloudflareR2Key?: boolean
+  cloudflareR2ThumbnailKey?: boolean
   grade?: boolean
   viewsCount?: boolean
   createdAt?: boolean
@@ -794,13 +831,14 @@ export type VideoSelectScalar = {
   title?: boolean
   description?: boolean
   cloudflareR2Key?: boolean
+  cloudflareR2ThumbnailKey?: boolean
   grade?: boolean
   viewsCount?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type VideoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "cloudflareR2Key" | "grade" | "viewsCount" | "createdAt" | "updatedAt", ExtArgs["result"]["video"]>
+export type VideoOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "title" | "description" | "cloudflareR2Key" | "cloudflareR2ThumbnailKey" | "grade" | "viewsCount" | "createdAt" | "updatedAt", ExtArgs["result"]["video"]>
 export type VideoInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   comments?: boolean | Prisma.Video$commentsArgs<ExtArgs>
   likes?: boolean | Prisma.Video$likesArgs<ExtArgs>
@@ -822,6 +860,7 @@ export type $VideoPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs 
     title: string
     description: string | null
     cloudflareR2Key: string
+    cloudflareR2ThumbnailKey: string | null
     grade: $Enums.Grade
     viewsCount: number
     createdAt: Date
@@ -1256,6 +1295,7 @@ export interface VideoFieldRefs {
   readonly title: Prisma.FieldRef<"Video", 'String'>
   readonly description: Prisma.FieldRef<"Video", 'String'>
   readonly cloudflareR2Key: Prisma.FieldRef<"Video", 'String'>
+  readonly cloudflareR2ThumbnailKey: Prisma.FieldRef<"Video", 'String'>
   readonly grade: Prisma.FieldRef<"Video", 'Grade'>
   readonly viewsCount: Prisma.FieldRef<"Video", 'Int'>
   readonly createdAt: Prisma.FieldRef<"Video", 'DateTime'>

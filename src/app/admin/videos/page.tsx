@@ -12,6 +12,7 @@ import {
   X,
   Eye,
   ChevronDown,
+  Image as ImageIcon,
 } from 'lucide-react';
 import { Grade } from '@/generated/client/enums';
 
@@ -21,6 +22,7 @@ interface Video {
   description: string | null;
   grade: Grade;
   viewsCount: number;
+  cloudflareR2ThumbnailKey: string | null;
   createdAt: string;
 }
 
@@ -40,13 +42,49 @@ function EditableRow({
   onCancel,
 }: {
   video: Video;
-  onSave: (id: string, data: { title: string; description: string | null; grade: Grade }) => Promise<void>;
+  onSave: (id: string, data: { title: string; description: string | null; grade: Grade; cloudflareR2ThumbnailKey: string | null }) => Promise<void>;
   onCancel: () => void;
 }) {
   const [title, setTitle] = useState(video.title);
   const [description, setDescription] = useState(video.description ?? '');
   const [grade, setGrade] = useState<Grade>(video.grade);
+  const [thumbnailKey, setThumbnailKey] = useState<string | null>(video.cloudflareR2ThumbnailKey);
+  const [thumbnailUploading, setThumbnailUploading] = useState(false);
+  const [thumbnailPreview, setThumbnailPreview] = useState(
+    video.cloudflareR2ThumbnailKey ? `/api/videos/${video.id}/thumbnail` : ''
+  );
   const [saving, setSaving] = useState(false);
+
+  const handleThumbnailChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setThumbnailPreview(URL.createObjectURL(file));
+    setThumbnailUploading(true);
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/upload/thumbnail', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        setThumbnailKey(data.key);
+      } else {
+        alert(data.error || 'Failed to upload thumbnail');
+        setThumbnailPreview(video.cloudflareR2ThumbnailKey ? `/api/videos/${video.id}/thumbnail` : '');
+      }
+    } catch {
+      alert('Error uploading thumbnail');
+      setThumbnailPreview(video.cloudflareR2ThumbnailKey ? `/api/videos/${video.id}/thumbnail` : '');
+    } finally {
+      setThumbnailUploading(false);
+    }
+  };
 
   const handleSave = async () => {
     if (!title.trim()) return;
@@ -55,33 +93,54 @@ function EditableRow({
       title: title.trim(),
       description: description.trim() || null,
       grade,
+      cloudflareR2ThumbnailKey: thumbnailKey,
     });
     setSaving(false);
   };
 
   return (
     <tr className="bg-surface-muted/40 border-b border-surface-strong">
-      {/* Title */}
-      <td className="py-2 px-3" colSpan={1}>
-        <input
-          autoFocus
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-          className="w-full text-xs border border-surface-strong rounded px-2 py-1 outline-none focus:ring-1 focus:ring-black bg-white"
-          placeholder="Video title"
-        />
-        <textarea
-          value={description}
-          onChange={(e) => setDescription(e.target.value)}
-          rows={2}
-          placeholder="Description (optional)"
-          className="mt-1 w-full text-xs border border-surface-strong rounded px-2 py-1 outline-none focus:ring-1 focus:ring-black bg-white resize-none text-text-tertiary"
-        />
+      {/* Title & Description & Thumbnail edit */}
+      <td className="py-3 px-3" colSpan={1}>
+        <div className="space-y-2">
+          <input
+            autoFocus
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full text-xs border border-surface-strong rounded px-2 py-1 outline-none focus:ring-1 focus:ring-black bg-white"
+            placeholder="Video title"
+          />
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            rows={2}
+            placeholder="Description (optional)"
+            className="w-full text-xs border border-surface-strong rounded px-2 py-1 outline-none focus:ring-1 focus:ring-black bg-white resize-none text-text-tertiary"
+          />
+          {/* Thumbnail editor inside row */}
+          <div className="flex items-center space-x-2 pt-1">
+            <label className="text-[10px] font-semibold text-text-tertiary uppercase">Thumbnail:</label>
+            <input
+              type="file"
+              accept="image/*"
+              onChange={handleThumbnailChange}
+              disabled={thumbnailUploading}
+              className="text-[10px] text-text-tertiary file:py-0.5 file:px-1.5 file:rounded file:border file:border-surface-strong file:text-[10px] file:bg-white file:text-text-primary hover:file:bg-surface-strong cursor-pointer"
+            />
+            {thumbnailUploading && <Loader2 size={10} className="animate-spin text-text-tertiary" />}
+            {thumbnailPreview && (
+              <div className="w-10 h-6 border border-surface-strong overflow-hidden rounded bg-black">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={thumbnailPreview} alt="Preview" className="w-full h-full object-cover" />
+              </div>
+            )}
+          </div>
+        </div>
       </td>
 
       {/* Grade */}
-      <td className="py-2 px-3">
-        <div className="relative">
+      <td className="py-3 px-3 vertical-align-top">
+        <div className="relative mt-0.5">
           <select
             value={grade}
             onChange={(e) => setGrade(e.target.value as Grade)}
@@ -97,20 +156,20 @@ function EditableRow({
         </div>
       </td>
 
-      {/* Views (read-only during edit) */}
-      <td className="py-2 px-3 text-xs text-text-tertiary">{video.viewsCount.toLocaleString()}</td>
+      {/* Views */}
+      <td className="py-3 px-3 text-xs text-text-tertiary">{video.viewsCount.toLocaleString()}</td>
 
-      {/* Date (read-only) */}
-      <td className="py-2 px-3 text-xs text-text-tertiary">
+      {/* Date */}
+      <td className="py-3 px-3 text-xs text-text-tertiary">
         {new Date(video.createdAt).toLocaleDateString()}
       </td>
 
       {/* Actions */}
-      <td className="py-2 px-3">
+      <td className="py-3 px-3">
         <div className="flex items-center justify-end gap-2">
           <button
             onClick={handleSave}
-            disabled={saving || !title.trim()}
+            disabled={saving || thumbnailUploading || !title.trim()}
             className="flex items-center gap-1 text-[11px] bg-black text-white px-2 py-1 rounded hover:bg-neutral-800 disabled:opacity-50 transition-colors"
           >
             {saving ? <Loader2 size={10} className="animate-spin" /> : <Check size={10} />}
@@ -163,7 +222,7 @@ export default function VideosAdminPage() {
 
   const handleSave = async (
     id: string,
-    data: { title: string; description: string | null; grade: Grade }
+    data: { title: string; description: string | null; grade: Grade; cloudflareR2ThumbnailKey: string | null }
   ) => {
     try {
       const res = await fetch(`/api/videos/${id}`, {
@@ -173,11 +232,16 @@ export default function VideosAdminPage() {
       });
       const json = await res.json();
       if (res.ok) {
-        // Optimistic update
         setVideos((prev) =>
           prev.map((v) =>
             v.id === id
-              ? { ...v, title: data.title, description: data.description, grade: data.grade }
+              ? {
+                  ...v,
+                  title: data.title,
+                  description: data.description,
+                  grade: data.grade,
+                  cloudflareR2ThumbnailKey: data.cloudflareR2ThumbnailKey,
+                }
               : v
           )
         );
@@ -296,16 +360,33 @@ export default function VideosAdminPage() {
                       key={video.id}
                       className="hover:bg-surface-muted/30 transition-colors group"
                     >
-                      {/* Title + description */}
+                      {/* Title + description + Thumbnail Icon/Image */}
                       <td className="py-2.5 px-3 max-w-xs">
-                        <span className="font-medium text-text-primary truncate block">
-                          {video.title}
-                        </span>
-                        {video.description && (
-                          <span className="text-[11px] text-text-tertiary truncate block mt-0.5">
-                            {video.description}
-                          </span>
-                        )}
+                        <div className="flex items-center space-x-2">
+                          {/* Small thumbnail in admin panel catalog list */}
+                          <div className="w-10 h-6 shrink-0 bg-neutral-800 rounded border border-surface-strong overflow-hidden flex items-center justify-center text-text-tertiary">
+                            {video.cloudflareR2ThumbnailKey ? (
+                              // eslint-disable-next-line @next/next/no-img-element
+                              <img
+                                src={`/api/videos/${video.id}/thumbnail`}
+                                alt={video.title}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <ImageIcon size={10} className="opacity-45" />
+                            )}
+                          </div>
+                          <div className="min-w-0">
+                            <span className="font-medium text-text-primary truncate block">
+                              {video.title}
+                            </span>
+                            {video.description && (
+                              <span className="text-[11px] text-text-tertiary truncate block mt-0.5">
+                                {video.description}
+                              </span>
+                            )}
+                          </div>
+                        </div>
                       </td>
 
                       {/* Grade badge */}

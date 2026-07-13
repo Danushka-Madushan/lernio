@@ -79,16 +79,38 @@ export default async function DashboardPage({
               key={vid.id}
               className="flex flex-col bg-white rounded-radius-md border border-surface-strong overflow-hidden hover:shadow-md transition-all duration-instant"
             >
-              <div className="relative aspect-video bg-[#0a0e12] flex items-center justify-center text-text-tertiary select-none">
-                <Play size={40} className="opacity-80 text-white" />
-                <span className="absolute bottom-2 right-2 bg-black/70 px-1.5 py-0.5 rounded text-[10px] text-white">
+              <Link
+                href={`/video/${vid.id}`}
+                className="relative aspect-video bg-[#0a0e12] flex items-center justify-center text-text-tertiary select-none group/thumb overflow-hidden block"
+              >
+                {vid.cloudflareR2ThumbnailKey ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={`/api/videos/${vid.id}/thumbnail`}
+                    alt={vid.title}
+                    className="absolute inset-0 w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-300"
+                  />
+                ) : (
+                  <div className="absolute inset-0 bg-gradient-to-br from-neutral-800 to-black" />
+                )}
+                {/* Play icon overlay on hover */}
+                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity duration-200">
+                  <Play size={36} className="text-white fill-white" />
+                </div>
+                {/* Static indicator play button */}
+                <div className="absolute inset-0 flex items-center justify-center group-hover/thumb:opacity-0 transition-opacity duration-200">
+                  <Play size={32} className="opacity-80 text-white" />
+                </div>
+                <span className="absolute bottom-2 right-2 bg-black/70 px-1.5 py-0.5 rounded text-[10px] text-white z-10">
                   {vid.grade.replace('GRADE_', 'Grade ')}
                 </span>
-              </div>
+              </Link>
               <div className="p-space-3 flex-1 flex flex-col justify-between">
                 <div>
-                  <h3 className="text-md font-semibold text-text-primary leading-tight mb-space-1 line-clamp-1">
-                    {vid.title}
+                  <h3 className="text-md font-semibold text-text-primary leading-tight mb-space-1 line-clamp-1 hover:text-neutral-700 transition-colors">
+                    <Link href={`/video/${vid.id}`}>
+                      {vid.title}
+                    </Link>
                   </h3>
                   <p className="text-xs text-text-tertiary line-clamp-2 mb-space-3">
                     {vid.description || 'No description provided.'}

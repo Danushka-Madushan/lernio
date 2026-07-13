@@ -34,6 +34,7 @@ export async function GET(request: Request) {
         title: true,
         description: true,
         cloudflareR2Key: true,
+        cloudflareR2ThumbnailKey: true,
         grade: true,
         viewsCount: true,
         createdAt: true,
@@ -65,7 +66,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { title, description, cloudflareR2Key, grade } = await request.json();
+    const { title, description, cloudflareR2Key, cloudflareR2ThumbnailKey, grade } = await request.json();
 
     if (!title || !cloudflareR2Key || !grade) {
       return NextResponse.json({ error: 'Title, cloudflareR2Key, and grade are required' }, { status: 400 });
@@ -80,6 +81,7 @@ export async function POST(request: Request) {
         title,
         description,
         cloudflareR2Key,
+        cloudflareR2ThumbnailKey,
         grade: grade as Grade,
       },
     });

@@ -91,6 +91,7 @@ export const VideoScalarFieldEnum = {
   title: 'title',
   description: 'description',
   cloudflareR2Key: 'cloudflareR2Key',
+  cloudflareR2ThumbnailKey: 'cloudflareR2ThumbnailKey',
   grade: 'grade',
   viewsCount: 'viewsCount',
   createdAt: 'createdAt',

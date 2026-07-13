@@ -112,7 +112,7 @@ export async function PUT(
   }
 
   try {
-    const { title, description, grade } = await request.json();
+    const { title, description, grade, cloudflareR2ThumbnailKey } = await request.json();
 
     if (!title || !grade) {
       return NextResponse.json({ error: 'Title and grade are required' }, { status: 400 });
@@ -124,6 +124,7 @@ export async function PUT(
         title,
         description,
         grade,
+        ...(cloudflareR2ThumbnailKey !== undefined ? { cloudflareR2ThumbnailKey } : {}),
       },
     });
 
