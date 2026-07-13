@@ -69,15 +69,15 @@ function EditableRow({
   };
 
   return (
-    <tr className="bg-surface-muted/40 border-b border-surface-strong">
+    <tr className="bg-[#f8f9fa]">
       {/* Title & Description & Thumbnail edit */}
-      <td className="py-3 px-3" colSpan={1}>
-        <div className="space-y-2">
+      <td className="py-4 px-4" colSpan={1}>
+        <div className="space-y-2.5">
           <input
             autoFocus
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full text-xs border border-surface-strong rounded px-2 py-1 outline-none focus:ring-1 focus:ring-black bg-white"
+            className="w-full rounded-lg border border-[#dadce0] bg-white px-3 py-2 text-xs text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20"
             placeholder="Video title"
           />
           <textarea
@@ -85,11 +85,11 @@ function EditableRow({
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
             placeholder="Description (optional)"
-            className="w-full text-xs border border-surface-strong rounded px-2 py-1 outline-none focus:ring-1 focus:ring-black bg-white resize-none text-text-tertiary"
+            className="w-full resize-none rounded-lg border border-[#dadce0] bg-white px-3 py-2 text-xs text-[#5f6368] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20"
           />
           {/* Thumbnail editor inside row */}
-          <div className="pt-1 space-y-1">
-            <p className="text-[10px] font-semibold text-text-tertiary uppercase">Cover Thumbnail</p>
+          <div className="space-y-1.5 pt-1">
+            <p className="text-[10px] font-semibold uppercase tracking-wide text-[#5f6368]">Cover Thumbnail</p>
             <ThumbnailUploader
               onSuccess={handleThumbnailSuccess}
               existingPreview={video.cloudflareR2ThumbnailKey ? `/api/videos/${video.id}/thumbnail` : undefined}
@@ -99,12 +99,12 @@ function EditableRow({
       </td>
 
       {/* Grade */}
-      <td className="py-3 px-3 vertical-align-top">
+      <td className="vertical-align-top py-4 px-4">
         <div className="relative mt-0.5">
           <select
             value={grade}
             onChange={(e) => setGrade(e.target.value as Grade)}
-            className="appearance-none w-full text-xs border border-surface-strong rounded px-2 py-1 pr-6 outline-none focus:ring-1 focus:ring-black bg-white"
+            className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3 py-2 pr-7 text-xs text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20"
           >
             {Object.entries(GRADE_LABELS).map(([val, label]) => (
               <option key={val} value={val}>
@@ -112,35 +112,35 @@ function EditableRow({
               </option>
             ))}
           </select>
-          <ChevronDown size={10} className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-text-tertiary" />
+          <ChevronDown size={11} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5f6368]" />
         </div>
       </td>
 
       {/* Views */}
-      <td className="py-3 px-3 text-xs text-text-tertiary">{video.viewsCount.toLocaleString()}</td>
+      <td className="py-4 px-4 text-xs text-[#5f6368]">{video.viewsCount.toLocaleString()}</td>
 
       {/* Date */}
-      <td className="py-3 px-3 text-xs text-text-tertiary">
+      <td className="py-4 px-4 text-xs text-[#5f6368]">
         {new Date(video.createdAt).toLocaleDateString()}
       </td>
 
       {/* Actions */}
-      <td className="py-3 px-3">
+      <td className="py-4 px-4">
         <div className="flex items-center justify-end gap-2">
           <button
             onClick={handleSave}
             disabled={saving || !title.trim()}
-            className="flex items-center gap-1 text-[11px] bg-black text-white px-2 py-1 rounded hover:bg-neutral-800 disabled:opacity-50 transition-colors"
+            className="flex items-center gap-1.5 rounded-full bg-[#1a73e8] px-3 py-1.5 text-[11px] font-medium text-white transition-colors hover:bg-[#1765cc] disabled:cursor-not-allowed disabled:bg-[#c4c7cc]"
           >
-            {saving ? <Loader2 size={10} className="animate-spin" /> : <Check size={10} />}
+            {saving ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />}
             Save
           </button>
           <button
             onClick={onCancel}
             disabled={saving}
-            className="flex items-center gap-1 text-[11px] text-text-tertiary border border-surface-strong px-2 py-1 rounded hover:text-text-primary hover:border-surface-raised transition-colors"
+            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-[#5f6368] transition-colors hover:bg-[#f1f3f4] hover:text-[#202124]"
           >
-            <X size={10} />
+            <X size={11} />
             Cancel
           </button>
         </div>
@@ -241,168 +241,176 @@ export default function VideosAdminPage() {
   };
 
   return (
-    <div className="space-y-space-4">
-      {/* Header row */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Film size={18} className="text-text-tertiary" />
-          <h1 className="text-sm font-semibold text-text-primary">Video Catalog</h1>
-          {!loading && (
-            <span className="text-[11px] text-text-tertiary bg-surface-muted px-2 py-0.5 rounded-full">
-              {videos.length} {videos.length === 1 ? 'video' : 'videos'}
-            </span>
-          )}
-        </div>
-        <Link
-          href="/admin/videos/upload"
-          className="flex items-center gap-1.5 bg-black hover:bg-neutral-800 text-white text-xs font-semibold px-3 py-1.5 rounded-radius-xs transition-colors"
-        >
-          <Plus size={13} />
-          Upload New Video
-        </Link>
-      </div>
-
-      {/* Toast */}
-      {toast && (
-        <div
-          className={`text-xs px-space-3 py-space-2 rounded-radius-xs border ${
-            toast.type === 'ok'
-              ? 'bg-green-50 border-green-200 text-green-700'
-              : 'bg-red-50 border-red-200 text-red-600'
-          }`}
-        >
-          {toast.msg}
-        </div>
-      )}
-
-      {/* Table */}
-      <div className="bg-white rounded-radius-md border border-surface-strong overflow-hidden">
-        {loading ? (
-          <div className="flex justify-center items-center py-16">
-            <Loader2 className="animate-spin text-text-tertiary" size={24} />
+    <div className="min-h-screen bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl space-y-5">
+        {/* Header row */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2.5">
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8f0fe]">
+              <Film size={17} className="text-[#1a73e8]" />
+            </div>
+            <div>
+              <h1 className="text-[15px] font-medium text-[#202124]">Video Catalog</h1>
+            </div>
+            {!loading && (
+              <span className="rounded-full bg-[#f1f3f4] px-2.5 py-1 text-xs font-medium text-[#5f6368]">
+                {videos.length} {videos.length === 1 ? 'video' : 'videos'}
+              </span>
+            )}
           </div>
-        ) : videos.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-16 gap-3 text-text-tertiary">
-            <Film size={32} className="opacity-30" />
-            <p className="text-xs">No videos published yet.</p>
-            <Link
-              href="/admin/videos/upload"
-              className="text-xs text-surface-raised underline hover:text-black"
-            >
-              Upload your first video →
-            </Link>
-          </div>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-surface-strong bg-surface-muted/40 text-text-tertiary text-[11px] uppercase tracking-wider">
-                  <th className="py-2.5 px-3 font-medium">Lesson Title</th>
-                  <th className="py-2.5 px-3 font-medium">Grade</th>
-                  <th className="py-2.5 px-3 font-medium">
-                    <span className="flex items-center gap-1"><Eye size={10} /> Views</span>
-                  </th>
-                  <th className="py-2.5 px-3 font-medium">Published</th>
-                  <th className="py-2.5 px-3 font-medium text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-muted">
-                {videos.map((video) =>
-                  editingId === video.id ? (
-                    <EditableRow
-                      key={video.id}
-                      video={video}
-                      onSave={handleSave}
-                      onCancel={() => setEditingId(null)}
-                    />
-                  ) : (
-                    <tr
-                      key={video.id}
-                      className="hover:bg-surface-muted/30 transition-colors group"
-                    >
-                      {/* Title + description + Thumbnail Icon/Image */}
-                      <td className="py-2.5 px-3 max-w-xs">
-                        <div className="flex items-center space-x-2">
-                          {/* Small thumbnail in admin panel catalog list */}
-                          <div className="w-10 h-6 shrink-0 bg-neutral-800 rounded border border-surface-strong overflow-hidden flex items-center justify-center text-text-tertiary">
-                            {video.cloudflareR2ThumbnailKey ? (
-                              // eslint-disable-next-line @next/next/no-img-element
-                              <img
-                                src={`/api/videos/${video.id}/thumbnail`}
-                                alt={video.title}
-                                className="w-full h-full object-cover"
-                              />
-                            ) : (
-                              <ImageIcon size={10} className="opacity-45" />
-                            )}
-                          </div>
-                          <div className="min-w-0">
-                            <span className="font-medium text-text-primary truncate block">
-                              {video.title}
-                            </span>
-                            {video.description && (
-                              <span className="text-[11px] text-text-tertiary truncate block mt-0.5">
-                                {video.description}
-                              </span>
-                            )}
-                          </div>
-                        </div>
-                      </td>
+          <Link
+            href="/admin/videos/upload"
+            className="flex items-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md active:bg-[#185abc]"
+          >
+            <Plus size={15} />
+            Upload New Video
+          </Link>
+        </div>
 
-                      {/* Grade badge */}
-                      <td className="py-2.5 px-3">
-                        <span className="bg-surface-strong text-text-secondary px-2 py-0.5 rounded text-[11px] font-medium">
-                          {GRADE_LABELS[video.grade]}
-                        </span>
-                      </td>
-
-                      {/* Views */}
-                      <td className="py-2.5 px-3 text-text-secondary">
-                        {video.viewsCount.toLocaleString()}
-                      </td>
-
-                      {/* Date */}
-                      <td className="py-2.5 px-3 text-text-tertiary">
-                        {new Date(video.createdAt).toLocaleDateString('en-GB', {
-                          day: '2-digit',
-                          month: 'short',
-                          year: 'numeric',
-                        })}
-                      </td>
-
-                      {/* Actions */}
-                      <td className="py-2.5 px-3">
-                        <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button
-                            onClick={() => setEditingId(video.id)}
-                            className="flex items-center gap-1 text-[11px] text-text-secondary border border-surface-strong px-2 py-1 rounded hover:border-black hover:text-text-primary transition-colors"
-                            title="Edit video metadata"
-                          >
-                            <Pencil size={10} />
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDelete(video)}
-                            disabled={deletingId === video.id}
-                            className="flex items-center gap-1 text-[11px] text-red-500 border border-red-200 px-2 py-1 rounded hover:bg-red-50 hover:border-red-400 transition-colors disabled:opacity-50"
-                            title="Delete video"
-                          >
-                            {deletingId === video.id ? (
-                              <Loader2 size={10} className="animate-spin" />
-                            ) : (
-                              <Trash2 size={10} />
-                            )}
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  )
-                )}
-              </tbody>
-            </table>
+        {/* Toast */}
+        {toast && (
+          <div
+            className={`rounded-lg border px-3.5 py-2.5 text-[13px] leading-5 ${
+              toast.type === 'ok'
+                ? 'border-[#ceead6] bg-[#e6f4ea] text-[#137333]'
+                : 'border-[#fad2cf] bg-[#fce8e6] text-[#c5221f]'
+            }`}
+          >
+            {toast.msg}
           </div>
         )}
+
+        {/* Table */}
+        <div className="overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="animate-spin text-[#1a73e8]" size={26} />
+            </div>
+          ) : videos.length === 0 ? (
+            <div className="flex flex-col items-center justify-center gap-3 py-16">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f1f3f4]">
+                <Film size={20} className="text-[#9aa0a6]" />
+              </div>
+              <p className="text-sm text-[#5f6368]">No videos published yet.</p>
+              <Link
+                href="/admin/videos/upload"
+                className="text-sm font-medium text-[#1a73e8] hover:underline"
+              >
+                Upload your first video →
+              </Link>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full border-collapse text-left text-xs">
+                <thead>
+                  <tr className="border-b border-[#e8eaed] bg-[#f8f9fa]">
+                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Lesson Title</th>
+                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Grade</th>
+                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                      <span className="flex items-center gap-1"><Eye size={11} /> Views</span>
+                    </th>
+                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Published</th>
+                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-[#5f6368]">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-[#f1f3f4]">
+                  {videos.map((video) =>
+                    editingId === video.id ? (
+                      <EditableRow
+                        key={video.id}
+                        video={video}
+                        onSave={handleSave}
+                        onCancel={() => setEditingId(null)}
+                      />
+                    ) : (
+                      <tr
+                        key={video.id}
+                        className="group transition-colors duration-100 hover:bg-[#f8f9fa]"
+                      >
+                        {/* Title + description + Thumbnail Icon/Image */}
+                        <td className="max-w-xs px-4 py-3">
+                          <div className="flex items-center space-x-3">
+                            {/* Small thumbnail in admin panel catalog list */}
+                            <div className="flex h-8 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[#e8eaed] bg-[#202124] text-[#9aa0a6]">
+                              {video.cloudflareR2ThumbnailKey ? (
+                                // eslint-disable-next-line @next/next/no-img-element
+                                <img
+                                  src={`/api/videos/${video.id}/thumbnail`}
+                                  alt={video.title}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : (
+                                <ImageIcon size={12} className="opacity-50" />
+                              )}
+                            </div>
+                            <div className="min-w-0">
+                              <span className="block truncate font-medium text-[#202124]">
+                                {video.title}
+                              </span>
+                              {video.description && (
+                                <span className="mt-0.5 block truncate text-[11px] text-[#5f6368]">
+                                  {video.description}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+
+                        {/* Grade badge */}
+                        <td className="px-4 py-3">
+                          <span className="rounded-full bg-[#e8f0fe] px-2.5 py-1 text-[11px] font-medium text-[#1a73e8]">
+                            {GRADE_LABELS[video.grade]}
+                          </span>
+                        </td>
+
+                        {/* Views */}
+                        <td className="px-4 py-3 text-[#5f6368]">
+                          {video.viewsCount.toLocaleString()}
+                        </td>
+
+                        {/* Date */}
+                        <td className="px-4 py-3 text-[#5f6368]">
+                          {new Date(video.createdAt).toLocaleDateString('en-GB', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                          })}
+                        </td>
+
+                        {/* Actions */}
+                        <td className="px-4 py-3">
+                          <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                            <button
+                              onClick={() => setEditingId(video.id)}
+                              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-[#1a73e8] transition-colors hover:bg-[#e8f0fe]"
+                              title="Edit video metadata"
+                            >
+                              <Pencil size={11} />
+                              Edit
+                            </button>
+                            <button
+                              onClick={() => handleDelete(video)}
+                              disabled={deletingId === video.id}
+                              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-[#d93025] transition-colors hover:bg-[#fce8e6] disabled:opacity-50"
+                              title="Delete video"
+                            >
+                              {deletingId === video.id ? (
+                                <Loader2 size={11} className="animate-spin" />
+                              ) : (
+                                <Trash2 size={11} />
+                              )}
+                              Delete
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  )}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );

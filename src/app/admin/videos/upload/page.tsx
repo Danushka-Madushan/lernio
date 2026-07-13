@@ -70,140 +70,150 @@ export default function VideoUploadPage() {
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-space-4">
-      {/* Breadcrumb */}
-      <div className="flex items-center space-x-2 text-xs text-text-tertiary">
-        <Link href="/admin/videos" className="hover:text-text-primary flex items-center gap-1 transition-colors">
-          <ArrowLeft size={12} />
-          Video Catalog
-        </Link>
-        <span>/</span>
-        <span className="text-text-primary font-medium">Upload New Video</span>
-      </div>
-
-      <div className="bg-white p-space-5 rounded-radius-md border border-surface-strong space-y-space-4">
-        <div className="flex items-center space-x-2">
-          <div className="w-8 h-8 rounded-radius-xs bg-black flex items-center justify-center">
-            <Film size={16} className="text-white" />
-          </div>
-          <div>
-            <h1 className="text-sm font-semibold text-text-primary">Publish Educational Video</h1>
-            <p className="text-xs text-text-tertiary">Upload the video file first, then fill in metadata and publish.</p>
-          </div>
+    <div className="min-h-screen bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-2xl space-y-5">
+        {/* Breadcrumb */}
+        <div className="flex items-center space-x-2 text-xs text-[#5f6368]">
+          <Link href="/admin/videos" className="flex items-center gap-1 transition-colors hover:text-[#1a73e8]">
+            <ArrowLeft size={12} />
+            Video Catalog
+          </Link>
+          <span className="text-[#dadce0]">/</span>
+          <span className="font-medium text-[#202124]">Upload New Video</span>
         </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 rounded-radius-xs p-space-2 text-xs">
-            {error}
+        <div className="space-y-5 rounded-2xl bg-white p-7 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
+          <div className="flex items-center space-x-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#e8f0fe]">
+              <Film size={18} className="text-[#1a73e8]" />
+            </div>
+            <div>
+              <h1 className="text-[15px] font-medium text-[#202124]">Publish Educational Video</h1>
+              <p className="text-xs text-[#5f6368]">Upload the video file first, then fill in metadata and publish.</p>
+            </div>
           </div>
-        )}
-        {success && (
-          <div className="bg-green-50 border border-green-200 text-green-700 rounded-radius-xs p-space-2 text-xs flex items-center gap-2">
-            <CheckCircle2 size={14} />
-            {success}
-          </div>
-        )}
 
-        {/* Step 1 – Video File */}
-        <div className="space-y-space-2">
-          <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-            Step 1 — Upload Video File
-          </p>
-          {!cloudflareR2Key ? (
-            <ResumableUploader onSuccess={handleUploadSuccess} />
-          ) : (
-            <div className="bg-green-50 border border-green-200 text-green-700 rounded-radius-xs p-space-3 text-xs flex items-start space-x-2">
-              <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
-              <div className="flex-1 min-w-0">
-                <span className="font-semibold block">File staged in Cloudflare R2</span>
-                <span className="block text-[10px] break-all text-green-600 mt-0.5">{cloudflareR2Key}</span>
-              </div>
-              <button
-                onClick={() => setCloudflareR2Key('')}
-                className="text-[10px] text-red-500 underline hover:text-red-700 shrink-0"
-              >
-                Replace
-              </button>
+          {error && (
+            <div className="rounded-lg border border-[#fad2cf] bg-[#fce8e6] px-3.5 py-2.5 text-[13px] leading-5 text-[#c5221f]">
+              {error}
             </div>
           )}
-        </div>
+          {success && (
+            <div className="flex items-center gap-2 rounded-lg border border-[#ceead6] bg-[#e6f4ea] px-3.5 py-2.5 text-[13px] leading-5 text-[#137333]">
+              <CheckCircle2 size={15} />
+              {success}
+            </div>
+          )}
 
-        {/* Step 2 – Metadata */}
-        <div className="space-y-space-3 pt-space-2 border-t border-surface-strong/40">
-          <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">
-            Step 2 — Video Details
-          </p>
+          {/* Step 1 – Video File */}
+          <div className="space-y-2.5">
+            <div className="flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1a73e8] text-[10px] font-semibold text-white">1</span>
+              <p className="text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                Upload Video File
+              </p>
+            </div>
+            {!cloudflareR2Key ? (
+              <ResumableUploader onSuccess={handleUploadSuccess} />
+            ) : (
+              <div className="flex items-start space-x-2.5 rounded-lg border border-[#ceead6] bg-[#e6f4ea] p-3.5 text-xs text-[#137333]">
+                <CheckCircle2 size={16} className="mt-0.5 shrink-0" />
+                <div className="min-w-0 flex-1">
+                  <span className="block font-semibold">File staged in Cloudflare R2</span>
+                  <span className="mt-0.5 block break-all text-[10px] text-[#1e8e3e]">{cloudflareR2Key}</span>
+                </div>
+                <button
+                  onClick={() => setCloudflareR2Key('')}
+                  className="shrink-0 text-[10px] font-medium text-[#d93025] hover:underline"
+                >
+                  Replace
+                </button>
+              </div>
+            )}
+          </div>
 
-          <form onSubmit={handleSaveVideo} className="space-y-space-3">
-            <div>
-              <label className="block text-xs text-text-tertiary mb-1" htmlFor="upload-title">
-                Video Title <span className="text-red-400">*</span>
-              </label>
-              <input
-                id="upload-title"
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                disabled={saving}
-                placeholder="e.g. Grade 10 Math – Lesson 1: Algebra Basics"
-                className="w-full rounded-radius-xs border border-surface-strong bg-white px-space-2 py-space-1.5 text-xs outline-none focus:ring-1 focus:ring-black disabled:opacity-60"
-                required
-              />
+          {/* Step 2 – Metadata */}
+          <div className="space-y-4 border-t border-[#e8eaed] pt-5">
+            <div className="flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1a73e8] text-[10px] font-semibold text-white">2</span>
+              <p className="text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                Video Details
+              </p>
             </div>
 
-            <div>
-              <label className="block text-xs text-text-tertiary mb-1" htmlFor="upload-description">
-                Description <span className="text-text-tertiary font-normal">(optional)</span>
-              </label>
-              <textarea
-                id="upload-description"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                disabled={saving}
-                placeholder="Brief overview of what this lesson covers…"
-                rows={3}
-                className="w-full rounded-radius-xs border border-surface-strong bg-white px-space-2 py-space-1.5 text-xs outline-none focus:ring-1 focus:ring-black resize-none disabled:opacity-60"
-              />
-            </div>
+            <form onSubmit={handleSaveVideo} className="space-y-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]" htmlFor="upload-title">
+                  Video Title <span className="text-[#d93025]">*</span>
+                </label>
+                <input
+                  id="upload-title"
+                  type="text"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  disabled={saving}
+                  placeholder="e.g. Grade 10 Math – Lesson 1: Algebra Basics"
+                  className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 placeholder:text-[#9aa0a6] hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4] disabled:text-[#9aa0a6]"
+                  required
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs text-text-tertiary mb-1">
-                Cover Thumbnail <span className="text-text-tertiary font-normal">(optional — JPG/PNG, 16:9)</span>
-              </label>
-              <ThumbnailUploader onSuccess={handleThumbnailSuccess} />
-            </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]" htmlFor="upload-description">
+                  Description <span className="font-normal text-[#9aa0a6]">(optional)</span>
+                </label>
+                <textarea
+                  id="upload-description"
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  disabled={saving}
+                  placeholder="Brief overview of what this lesson covers…"
+                  rows={3}
+                  className="w-full resize-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 placeholder:text-[#9aa0a6] hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4] disabled:text-[#9aa0a6]"
+                />
+              </div>
 
-            <div>
-              <label className="block text-xs text-text-tertiary mb-1" htmlFor="upload-grade">
-                Grade Band <span className="text-red-400">*</span>
-              </label>
-              <select
-                id="upload-grade"
-                value={grade}
-                onChange={(e) => setGrade(e.target.value as Grade)}
-                disabled={saving}
-                className="w-full rounded-radius-xs border border-surface-strong bg-white px-space-2 py-space-1.5 text-xs outline-none focus:ring-1 focus:ring-black"
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">
+                  Cover Thumbnail <span className="font-normal text-[#9aa0a6]">(optional — JPG/PNG, 16:9)</span>
+                </label>
+                <ThumbnailUploader onSuccess={handleThumbnailSuccess} />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]" htmlFor="upload-grade">
+                  Grade Band <span className="text-[#d93025]">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    id="upload-grade"
+                    value={grade}
+                    onChange={(e) => setGrade(e.target.value as Grade)}
+                    disabled={saving}
+                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20"
+                  >
+                    {Object.values(Grade).map((g) => (
+                      <option key={g} value={g}>
+                        {g.replace('GRADE_', 'Grade ')}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={saving || !cloudflareR2Key}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-[#1a73e8] py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md active:bg-[#185abc] disabled:cursor-not-allowed disabled:bg-[#c4c7cc] disabled:shadow-none"
               >
-                {Object.values(Grade).map((g) => (
-                  <option key={g} value={g}>
-                    {g.replace('GRADE_', 'Grade ')}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <button
-              type="submit"
-              disabled={saving || !cloudflareR2Key}
-              className="w-full flex justify-center items-center gap-2 bg-black hover:bg-neutral-800 text-white text-xs font-semibold py-space-2 rounded-radius-xs transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {saving ? (
-                <><Loader2 className="animate-spin" size={14} /><span>Publishing…</span></>
-              ) : (
-                <><Plus size={14} /><span>Publish Video</span></>
-              )}
-            </button>
-          </form>
+                {saving ? (
+                  <><Loader2 className="animate-spin" size={16} /><span>Publishing…</span></>
+                ) : (
+                  <><Plus size={16} /><span>Publish Video</span></>
+                )}
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>

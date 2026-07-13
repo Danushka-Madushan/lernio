@@ -200,19 +200,19 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
   };
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-2.5">
       {/* Drop zone / file picker */}
       {status !== 'done' && (
         <label
           htmlFor="thumbnail-input"
-          className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-radius-xs p-4 cursor-pointer transition-colors
-            ${status === 'error' ? 'border-red-300 bg-red-50' : 'border-surface-strong bg-surface-muted/40 hover:border-neutral-400 hover:bg-surface-muted'}`}
+          className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-5 cursor-pointer transition-colors duration-150
+            ${status === 'error' ? 'border-[#fad2cf] bg-[#fce8e6]' : 'border-[#dadce0] bg-[#f8f9fa] hover:border-[#1a73e8] hover:bg-[#e8f0fe]/40'}`}
         >
-          <ImagePlus size={20} className={status === 'error' ? 'text-red-400' : 'text-text-tertiary'} />
-          <span className="text-[11px] text-text-tertiary text-center leading-relaxed">
+          <ImagePlus size={20} className={status === 'error' ? 'text-[#d93025]' : 'text-[#5f6368]'} />
+          <span className="text-center text-[11px] leading-relaxed text-[#5f6368]">
             Click to select a JPG or PNG cover image
             <br />
-            <span className="text-[10px]">Must be 16:9 ratio — will be resized to 1280×720</span>
+            <span className="text-[10px] text-[#9aa0a6]">Must be 16:9 ratio — will be resized to 1280×720</span>
           </span>
           <input
             ref={inputRef}
@@ -228,7 +228,7 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
 
       {/* Error message */}
       {status === 'error' && errorMsg && (
-        <div className="flex items-start gap-2 text-[11px] text-red-600 bg-red-50 border border-red-200 rounded-radius-xs p-2">
+        <div className="flex items-start gap-2 rounded-lg border border-[#fad2cf] bg-[#fce8e6] p-2.5 text-[11px] text-[#c5221f]">
           <AlertTriangle size={13} className="mt-0.5 shrink-0" />
           <span>{errorMsg}</span>
         </div>
@@ -236,30 +236,30 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
 
       {/* Compressing indicator */}
       {status === 'compressing' && (
-        <div className="flex items-center gap-2 text-[11px] text-text-tertiary">
-          <Loader2 size={12} className="animate-spin" />
+        <div className="flex items-center gap-2 text-[11px] text-[#5f6368]">
+          <Loader2 size={12} className="animate-spin text-[#1a73e8]" />
           Validating aspect ratio and compressing to 1280×720…
         </div>
       )}
 
       {/* Upload progress */}
       {(status === 'uploading' || status === 'done') && (
-        <div className="space-y-1">
-          <div className="flex justify-between text-[10px] text-text-tertiary">
+        <div className="space-y-1.5">
+          <div className="flex justify-between text-[10px] text-[#5f6368]">
             <span>
               {status === 'done' ? (
-                <span className="text-green-600 font-semibold flex items-center gap-1">
+                <span className="flex items-center gap-1 font-semibold text-[#137333]">
                   <CheckCircle2 size={11} /> Uploaded — {compressedSize}
                 </span>
               ) : (
                 `Uploading to ImgBB… ${compressedSize}`
               )}
             </span>
-            <span className="tabular-nums font-semibold text-text-secondary">{uploadProgress}%</span>
+            <span className="tabular-nums font-semibold text-[#3c4043]">{uploadProgress}%</span>
           </div>
-          <div className="w-full bg-surface-strong h-1.5 rounded-full overflow-hidden">
+          <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#e8eaed]">
             <div
-              className={`h-full rounded-full transition-all duration-200 ${status === 'done' ? 'bg-green-500' : 'bg-black'}`}
+              className={`h-full rounded-full transition-all duration-200 ${status === 'done' ? 'bg-[#34a853]' : 'bg-[#1a73e8]'}`}
               style={{ width: `${uploadProgress}%` }}
             />
           </div>
@@ -269,20 +269,20 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
       {/* Preview + result */}
       {preview && status !== 'error' && (
         <div className="flex items-start gap-3">
-          <div className="relative w-32 aspect-video rounded border border-surface-strong overflow-hidden bg-black shrink-0">
+          <div className="relative aspect-video w-32 shrink-0 overflow-hidden rounded-lg border border-[#e8eaed] bg-black">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={preview} alt="Thumbnail preview" className="w-full h-full object-cover" />
+            <img src={preview} alt="Thumbnail preview" className="h-full w-full object-cover" />
           </div>
-          <div className="flex flex-col justify-between h-full gap-2 pt-1">
-            <div className="text-[10px] text-text-tertiary space-y-0.5">
-              <p className="font-semibold text-green-600">1280 × 720 · JPEG</p>
+          <div className="flex h-full flex-col justify-between gap-2 pt-1">
+            <div className="space-y-0.5 text-[10px] text-[#5f6368]">
+              <p className="font-semibold text-[#137333]">1280 × 720 · JPEG</p>
               <p>{compressedSize}</p>
             </div>
             {status === 'done' && (
               <button
                 type="button"
                 onClick={handleClear}
-                className="flex items-center gap-1 text-[10px] text-red-500 hover:text-red-700 transition-colors"
+                className="flex items-center gap-1 text-[10px] font-medium text-[#d93025] transition-colors hover:text-[#a50e0e]"
               >
                 <X size={10} />
                 Remove

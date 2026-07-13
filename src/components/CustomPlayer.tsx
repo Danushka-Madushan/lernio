@@ -170,21 +170,21 @@ export default function CustomPlayer({ videoId }: CustomPlayerProps) {
       onContextMenu={(e) => e.preventDefault()}
       onMouseMove={resetControlsTimer}
       onMouseEnter={resetControlsTimer}
-      className="relative flex items-center justify-center w-full aspect-video bg-black rounded-radius-md overflow-hidden border border-text-secondary group select-none"
+      className="group relative flex w-full aspect-video select-none items-center justify-center overflow-hidden rounded-2xl bg-black shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]"
     >
       {/* ── Buffering spinner (shows while canplay not yet fired) ── */}
       {isBuffering && !error && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/60 pointer-events-none">
-          <Loader2 size={36} className="animate-spin text-surface-raised mb-2" />
-          <p className="text-xs text-text-tertiary">Loading…</p>
+        <div className="pointer-events-none absolute inset-0 z-10 flex flex-col items-center justify-center bg-black/60">
+          <Loader2 size={36} className="mb-2 animate-spin text-[#8ab4f8]" />
+          <p className="text-xs text-white/70">Loading…</p>
         </div>
       )}
 
       {/* ── Error state ── */}
       {error && (
-        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center bg-black gap-2">
-          <AlertCircle size={32} className="text-red-500" />
-          <p className="text-xs text-red-400 font-semibold">{error}</p>
+        <div className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-2 bg-black">
+          <AlertCircle size={32} className="text-[#f28b82]" />
+          <p className="text-xs font-medium text-[#f28b82]">{error}</p>
         </div>
       )}
 
@@ -213,23 +213,23 @@ export default function CustomPlayer({ videoId }: CustomPlayerProps) {
           setIsBuffering(false);
         }}
         onEnded={() => { setIsPlaying(false); setShowControls(true); setProgress(100); }}
-        className="w-full h-full object-contain"
+        className="h-full w-full object-contain"
         aria-label="Video Player"
       />
 
       {/* ── Custom controls overlay (auto-hides on idle) ── */}
       <div
-        className={`absolute bottom-0 left-0 right-0 px-3 pb-3 pt-8
+        className={`absolute bottom-0 left-0 right-0 px-4 pb-4 pt-10
           bg-linear-to-t from-black/85 via-black/40 to-transparent
-          flex flex-col gap-2
+          flex flex-col gap-2.5
           transition-opacity duration-300
           ${showControls || !isPlaying ? 'opacity-100' : 'opacity-0 pointer-events-none'}`}
       >
         {/* Seek / buffer bar */}
-        <div className="relative w-full h-1 group/seek">
+        <div className="group/seek relative h-1 w-full">
           {/* Buffer track */}
           <div
-            className="absolute inset-y-0 left-0 bg-white/20 rounded-full pointer-events-none"
+            className="pointer-events-none absolute inset-y-0 left-0 rounded-full bg-white/25"
             style={{ width: `${buffered}%` }}
           />
           <input
@@ -239,18 +239,18 @@ export default function CustomPlayer({ videoId }: CustomPlayerProps) {
             step="0.1"
             value={progress}
             onChange={handleSeek}
-            className="relative w-full h-1 rounded-full cursor-pointer appearance-none bg-white/10 accent-surface-raised focus:outline-none"
+            className="relative h-1 w-full cursor-pointer appearance-none rounded-full bg-white/15 accent-[#8ab4f8] focus:outline-none"
             aria-label="Seek"
           />
         </div>
 
         {/* Controls row */}
-        <div className="flex justify-between items-center text-white">
+        <div className="flex items-center justify-between text-white">
           {/* Left: play/pause + volume + time */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3.5">
             <button
               onClick={() => { togglePlay(); resetControlsTimer(); }}
-              className="hover:text-surface-raised transition-colors focus:outline-none"
+              className="transition-colors hover:text-[#8ab4f8] focus:outline-none"
               aria-label={isPlaying ? 'Pause' : 'Play'}
             >
               {isPlaying ? <Pause size={18} /> : <Play size={18} />}
@@ -259,7 +259,7 @@ export default function CustomPlayer({ videoId }: CustomPlayerProps) {
             <div className="flex items-center gap-1.5">
               <button
                 onClick={toggleMute}
-                className="hover:text-surface-raised transition-colors focus:outline-none"
+                className="transition-colors hover:text-[#8ab4f8] focus:outline-none"
                 aria-label={isMuted ? 'Unmute' : 'Mute'}
               >
                 {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
@@ -271,7 +271,7 @@ export default function CustomPlayer({ videoId }: CustomPlayerProps) {
                 step="0.05"
                 value={isMuted ? 0 : volume}
                 onChange={handleVolumeChange}
-                className="w-16 h-1 cursor-pointer appearance-none bg-white/20 accent-surface-raised rounded-full focus:outline-none"
+                className="h-1 w-16 cursor-pointer appearance-none rounded-full bg-white/25 accent-[#8ab4f8] focus:outline-none"
                 aria-label="Volume"
               />
             </div>
@@ -284,7 +284,7 @@ export default function CustomPlayer({ videoId }: CustomPlayerProps) {
           {/* Right: fullscreen */}
           <button
             onClick={toggleFullScreen}
-            className="hover:text-surface-raised transition-colors focus:outline-none"
+            className="transition-colors hover:text-[#8ab4f8] focus:outline-none"
             aria-label="Toggle fullscreen"
           >
             <Maximize2 size={16} />

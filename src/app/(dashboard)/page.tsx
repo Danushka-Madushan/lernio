@@ -39,110 +39,112 @@ export default async function DashboardPage({
   });
 
   return (
-    <div className="space-y-space-5">
-      {/* Grade Selector */}
-      <div className="flex flex-wrap gap-2 pb-space-2 border-b border-surface-strong">
-        <Link
-          href="/"
-          className={`px-space-3 py-space-2 rounded-radius-xs text-xs font-semibold transition-all duration-instant outline-none focus-visible:ring-2 focus-visible:ring-surface-raised ${
-            !activeGrade
-              ? 'bg-black text-white'
-              : 'bg-white text-text-primary border border-surface-strong hover:bg-surface-strong'
-          }`}
-        >
-          All Grades
-        </Link>
-        {gradeMapping.map((g) => (
+    <div className="min-h-screen bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl space-y-6">
+        {/* Grade Selector */}
+        <div className="flex flex-wrap gap-2 border-b border-[#e8eaed] pb-5">
           <Link
-            key={g.value}
-            href={`/?grade=${g.value}`}
-            className={`px-space-3 py-space-2 rounded-radius-xs text-xs font-semibold transition-all duration-instant outline-none focus-visible:ring-2 focus-visible:ring-surface-raised ${
-              activeGrade === g.value
-                ? 'bg-black text-white'
-                : 'bg-white text-text-primary border border-surface-strong hover:bg-surface-strong'
+            href="/"
+            className={`rounded-full px-4 py-2 text-xs font-medium transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/40 ${
+              !activeGrade
+                ? 'bg-[#1a73e8] text-white shadow-sm'
+                : 'border border-[#dadce0] bg-white text-[#3c4043] hover:bg-[#f1f3f4]'
             }`}
           >
-            {g.label}
+            All Grades
           </Link>
-        ))}
-      </div>
-
-      {/* Video Feed */}
-      {videos.length === 0 ? (
-        <div className="text-center py-space-6 border border-dashed border-surface-strong bg-white rounded-radius-md">
-          <p className="text-sm text-text-tertiary">No videos found for this grade.</p>
-        </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-space-4">
-          {videos.map((vid) => (
-            <div
-              key={vid.id}
-              className="flex flex-col bg-white rounded-radius-md border border-surface-strong overflow-hidden hover:shadow-md transition-all duration-instant"
+          {gradeMapping.map((g) => (
+            <Link
+              key={g.value}
+              href={`/?grade=${g.value}`}
+              className={`rounded-full px-4 py-2 text-xs font-medium transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/40 ${
+                activeGrade === g.value
+                  ? 'bg-[#1a73e8] text-white shadow-sm'
+                  : 'border border-[#dadce0] bg-white text-[#3c4043] hover:bg-[#f1f3f4]'
+              }`}
             >
-              <Link
-                href={`/video/${vid.id}`}
-                className="relative aspect-video bg-text-primary flex items-center justify-center text-text-tertiary select-none group/thumb overflow-hidden"
-              >
-                {vid.cloudflareR2ThumbnailKey ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={`/api/videos/${vid.id}/thumbnail`}
-                    alt={vid.title}
-                    className="absolute inset-0 w-full h-full object-cover group-hover/thumb:scale-105 transition-transform duration-300"
-                  />
-                ) : (
-                  <div className="absolute inset-0 bg-linear-to-br from-neutral-800 to-black" />
-                )}
-                {/* Play icon overlay on hover */}
-                <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover/thumb:opacity-100 transition-opacity duration-200">
-                  <Play size={36} className="text-white fill-white" />
-                </div>
-                {/* Static indicator play button */}
-                <div className="absolute inset-0 flex items-center justify-center group-hover/thumb:opacity-0 transition-opacity duration-200">
-                  <Play size={32} className="opacity-80 text-white" />
-                </div>
-                <span className="absolute bottom-2 right-2 bg-black/70 px-1.5 py-0.5 rounded text-[10px] text-white z-10">
-                  {vid.grade.replace('GRADE_', 'Grade ')}
-                </span>
-              </Link>
-              <div className="p-space-3 flex-1 flex flex-col justify-between">
-                <div>
-                  <h3 className="text-md font-semibold text-text-primary leading-tight mb-space-1 line-clamp-1 hover:text-neutral-700 transition-colors">
-                    <Link href={`/video/${vid.id}`}>
-                      {vid.title}
-                    </Link>
-                  </h3>
-                  <p className="text-xs text-text-tertiary line-clamp-2 mb-space-3">
-                    {vid.description || 'No description provided.'}
-                  </p>
-                </div>
-                <div className="flex justify-between items-center text-[11px] text-text-tertiary border-t border-surface-muted pt-space-2">
-                  <div className="flex items-center space-x-space-2">
-                    <span className="flex items-center space-x-0.5">
-                      <Eye size={12} />
-                      <span>{vid.viewsCount}</span>
-                    </span>
-                    <span className="flex items-center space-x-0.5">
-                      <Heart size={12} />
-                      <span>{vid._count.likes}</span>
-                    </span>
-                    <span className="flex items-center space-x-0.5">
-                      <MessageSquare size={12} />
-                      <span>{vid._count.comments}</span>
-                    </span>
-                  </div>
-                  <Link
-                    href={`/video/${vid.id}`}
-                    className="bg-black text-white hover:bg-surface-raised hover:text-black font-semibold px-2.5 py-1 rounded text-[11px] transition-all duration-instant focus-visible:ring-1 focus-visible:ring-surface-raised outline-none"
-                  >
-                    Watch Now
-                  </Link>
-                </div>
-              </div>
-            </div>
+              {g.label}
+            </Link>
           ))}
         </div>
-      )}
+
+        {/* Video Feed */}
+        {videos.length === 0 ? (
+          <div className="rounded-2xl border border-dashed border-[#dadce0] bg-white py-16 text-center">
+            <p className="text-sm text-[#5f6368]">No videos found for this grade.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-2 lg:grid-cols-3">
+            {videos.map((vid) => (
+              <div
+                key={vid.id}
+                className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] transition-shadow duration-150 hover:shadow-[0_1px_3px_0_rgba(60,64,67,0.3),0_4px_8px_3px_rgba(60,64,67,0.15)]"
+              >
+                <Link
+                  href={`/video/${vid.id}`}
+                  className="group/thumb relative aspect-video select-none overflow-hidden bg-[#202124] flex items-center justify-center text-[#9aa0a6]"
+                >
+                  {vid.cloudflareR2ThumbnailKey ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={`/api/videos/${vid.id}/thumbnail`}
+                      alt={vid.title}
+                      className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover/thumb:scale-105"
+                    />
+                  ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-[#3c4043] to-[#202124]" />
+                  )}
+                  {/* Play icon overlay on hover */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-200 group-hover/thumb:opacity-100">
+                    <Play size={36} className="fill-white text-white" />
+                  </div>
+                  {/* Static indicator play button */}
+                  <div className="absolute inset-0 flex items-center justify-center transition-opacity duration-200 group-hover/thumb:opacity-0">
+                    <Play size={32} className="text-white opacity-80" />
+                  </div>
+                  <span className="absolute bottom-2 right-2 z-10 rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-medium text-white">
+                    {vid.grade.replace('GRADE_', 'Grade ')}
+                  </span>
+                </Link>
+                <div className="flex flex-1 flex-col justify-between p-4">
+                  <div>
+                    <h3 className="mb-1 line-clamp-1 text-[15px] font-medium leading-tight text-[#202124] transition-colors hover:text-[#1a73e8]">
+                      <Link href={`/video/${vid.id}`}>
+                        {vid.title}
+                      </Link>
+                    </h3>
+                    <p className="mb-3 line-clamp-2 text-xs text-[#5f6368]">
+                      {vid.description || 'No description provided.'}
+                    </p>
+                  </div>
+                  <div className="flex items-center justify-between border-t border-[#f1f3f4] pt-3 text-[11px] text-[#5f6368]">
+                    <div className="flex items-center space-x-3">
+                      <span className="flex items-center space-x-1">
+                        <Eye size={12} />
+                        <span>{vid.viewsCount}</span>
+                      </span>
+                      <span className="flex items-center space-x-1">
+                        <Heart size={12} />
+                        <span>{vid._count.likes}</span>
+                      </span>
+                      <span className="flex items-center space-x-1">
+                        <MessageSquare size={12} />
+                        <span>{vid._count.comments}</span>
+                      </span>
+                    </div>
+                    <Link
+                      href={`/video/${vid.id}`}
+                      className="rounded-full bg-[#1a73e8] px-3 py-1.5 text-[11px] font-medium text-white outline-none transition-all duration-150 hover:bg-[#1765cc] hover:shadow-sm focus-visible:ring-2 focus-visible:ring-[#1a73e8]/40"
+                    >
+                      Watch Now
+                    </Link>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }

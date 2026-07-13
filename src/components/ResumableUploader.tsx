@@ -225,13 +225,13 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
   const totalMB = file?.size ?? uploadState?.totalSize ?? 0;
 
   return (
-    <div className="border border-surface-strong bg-surface-muted/50 rounded-radius-md p-space-4 space-y-space-3">
-      <div className="flex justify-between items-center">
-        <h3 className="text-xs font-bold text-text-secondary uppercase tracking-wider">Video File</h3>
+    <div className="space-y-4 rounded-xl border border-[#e8eaed] bg-[#f8f9fa] p-4">
+      <div className="flex items-center justify-between">
+        <h3 className="text-xs font-medium uppercase tracking-wide text-[#5f6368]">Video File</h3>
         {uploadState && (
           <button
             onClick={resetUploader}
-            className="text-[10px] text-red-500 hover:underline flex items-center gap-0.5"
+            className="flex items-center gap-1 text-[10px] font-medium text-[#d93025] hover:underline"
           >
             <X size={11} />
             Cancel Session
@@ -239,18 +239,18 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
         )}
       </div>
 
-      <div className="space-y-space-2 text-xs">
+      <div className="space-y-3 text-xs">
         <input
           type="file"
           accept="video/*"
           onChange={handleFileChange}
           disabled={uploading}
-          className="w-full text-xs text-text-tertiary file:mr-space-2 file:py-1 file:px-2 file:rounded-radius-xs file:border file:border-surface-strong file:text-xs file:bg-white file:text-text-primary hover:file:bg-surface-strong cursor-pointer"
+          className="w-full cursor-pointer text-xs text-[#5f6368] file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-[#e8f0fe] file:px-3.5 file:py-1.5 file:text-xs file:font-medium file:text-[#1a73e8] hover:file:bg-[#d2e3fc]"
         />
 
         {file && (
-          <div className="text-[10px] text-text-tertiary">
-            <span className="font-medium text-text-secondary">{file.name}</span>
+          <div className="text-[10px] text-[#5f6368]">
+            <span className="font-medium text-[#3c4043]">{file.name}</span>
             {' '}— {formatMB(file.size)} MB
           </div>
         )}
@@ -259,22 +259,22 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
         {(uploading || progress > 0) && (
           <div className="space-y-1.5">
             {/* Status + Percentage row */}
-            <div className="flex justify-between items-center text-[10px] text-text-tertiary">
+            <div className="flex items-center justify-between text-[10px] text-[#5f6368]">
               <span>{statusText}</span>
-              <span className="font-semibold text-text-secondary tabular-nums">{progress}%</span>
+              <span className="font-semibold tabular-nums text-[#3c4043]">{progress}%</span>
             </div>
 
             {/* Progress bar */}
-            <div className="w-full bg-surface-strong h-2 rounded-full overflow-hidden">
+            <div className="h-2 w-full overflow-hidden rounded-full bg-[#e8eaed]">
               <div
-                className="bg-black h-full rounded-full transition-all duration-200"
+                className="h-full rounded-full bg-[#1a73e8] transition-all duration-200"
                 style={{ width: `${progress}%` }}
               />
             </div>
 
             {/* MB counter */}
             {totalMB > 0 && (
-              <div className="flex justify-between text-[10px] text-text-tertiary tabular-nums">
+              <div className="flex justify-between text-[10px] tabular-nums text-[#5f6368]">
                 <span>{formatMB(uploadedBytes)} MB uploaded</span>
                 <span>{formatMB(totalMB)} MB total</span>
               </div>
@@ -283,19 +283,19 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
         )}
 
         {error && (
-          <div className="text-[10px] text-red-600 bg-red-50 border border-red-200 p-space-2 rounded-radius-xs">
+          <div className="rounded-lg border border-[#fad2cf] bg-[#fce8e6] p-2.5 text-[10px] text-[#c5221f]">
             {error}
           </div>
         )}
 
         {/* Controls */}
-        <div className="flex items-center gap-space-2">
+        <div className="flex items-center gap-2.5">
           {!uploadState ? (
             <button
               type="button"
               onClick={startNewUpload}
               disabled={!file || uploading}
-              className="flex items-center gap-1.5 bg-black text-white hover:bg-neutral-800 font-semibold px-space-3 py-1.5 rounded-radius-xs disabled:opacity-50 transition-colors text-xs"
+              className="flex items-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-1.5 text-xs font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md disabled:cursor-not-allowed disabled:bg-[#c4c7cc] disabled:shadow-none"
             >
               <Upload size={13} />
               Start Upload
@@ -307,7 +307,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
                   type="button"
                   onClick={resumeUpload}
                   disabled={!file}
-                  className="flex items-center gap-1.5 bg-amber-500 text-white hover:bg-amber-600 font-semibold px-space-3 py-1.5 rounded-radius-xs disabled:opacity-50 transition-colors text-xs"
+                  className="flex items-center gap-1.5 rounded-full bg-[#f9ab00] px-4 py-1.5 text-xs font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#e8a000] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   <Play size={13} />
                   Resume
@@ -316,7 +316,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
                 <button
                   type="button"
                   onClick={() => { pausedRef.current = true; setPaused(true); }}
-                  className="flex items-center gap-1.5 bg-yellow-50 border border-yellow-300 text-yellow-700 hover:bg-yellow-100 font-semibold px-space-3 py-1.5 rounded-radius-xs transition-colors text-xs"
+                  className="flex items-center gap-1.5 rounded-full border border-[#feefc3] bg-[#fef7e0] px-4 py-1.5 text-xs font-medium text-[#b06000] transition-colors hover:bg-[#fdedc0]"
                 >
                   <Pause size={13} />
                   Pause
@@ -326,14 +326,14 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
           )}
 
           {uploading && (
-            <span className="flex items-center gap-1 text-[10px] text-text-tertiary">
-              <Loader2 size={11} className="animate-spin" />
+            <span className="flex items-center gap-1 text-[10px] text-[#5f6368]">
+              <Loader2 size={11} className="animate-spin text-[#1a73e8]" />
               Transferring…
             </span>
           )}
 
           {progress === 100 && !uploading && (
-            <span className="flex items-center gap-1 text-[10px] text-green-600 font-semibold">
+            <span className="flex items-center gap-1 text-[10px] font-semibold text-[#137333]">
               <CheckCircle size={11} />
               Done
             </span>

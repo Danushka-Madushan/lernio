@@ -126,165 +126,214 @@ export default function UsersAdminPage() {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-3 gap-space-4">
-      {/* Left panel: Add Student */}
-      <div className="bg-white p-space-4 rounded-radius-md border border-surface-strong space-y-space-3 lg:col-span-1 h-fit">
-        <h2 className="text-md font-semibold text-text-primary flex items-center space-x-1">
-          <UserPlus size={18} />
-          <span>Create Student Account</span>
-        </h2>
+    <div className="min-h-screen bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl">
+        <div className="mb-6">
+          <h1 className="text-[22px] font-medium tracking-tight text-[#202124]">
+            Student Accounts
+          </h1>
+          <p className="mt-1 text-sm text-[#5f6368]">
+            Create, manage, and remove student login accounts
+          </p>
+        </div>
 
-        {error && (
-          <div className="bg-red-50 border border-red-200 text-red-600 rounded-radius-xs p-space-2 text-xs">
-            {error}
-          </div>
-        )}
-
-        {success && (
-          <div className="bg-green-50 border border-green-200 text-green-600 rounded-radius-xs p-space-2 text-xs">
-            {success}
-          </div>
-        )}
-
-        <form onSubmit={handleCreateStudent} className="space-y-space-3">
-          <div>
-            <label className="block text-xs text-text-tertiary mb-1" htmlFor="username">
-              Username
-            </label>
-            <input
-              id="username"
-              type="text"
-              value={newUsername}
-              onChange={(e) => setNewUsername(e.target.value)}
-              disabled={creating}
-              placeholder="e.g. madushan6"
-              className="w-full rounded-radius-xs border border-surface-strong bg-white px-space-2 py-space-1.5 text-xs outline-none focus:ring-1 focus:ring-black"
-              required
-            />
-          </div>
-
-          <div>
-            <label className="block text-xs text-text-tertiary mb-1" htmlFor="password">
-              Password
-            </label>
-            <div className="relative">
-              <input
-                id="password"
-                type={showPassword ? 'text' : 'password'}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-                disabled={creating}
-                placeholder="Initial password"
-                className="w-full rounded-radius-xs border border-surface-strong bg-white px-space-2 py-space-1.5 pr-space-4 text-xs outline-none focus:ring-1 focus:ring-black"
-                required
-              />
-              <button
-                type="button"
-                onClick={() => setShowPassword(!showPassword)}
-                className="absolute inset-y-0 right-2 flex items-center text-text-tertiary hover:text-text-primary"
-              >
-                {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-              </button>
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          {/* Left panel: Add Student */}
+          <div className="h-fit rounded-2xl bg-white p-6 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] lg:col-span-1">
+            <div className="mb-5 flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8f0fe]">
+                <UserPlus size={17} className="text-[#1a73e8]" />
+              </div>
+              <h2 className="text-[15px] font-medium text-[#202124]">
+                Create Student Account
+              </h2>
             </div>
-          </div>
 
-          <button
-            type="submit"
-            disabled={creating}
-            className="w-full flex justify-center items-center space-x-1 bg-black hover:bg-surface-strong hover:text-black text-white text-xs font-semibold py-space-2 rounded-radius-xs transition-colors duration-instant disabled:opacity-50"
-          >
-            {creating ? (
-              <Loader2 className="animate-spin" size={14} />
-            ) : (
-              <>
-                <Plus size={14} />
-                <span>Create Student</span>
-              </>
+            {error && (
+              <div className="mb-4 rounded-lg border border-[#fad2cf] bg-[#fce8e6] px-3.5 py-2.5 text-[13px] leading-5 text-[#c5221f]">
+                {error}
+              </div>
             )}
-          </button>
-        </form>
-      </div>
 
-      {/* Right panel: Students list */}
-      <div className="bg-white p-space-4 rounded-radius-md border border-surface-strong lg:col-span-2 space-y-space-3">
-        <h2 className="text-md font-semibold text-text-primary">Existing Student Accounts</h2>
+            {success && (
+              <div className="mb-4 rounded-lg border border-[#ceead6] bg-[#e6f4ea] px-3.5 py-2.5 text-[13px] leading-5 text-[#137333]">
+                {success}
+              </div>
+            )}
 
-        {loading ? (
-          <div className="flex justify-center py-space-6">
-            <Loader2 className="animate-spin text-text-tertiary" size={24} />
+            <form onSubmit={handleCreateStudent} className="space-y-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]" htmlFor="username">
+                  Username
+                </label>
+                <input
+                  id="username"
+                  type="text"
+                  value={newUsername}
+                  onChange={(e) => setNewUsername(e.target.value)}
+                  disabled={creating}
+                  placeholder="e.g. madushan6"
+                  className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 placeholder:text-[#9aa0a6] hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4] disabled:text-[#9aa0a6]"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]" htmlFor="password">
+                  Password
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? 'text' : 'password'}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    disabled={creating}
+                    placeholder="Initial password"
+                    className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 pr-10 text-sm text-[#202124] outline-none transition-all duration-150 placeholder:text-[#9aa0a6] hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4] disabled:text-[#9aa0a6]"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-[#5f6368] transition-colors hover:text-[#202124]"
+                  >
+                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={creating}
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-[#1a73e8] py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md active:bg-[#185abc] disabled:cursor-not-allowed disabled:bg-[#c4c7cc] disabled:shadow-none"
+              >
+                {creating ? (
+                  <Loader2 className="animate-spin" size={16} />
+                ) : (
+                  <>
+                    <Plus size={16} />
+                    <span>Create Student</span>
+                  </>
+                )}
+              </button>
+            </form>
           </div>
-        ) : students.length === 0 ? (
-          <p className="text-xs text-text-tertiary py-space-4 text-center">No student accounts registered yet.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-surface-strong text-text-tertiary">
-                  <th className="py-2">Username</th>
-                  <th className="py-2">Registered On</th>
-                  <th className="py-2 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-surface-muted">
-                {students.map((student) => (
-                  <tr key={student.id} className="hover:bg-surface-muted/55">
-                    <td className="py-2 font-medium text-text-primary">{student.username}</td>
-                    <td className="py-2 text-text-tertiary">
-                      {new Date(student.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="py-2 text-right space-x-2">
-                      {resettingId === student.id ? (
-                        <div className="inline-flex items-center space-x-1">
-                          <input
-                            type="text"
-                            placeholder="New pass"
-                            value={resetPassword}
-                            onChange={(e) => setResetPassword(e.target.value)}
-                            className="border border-surface-strong px-2 py-0.5 rounded text-[11px] outline-none"
-                          />
-                          <button
-                            onClick={() => handleResetPassword(student.id)}
-                            className="bg-black text-white px-2 py-0.5 rounded text-[11px] hover:bg-surface-strong hover:text-black font-semibold"
-                          >
-                            Save
-                          </button>
-                          <button
-                            onClick={() => setResettingId(null)}
-                            className="text-text-tertiary hover:underline text-[11px]"
-                          >
-                            Cancel
-                          </button>
-                        </div>
-                      ) : (
-                        <>
-                          <button
-                            onClick={() => {
-                              setResettingId(student.id);
-                              setResetPassword('');
-                            }}
-                            className="inline-flex items-center space-x-0.5 text-text-secondary hover:text-black hover:underline"
-                            title="Reset Password"
-                          >
-                            <Key size={12} />
-                            <span>Reset</span>
-                          </button>
-                          <button
-                            onClick={() => handleDeleteStudent(student.id, student.username)}
-                            className="inline-flex items-center space-x-0.5 text-red-500 hover:text-red-700 hover:underline"
-                            title="Delete Student"
-                          >
-                            <Trash size={12} />
-                            <span>Delete</span>
-                          </button>
-                        </>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+
+          {/* Right panel: Students list */}
+          <div className="rounded-2xl bg-white p-6 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] lg:col-span-2">
+            <div className="mb-5 flex items-center justify-between">
+              <h2 className="text-[15px] font-medium text-[#202124]">
+                Existing Student Accounts
+              </h2>
+              {!loading && students.length > 0 && (
+                <span className="rounded-full bg-[#f1f3f4] px-2.5 py-1 text-xs font-medium text-[#5f6368]">
+                  {students.length} total
+                </span>
+              )}
+            </div>
+
+            {loading ? (
+              <div className="flex justify-center py-14">
+                <Loader2 className="animate-spin text-[#1a73e8]" size={26} />
+              </div>
+            ) : students.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-14 text-center">
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f1f3f4]">
+                  <UserPlus size={20} className="text-[#9aa0a6]" />
+                </div>
+                <p className="text-sm text-[#5f6368]">No student accounts registered yet.</p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-[#e8eaed]">
+                      <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                        Username
+                      </th>
+                      <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                        Registered On
+                      </th>
+                      <th className="py-2.5 text-right text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                        Actions
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#f1f3f4]">
+                    {students.map((student) => (
+                      <tr
+                        key={student.id}
+                        className="transition-colors duration-100 hover:bg-[#f8f9fa]"
+                      >
+                        <td className="py-3.5">
+                          <div className="flex items-center gap-3">
+                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#e8f0fe] text-xs font-medium text-[#1a73e8]">
+                              {student.username.charAt(0).toUpperCase()}
+                            </div>
+                            <span className="font-medium text-[#202124]">
+                              {student.username}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="py-3.5 text-[#5f6368]">
+                          {new Date(student.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="py-3.5 text-right">
+                          {resettingId === student.id ? (
+                            <div className="inline-flex items-center gap-2">
+                              <input
+                                type="text"
+                                placeholder="New password"
+                                value={resetPassword}
+                                onChange={(e) => setResetPassword(e.target.value)}
+                                className="rounded-md border border-[#dadce0] px-2.5 py-1.5 text-xs outline-none transition-colors focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20"
+                              />
+                              <button
+                                onClick={() => handleResetPassword(student.id)}
+                                className="rounded-full bg-[#1a73e8] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#1765cc]"
+                              >
+                                Save
+                              </button>
+                              <button
+                                onClick={() => setResettingId(null)}
+                                className="rounded-full px-2.5 py-1.5 text-xs font-medium text-[#5f6368] transition-colors hover:bg-[#f1f3f4]"
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <div className="inline-flex items-center gap-1">
+                              <button
+                                onClick={() => {
+                                  setResettingId(student.id);
+                                  setResetPassword('');
+                                }}
+                                title="Reset Password"
+                                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#1a73e8] transition-colors hover:bg-[#e8f0fe]"
+                              >
+                                <Key size={13} />
+                                <span>Reset</span>
+                              </button>
+                              <button
+                                onClick={() => handleDeleteStudent(student.id, student.username)}
+                                title="Delete Student"
+                                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#d93025] transition-colors hover:bg-[#fce8e6]"
+                              >
+                                <Trash size={13} />
+                                <span>Delete</span>
+                              </button>
+                            </div>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     </div>
   );

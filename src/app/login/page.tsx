@@ -53,35 +53,35 @@ function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md rounded-radius-md border border-text-secondary bg-black p-space-6 shadow-2xl transition-all duration-instant">
-      <div className="mb-space-5 text-center">
-        <h1 className="text-2xl font-semibold tracking-tight text-white select-none">
-          Lernio Video
+    <div className="w-full max-w-md rounded-2xl border border-[#e8eaed] bg-white p-8 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_2px_6px_2px_rgba(60,64,67,0.15)] transition-all duration-150">
+      <div className="mb-6 text-center">
+        <h1 className="text-3xl font-medium tracking-tight text-[#202124] select-none">
+          Lernio
         </h1>
-        <p className="mt-space-1 text-xs text-text-tertiary">
-          Tuition platform student & admin portal
+        <p className="mt-1.5 text-md text-[#5f6368]">
+          E Wisdom Institute
         </p>
       </div>
 
       {error && (
         <div
-          className="mb-space-3 rounded-radius-xs bg-red-950/50 border border-red-800 p-space-2 text-xs text-red-400"
+          className="mb-4 rounded-lg border border-[#fad2cf] bg-[#fce8e6] p-2.5 text-xs text-[#c5221f]"
           role="alert"
         >
           {error}
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="space-y-space-3">
+      <form onSubmit={handleSubmit} className="space-y-4">
         <div>
           <label
             htmlFor="username"
-            className="block text-xs font-medium text-text-tertiary mb-space-1"
+            className="mb-1.5 block text-xs font-medium text-[#5f6368]"
           >
             Username
           </label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-space-2 text-text-tertiary">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-[#9aa0a6]">
               <UserIcon size={16} />
             </span>
             <input
@@ -90,7 +90,7 @@ function LoginForm() {
               value={username}
               onChange={(e) => setUsername(e.target.value)}
               disabled={loading}
-              className="w-full rounded-radius-xs border border-text-secondary bg-text-secondary py-space-2 pl-space-5 pr-space-2 text-text-inverse placeholder-text-tertiary text-xs outline-none transition-all duration-instant focus:border-surface-raised focus:ring-1 focus:ring-surface-raised disabled:opacity-50"
+              className="w-full rounded-lg border border-[#dadce0] bg-white py-2.5 pl-10 pr-3 text-sm text-[#202124] placeholder-[#9aa0a6] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4] disabled:text-[#9aa0a6]"
               placeholder="Enter username"
               required
               autoComplete="username"
@@ -101,12 +101,12 @@ function LoginForm() {
         <div>
           <label
             htmlFor="password"
-            className="block text-xs font-medium text-text-tertiary mb-space-1"
+            className="mb-1.5 block text-xs font-medium text-[#5f6368]"
           >
             Password
           </label>
           <div className="relative">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-space-2 text-text-tertiary">
+            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-[#9aa0a6]">
               <Lock size={16} />
             </span>
             <input
@@ -115,7 +115,7 @@ function LoginForm() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               disabled={loading}
-              className="w-full rounded-radius-xs border border-text-secondary bg-text-secondary py-space-2 pl-space-5 pr-space-5 text-text-inverse placeholder-text-tertiary text-xs outline-none transition-all duration-instant focus:border-surface-raised focus:ring-1 focus:ring-surface-raised disabled:opacity-50"
+              className="w-full rounded-lg border border-[#dadce0] bg-white py-2.5 pl-10 pr-10 text-sm text-[#202124] placeholder-[#9aa0a6] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4] disabled:text-[#9aa0a6]"
               placeholder="Enter password"
               required
               autoComplete="current-password"
@@ -124,7 +124,7 @@ function LoginForm() {
               type="button"
               onClick={() => setShowPassword(!showPassword)}
               disabled={loading}
-              className="absolute inset-y-0 right-0 flex items-center pr-space-2 text-text-tertiary hover:text-text-inverse focus-visible:text-surface-raised outline-none"
+              className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#5f6368] outline-none hover:text-[#202124] focus-visible:text-[#1a73e8]"
             >
               {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
             </button>
@@ -134,11 +134,11 @@ function LoginForm() {
         <button
           type="submit"
           disabled={loading}
-          className="flex w-full items-center justify-center rounded-radius-xs bg-surface-raised py-space-2 px-space-3 text-xs font-semibold text-black transition-all duration-instant hover:opacity-90 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-white outline-none disabled:opacity-50"
+          className="flex w-full items-center justify-center rounded-full bg-[#1a73e8] py-2.5 px-4 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md active:scale-[0.98] active:bg-[#185abc] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/40 disabled:opacity-50"
         >
           {loading ? (
             <>
-              <Loader2 className="mr-space-1 animate-spin" size={16} /> Logging in...
+              <Loader2 className="mr-2 animate-spin" size={16} /> Logging in...
             </>
           ) : (
             'Sign In'
@@ -151,10 +151,10 @@ function LoginForm() {
 
 export default function LoginPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-text-primary px-space-3 font-sans">
+    <div className="flex min-h-screen items-center justify-center bg-[#f8f9fa] px-4 font-sans">
       <Suspense fallback={
-        <div className="w-full max-w-md rounded-radius-md border border-text-secondary bg-black p-space-6 flex items-center justify-center">
-          <Loader2 className="animate-spin text-surface-raised" size={24} />
+        <div className="w-full max-w-md rounded-2xl border border-[#e8eaed] bg-white p-8 flex items-center justify-center shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_2px_6px_2px_rgba(60,64,67,0.15)]">
+          <Loader2 className="animate-spin text-[#1a73e8]" size={24} />
         </div>
       }>
         <LoginForm />

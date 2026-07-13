@@ -132,25 +132,25 @@ export default function VideoDetails({
   };
 
   return (
-    <div className="space-y-space-4">
+    <div className="space-y-5">
       {/* Secure Video Player */}
       <CustomPlayer videoId={video.id} />
 
       {/* Video Info Section */}
-      <div className="bg-white rounded-radius-md border border-surface-strong p-space-4 space-y-space-3">
-        <div className="flex flex-wrap justify-between items-start gap-space-2">
-          <div className="space-y-1">
-            <span className="inline-block bg-[#141a20] text-white px-2 py-0.5 rounded text-[10px] uppercase font-semibold">
+      <div className="space-y-4 rounded-2xl bg-white p-5 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div className="space-y-1.5">
+            <span className="inline-block rounded-full bg-[#e8f0fe] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#1a73e8]">
               {video.grade.replace('GRADE_', 'Grade ')}
             </span>
-            <h1 className="text-xl font-bold tracking-tight leading-tight text-text-primary">
+            <h1 className="text-xl font-medium leading-tight tracking-tight text-[#202124]">
               {video.title}
             </h1>
           </div>
 
           <div className="flex items-center space-x-2">
             {/* View Counter */}
-            <span className="flex items-center space-x-1 text-xs text-text-tertiary px-space-2 py-space-1 bg-surface-muted rounded-radius-xs">
+            <span className="flex items-center space-x-1.5 rounded-full bg-[#f1f3f4] px-3 py-1.5 text-xs text-[#5f6368]">
               <Eye size={14} />
               <span>{video.viewsCount} views</span>
             </span>
@@ -158,10 +158,10 @@ export default function VideoDetails({
             {/* Like Button */}
             <button
               onClick={handleLikeToggle}
-              className={`flex items-center space-x-1.5 text-xs font-semibold px-space-3 py-space-1.5 rounded-radius-xs border transition-all duration-instant outline-none focus-visible:ring-2 focus-visible:ring-surface-raised ${
+              className={`flex items-center space-x-1.5 rounded-full border px-3.5 py-1.5 text-xs font-medium outline-none transition-all duration-150 focus-visible:ring-2 focus-visible:ring-[#1a73e8]/40 ${
                 hasLiked
-                  ? 'bg-red-50 border-red-200 text-red-600 hover:bg-red-100'
-                  : 'bg-white border-surface-strong text-text-primary hover:bg-surface-muted'
+                  ? 'border-[#fad2cf] bg-[#fce8e6] text-[#d93025] hover:bg-[#fadad7]'
+                  : 'border-[#dadce0] bg-white text-[#3c4043] hover:bg-[#f1f3f4]'
               }`}
               aria-label={hasLiked ? 'Unlike' : 'Like'}
             >
@@ -172,34 +172,34 @@ export default function VideoDetails({
         </div>
 
         {video.description && (
-          <p className="text-xs text-text-secondary leading-relaxed bg-surface-muted p-space-3 rounded-radius-xs border border-surface-strong/30">
+          <p className="rounded-xl border border-[#e8eaed] bg-[#f8f9fa] p-3.5 text-xs leading-relaxed text-[#3c4043]">
             {video.description}
           </p>
         )}
       </div>
 
       {/* Engagement / Comments Section */}
-      <div className="bg-white rounded-radius-md border border-surface-strong p-space-4 space-y-space-4">
-        <h2 className="text-md font-semibold text-text-primary flex items-center space-x-1">
-          <MessageSquare size={16} />
+      <div className="space-y-5 rounded-2xl bg-white p-5 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
+        <h2 className="flex items-center space-x-2 text-[15px] font-medium text-[#202124]">
+          <MessageSquare size={17} className="text-[#5f6368]" />
           <span>Comments ({optimisticComments.length})</span>
         </h2>
 
         {/* Comment Form */}
-        <form onSubmit={handleCommentSubmit} className="flex gap-space-2 items-start">
+        <form onSubmit={handleCommentSubmit} className="flex items-center gap-2.5">
           <input
             type="text"
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             placeholder="Write a comment..."
             disabled={commentLoading}
-            className="flex-1 rounded-radius-xs border border-surface-strong bg-white px-space-3 py-space-2 text-xs placeholder-text-tertiary outline-none transition-all duration-instant focus:border-surface-base focus:ring-1 focus:ring-surface-base disabled:opacity-50"
+            className="flex-1 rounded-full border border-[#dadce0] bg-white px-4 py-2.5 text-sm text-[#202124] placeholder-[#9aa0a6] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4] disabled:opacity-70"
             aria-label="Add comment input"
           />
           <button
             type="submit"
             disabled={!commentText.trim() || commentLoading}
-            className="bg-black hover:bg-surface-strong hover:text-black text-white p-space-2 rounded-radius-xs transition-all duration-instant focus-visible:ring-2 focus-visible:ring-black outline-none disabled:opacity-50"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1a73e8] text-white shadow-sm outline-none transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#1a73e8]/40 disabled:cursor-not-allowed disabled:bg-[#c4c7cc] disabled:shadow-none"
             aria-label="Submit comment"
           >
             <Send size={16} />
@@ -207,19 +207,23 @@ export default function VideoDetails({
         </form>
 
         {/* Comments Feed */}
-        <div className="space-y-space-3 divide-y divide-surface-muted">
+        <div className="divide-y divide-[#f1f3f4]">
           {optimisticComments.length === 0 ? (
-            <p className="text-xs text-text-tertiary py-space-2 text-center select-none">
+            <p className="select-none py-3 text-center text-xs text-[#5f6368]">
               No comments yet. Start the conversation!
             </p>
           ) : (
             optimisticComments.map((c) => (
-              <div key={c.id} className="pt-space-3 first:pt-0 space-y-1">
-                <div className="flex justify-between items-center text-[10px] text-text-tertiary">
-                  <span className="font-semibold text-text-secondary">{c.username}</span>
+              <div key={c.id} className="space-y-1 py-3.5 first:pt-0">
+                <div className="flex items-center gap-2 text-[10px] text-[#5f6368]">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#e8f0fe] text-[10px] font-medium text-[#1a73e8]">
+                    {c.username.charAt(0).toUpperCase()}
+                  </div>
+                  <span className="font-medium text-[#3c4043]">{c.username}</span>
+                  <span>·</span>
                   <span>{new Date(c.createdAt).toLocaleDateString()}</span>
                 </div>
-                <p className="text-xs text-text-primary leading-normal">{c.content}</p>
+                <p className="pl-8 text-xs leading-normal text-[#202124]">{c.content}</p>
               </div>
             ))
           )}
