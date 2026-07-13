@@ -24,7 +24,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
                 </span>
                 {user.role === 'ADMIN' && (
                   <Link
-                    href="/admin/videos"
+                    href="/admin"
                     className="text-surface-raised font-medium hover:underline focus-visible:ring-1 focus-visible:ring-surface-raised outline-none"
                   >
                     Admin Panel

@@ -5,31 +5,33 @@ import { verifyToken } from './lib/jwt';
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
-  // Define public paths that bypass authentication checks
-  const isPublicAsset =
+  // Bypass: static assets & Next.js internals
+  if (
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/api/auth/login') ||
-    pathname.startsWith('/favicon.ico');
-
-  if (isPublicAsset) {
+    pathname.startsWith('/favicon.ico') ||
+    pathname.startsWith('/public')
+  ) {
     return NextResponse.next();
   }
 
-  // Paths requiring NO active session (e.g., login page)
-  const isAuthPage = pathname === '/login';
+  // Bypass: the login API route itself
+  if (pathname === '/api/auth/login') {
+    return NextResponse.next();
+  }
 
+  const isLoginPage = pathname === '/login';
   const token = request.cookies.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
 
-  // If trying to access login page while already authenticated, redirect to home
-  if (isAuthPage) {
+  // ---- Authenticated users on login page → redirect to home ----
+  if (isLoginPage) {
     if (user) {
       return NextResponse.redirect(new URL('/', request.url));
     }
     return NextResponse.next();
   }
 
-  // If not authenticated, redirect to login (or return 401 for API)
+  // ---- Unauthenticated → redirect to login ----
   if (!user) {
     if (pathname.startsWith('/api/')) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -39,9 +41,10 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // Admin routing check
+  // ---- Admin-only routes ----
   if (pathname.startsWith('/admin')) {
     if (user.role !== 'ADMIN') {
+      // Non-admin visiting /admin → redirect to student feed
       return NextResponse.redirect(new URL('/', request.url));
     }
   }
@@ -51,13 +54,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for:
-     * - api/auth/login (handled in code explicitly or omitted)
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
-    '/((?!_next/static|_next/image|favicon.ico).*)',
+    '/((?!_next/static|_next/image|favicon.ico|.*\\.png$).*)',
   ],
 };
