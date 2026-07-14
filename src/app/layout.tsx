@@ -4,6 +4,9 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "Lernio - Tuition Video Platform",
   description: "Secure, closed-ecosystem educational video hosting for tuition classes.",
+  icons: {
+    icon: '/favicon.svg'
+  }
 };
 
 export default function RootLayout({
