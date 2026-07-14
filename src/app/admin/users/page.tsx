@@ -1,13 +1,203 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Plus, Trash, Key, Loader2, UserPlus, Eye, EyeOff } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import {
+  Plus,
+  Trash,
+  Key,
+  Loader2,
+  UserPlus,
+  Copy,
+  Check,
+  RefreshCw,
+  Search,
+  X,
+} from 'lucide-react';
 
 interface Student {
   id: string;
   username: string;
   createdAt: string;
 }
+
+interface ShareInfo {
+  username: string;
+  password: string;
+}
+
+// ---------- Helpers ----------
+
+/** Cryptographically-strong random index in [0, max). */
+function secureRandomInt(max: number): number {
+  const arr = new Uint32Array(1);
+  crypto.getRandomValues(arr);
+  return arr[0] % max;
+}
+
+/**
+ * Generates a random password containing uppercase, lowercase and numeric
+ * characters. Guarantees at least one of each class, then fills the rest
+ * and shuffles (Fisher-Yates) so the guaranteed characters aren't always
+ * in the same position.
+ */
+function generatePassword(length = 6): string {
+  const upper = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+  const lower = 'abcdefghijklmnopqrstuvwxyz';
+  const digits = '0123456789';
+  const all = upper + lower + digits;
+
+  const required = [
+    upper[secureRandomInt(upper.length)],
+    lower[secureRandomInt(lower.length)],
+    digits[secureRandomInt(digits.length)],
+  ];
+
+  const remaining = Math.max(length - required.length, 0);
+  const rest = Array.from({ length: remaining }, () => all[secureRandomInt(all.length)]);
+
+  const combined = [...required, ...rest];
+  for (let i = combined.length - 1; i > 0; i--) {
+    const j = secureRandomInt(i + 1);
+    [combined[i], combined[j]] = [combined[j], combined[i]];
+  }
+
+  return combined.slice(0, length).join('');
+}
+
+async function copyToClipboard(text: string): Promise<boolean> {
+  if (!text) return false;
+  try {
+    if (navigator.clipboard && window.isSecureContext) {
+      await navigator.clipboard.writeText(text);
+      return true;
+    }
+  } catch {
+    // fall through to legacy fallback below
+  }
+  try {
+    const textarea = document.createElement('textarea');
+    textarea.value = text;
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    document.execCommand('copy');
+    document.body.removeChild(textarea);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function buildShareMessage(username: string, password: string): string {
+  return `Hi, this is your Lernio logins\n\nUsername: ${username}\nPassword: ${password}\n\nIf not working please contact\n+94 70 700 8041`;
+}
+
+// ---------- Small reusable components ----------
+
+function CopyIconButton({
+  text,
+  label,
+  variant = 'ghost',
+}: {
+  text: string;
+  label?: string;
+  variant?: 'ghost' | 'solid';
+}) {
+  const [copied, setCopied] = useState(false);
+  const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    };
+  }, []);
+
+  const handleCopy = async () => {
+    const ok = await copyToClipboard(text);
+    if (!ok) return;
+    setCopied(true);
+    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    timeoutRef.current = setTimeout(() => setCopied(false), 1500);
+  };
+
+  const base =
+    'inline-flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40';
+  const styles =
+    variant === 'solid'
+      ? 'bg-[#1a73e8] text-white hover:bg-[#1765cc]'
+      : 'text-[#1a73e8] hover:bg-[#e8f0fe]';
+
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      disabled={!text}
+      className={`${base} ${styles}`}
+    >
+      {copied ? <Check size={13} /> : <Copy size={13} />}
+      {label && <span>{copied ? 'Copied' : label}</span>}
+    </button>
+  );
+}
+
+function ShareCredentialsCard({
+  info,
+  onDismiss,
+}: {
+  info: ShareInfo;
+  onDismiss: () => void;
+}) {
+  const message = buildShareMessage(info.username, info.password);
+
+  return (
+    <div className="mt-5 rounded-xl border border-[#e8eaed] bg-[#f8f9fa] p-4">
+      <div className="mb-3 flex items-center justify-between">
+        <span className="text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+          Ready to share
+        </span>
+        <button
+          type="button"
+          onClick={onDismiss}
+          className="rounded-full p-1 text-[#9aa0a6] transition-colors hover:bg-[#e8eaed] hover:text-[#202124]"
+          aria-label="Dismiss"
+        >
+          <X size={14} />
+        </button>
+      </div>
+
+      <div className="mb-2 flex items-center justify-between gap-2 rounded-lg border border-[#dadce0] bg-white px-3 py-2">
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-wide text-[#9aa0a6]">Username</div>
+          <div className="truncate text-sm font-medium text-[#202124]">{info.username}</div>
+        </div>
+        <CopyIconButton text={info.username} label="Copy" />
+      </div>
+
+      <div className="mb-3 flex items-center justify-between gap-2 rounded-lg border border-[#dadce0] bg-white px-3 py-2">
+        <div className="min-w-0">
+          <div className="text-[10px] uppercase tracking-wide text-[#9aa0a6]">Password</div>
+          <div className="truncate text-sm font-medium text-[#202124]">{info.password}</div>
+        </div>
+        <CopyIconButton text={info.password} label="Copy" />
+      </div>
+
+      <div className="relative">
+        <div className="absolute left-2 top-2 z-10">
+          <CopyIconButton text={message} label="Copy" variant="solid" />
+        </div>
+        <textarea
+          readOnly
+          value={message}
+          rows={6}
+          className="w-full resize-none rounded-lg border border-[#dadce0] bg-white px-3 pb-3 pt-11 text-[13px] leading-5 text-[#202124] outline-none"
+        />
+      </div>
+    </div>
+  );
+}
+
+// ---------- Main page ----------
 
 export default function UsersAdminPage() {
   const [students, setStudents] = useState<Student[]>([]);
@@ -16,14 +206,19 @@ export default function UsersAdminPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
-  // Form states
+  // Create-student form state
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
 
-  // Reset states
+  // Reset-password state
   const [resettingId, setResettingId] = useState<string | null>(null);
   const [resetPassword, setResetPassword] = useState('');
+
+  // Shareable credentials (populated after a successful create or reset)
+  const [shareInfo, setShareInfo] = useState<ShareInfo | null>(null);
+
+  // List search/filter
+  const [searchQuery, setSearchQuery] = useState('');
 
   const fetchStudents = async () => {
     setLoading(true);
@@ -48,7 +243,10 @@ export default function UsersAdminPage() {
 
   const handleCreateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newUsername.trim() || !newPassword.trim()) {
+    const username = newUsername.trim();
+    const password = newPassword.trim();
+
+    if (!username || !password) {
       setError('Username and password are required');
       return;
     }
@@ -61,12 +259,13 @@ export default function UsersAdminPage() {
       const res = await fetch('/api/users', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: newUsername.trim(), password: newPassword }),
+        body: JSON.stringify({ username, password }),
       });
       const data = await res.json();
 
       if (res.ok) {
-        setSuccess(`Student account '${newUsername}' created successfully.`);
+        setSuccess(`Student account '${username}' created successfully.`);
+        setShareInfo({ username, password });
         setNewUsername('');
         setNewPassword('');
         fetchStudents();
@@ -80,9 +279,10 @@ export default function UsersAdminPage() {
     }
   };
 
-  const handleResetPassword = async (studentId: string) => {
-    if (!resetPassword.trim()) {
-      alert('Please enter a new password');
+  const handleResetPassword = async (studentId: string, username: string) => {
+    const password = resetPassword.trim();
+    if (!password) {
+      alert('Please enter or generate a new password');
       return;
     }
 
@@ -90,11 +290,12 @@ export default function UsersAdminPage() {
       const res = await fetch(`/api/users/${studentId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ password: resetPassword }),
+        body: JSON.stringify({ password }),
       });
 
       if (res.ok) {
-        alert('Password updated successfully');
+        setSuccess(`Password updated for '${username}'.`);
+        setShareInfo({ username, password });
         setResetPassword('');
         setResettingId(null);
       } else {
@@ -124,6 +325,10 @@ export default function UsersAdminPage() {
       alert('Connection error deleting student');
     }
   };
+
+  const filteredStudents = students.filter((s) =>
+    s.username.toLowerCase().includes(searchQuery.trim().toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
@@ -163,9 +368,12 @@ export default function UsersAdminPage() {
 
             <form onSubmit={handleCreateStudent} className="space-y-4">
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]" htmlFor="username">
-                  Username
-                </label>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label className="block text-xs font-medium text-[#5f6368]" htmlFor="username">
+                    Username
+                  </label>
+                  <CopyIconButton text={newUsername} label="Copy" />
+                </div>
                 <input
                   id="username"
                   type="text"
@@ -179,28 +387,37 @@ export default function UsersAdminPage() {
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]" htmlFor="password">
-                  Password
-                </label>
-                <div className="relative">
-                  <input
-                    id="password"
-                    type={showPassword ? 'text' : 'password'}
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    disabled={creating}
-                    placeholder="Initial password"
-                    className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 pr-10 text-sm text-[#202124] outline-none transition-all duration-150 placeholder:text-[#9aa0a6] hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4] disabled:text-[#9aa0a6]"
-                    required
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute inset-y-0 right-0 flex w-10 items-center justify-center text-[#5f6368] transition-colors hover:text-[#202124]"
-                  >
-                    {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                  </button>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label className="block text-xs font-medium text-[#5f6368]" htmlFor="password">
+                    Password
+                  </label>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => setNewPassword(generatePassword(8))}
+                      disabled={creating}
+                      title="Auto-generate password"
+                      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-[#1a73e8] transition-colors hover:bg-[#e8f0fe] disabled:cursor-not-allowed disabled:opacity-40"
+                    >
+                      <RefreshCw size={13} />
+                      <span>Generate</span>
+                    </button>
+                    <CopyIconButton text={newPassword} label="Copy" />
+                  </div>
                 </div>
+                <input
+                  id="password"
+                  type="text"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  disabled={creating}
+                  placeholder="Initial password"
+                  className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 placeholder:text-[#9aa0a6] hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4] disabled:text-[#9aa0a6]"
+                  required
+                />
+                <p className="mt-1 text-[11px] text-[#9aa0a6]">
+                  6 characters — uppercase, lowercase & numbers. Auto-generate or type your own.
+                </p>
               </div>
 
               <button
@@ -218,19 +435,49 @@ export default function UsersAdminPage() {
                 )}
               </button>
             </form>
+
+            {shareInfo && (
+              <ShareCredentialsCard info={shareInfo} onDismiss={() => setShareInfo(null)} />
+            )}
           </div>
 
           {/* Right panel: Students list */}
           <div className="rounded-2xl bg-white p-6 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] lg:col-span-2">
-            <div className="mb-5 flex items-center justify-between">
-              <h2 className="text-[15px] font-medium text-[#202124]">
-                Existing Student Accounts
-              </h2>
-              {!loading && students.length > 0 && (
-                <span className="rounded-full bg-[#f1f3f4] px-2.5 py-1 text-xs font-medium text-[#5f6368]">
-                  {students.length} total
-                </span>
-              )}
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-2.5">
+                <h2 className="text-[15px] font-medium text-[#202124]">
+                  Existing Student Accounts
+                </h2>
+                {!loading && students.length > 0 && (
+                  <span className="rounded-full bg-[#f1f3f4] px-2.5 py-1 text-xs font-medium text-[#5f6368]">
+                    {students.length} total
+                  </span>
+                )}
+              </div>
+
+              <div className="relative w-full sm:w-64">
+                <Search
+                  size={15}
+                  className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa0a6]"
+                />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search students..."
+                  className="w-full rounded-full border border-[#dadce0] bg-white py-2 pl-9 pr-8 text-sm text-[#202124] outline-none transition-all duration-150 placeholder:text-[#9aa0a6] hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery('')}
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9aa0a6] hover:text-[#202124]"
+                    aria-label="Clear search"
+                  >
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
             </div>
 
             {loading ? (
@@ -243,6 +490,15 @@ export default function UsersAdminPage() {
                   <UserPlus size={20} className="text-[#9aa0a6]" />
                 </div>
                 <p className="text-sm text-[#5f6368]">No student accounts registered yet.</p>
+              </div>
+            ) : filteredStudents.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-14 text-center">
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f1f3f4]">
+                  <Search size={18} className="text-[#9aa0a6]" />
+                </div>
+                <p className="text-sm text-[#5f6368]">
+                  No students match &ldquo;{searchQuery}&rdquo;.
+                </p>
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -261,7 +517,7 @@ export default function UsersAdminPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-[#f1f3f4]">
-                    {students.map((student) => (
+                    {filteredStudents.map((student) => (
                       <tr
                         key={student.id}
                         className="transition-colors duration-100 hover:bg-[#f8f9fa]"
@@ -287,16 +543,26 @@ export default function UsersAdminPage() {
                                 placeholder="New password"
                                 value={resetPassword}
                                 onChange={(e) => setResetPassword(e.target.value)}
-                                className="rounded-md border border-[#dadce0] px-2.5 py-1.5 text-xs outline-none transition-colors focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20"
+                                className="w-32 rounded-md border border-[#dadce0] px-2.5 py-1.5 text-xs outline-none transition-colors focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20"
                               />
                               <button
-                                onClick={() => handleResetPassword(student.id)}
+                                onClick={() => setResetPassword(generatePassword(8))}
+                                title="Auto-generate password"
+                                className="inline-flex items-center rounded-full p-1.5 text-[#1a73e8] transition-colors hover:bg-[#e8f0fe]"
+                              >
+                                <RefreshCw size={13} />
+                              </button>
+                              <button
+                                onClick={() => handleResetPassword(student.id, student.username)}
                                 className="rounded-full bg-[#1a73e8] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#1765cc]"
                               >
                                 Save
                               </button>
                               <button
-                                onClick={() => setResettingId(null)}
+                                onClick={() => {
+                                  setResettingId(null);
+                                  setResetPassword('');
+                                }}
                                 className="rounded-full px-2.5 py-1.5 text-xs font-medium text-[#5f6368] transition-colors hover:bg-[#f1f3f4]"
                               >
                                 Cancel
