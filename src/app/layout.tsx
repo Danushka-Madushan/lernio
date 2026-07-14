@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Lernio - Tuition Video Platform",
+  title: "Lernio - EWisdom Institute",
   description: "Secure, closed-ecosystem educational video hosting for tuition classes.",
   icons: {
     icon: '/favicon.svg'
