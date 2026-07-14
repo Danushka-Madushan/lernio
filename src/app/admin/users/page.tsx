@@ -409,7 +409,7 @@ function UsernameInput({
   };
 
   return (
-    <div className="flex items-center w-80 gap-1.5">
+    <div className="flex items-center w-full gap-1.5">
       {/* Long prefix bar */}
       <input
         type="text"
@@ -501,6 +501,28 @@ export default function UsersAdminPage() {
   };
 
   useEffect(() => { fetchStudents(); }, []);
+
+  /* 1. Auto-dismiss success messages after 5 seconds */
+  useEffect(() => {
+    if (success) {
+      const timer = setTimeout(() => {
+        setSuccess('');
+      }, 5000); // 5000ms = 5 seconds
+
+      return () => clearTimeout(timer); // Clean up if state changes before 5s
+    }
+  }, [success]);
+
+  /* 2. Auto-dismiss error messages after 5 seconds */
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(() => {
+        setError('');
+      }, 5000);
+
+      return () => clearTimeout(timer);
+    }
+  }, [error]);
 
   const handleCreateStudent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -635,7 +657,7 @@ export default function UsersAdminPage() {
       )}
 
       <div className="min-h-100vh bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-7xl">
           <div className="mb-6">
             <h1 className="text-[22px] font-medium tracking-tight text-[#202124]">
               Student Accounts
@@ -645,9 +667,9 @@ export default function UsersAdminPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-6">
             {/* ── Left panel: Create ─────────────────────────────────────── */}
-            <div className="h-fit rounded-2xl w-fit bg-white p-6 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] lg:col-span-1">
+            <div className="h-fit w-full min-w-0 rounded-2xl bg-white p-6 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] lg:col-span-2">
               <div className="mb-5 flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8f0fe]">
                   <UserPlus size={17} className="text-[#1a73e8]" />
@@ -738,7 +760,7 @@ export default function UsersAdminPage() {
             </div>
 
             {/* ── Right panel: Students list ─────────────────────────────── */}
-            <div className="rounded-2xl bg-white p-6 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] lg:col-span-2">
+            <div className="rounded-2xl w-full min-w-0 bg-white p-6 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] lg:col-span-4">
               <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-center gap-2.5">
                   <h2 className="text-[15px] font-medium text-[#202124]">
