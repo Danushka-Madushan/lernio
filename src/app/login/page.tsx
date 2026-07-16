@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, useRef, FormEvent, ChangeEvent, KeyboardEvent, ClipboardEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { BrushCleaning } from 'lucide-react';
 import { Button } from '@heroui/react/button';
@@ -8,27 +8,92 @@ import { Spinner } from '@heroui/react/spinner';
 import { Description, FieldError, Form, Input, Label, TextField } from '@heroui/react';
 import Image from 'next/image';
 
+const DIGIT_COUNT = 4;
+
 const LoginPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams?.get('callbackUrl') || '/';
 
   const [username, setUsername] = useState('');
+  const [digits, setDigits] = useState<string[]>(Array(DIGIT_COUNT).fill(''));
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  const digitRefs = useRef<Array<HTMLInputElement | null>>([]);
+
   // Clear errors when typing
   useEffect(() => {
     if (error) setError('');
-  }, [username, password]);
+     
+  }, [username, password, digits]);
+
+  const handleDigitChange = (index: number) => (e: ChangeEvent<HTMLInputElement>) => {
+    // Keep only the last typed digit; strips anything non-numeric
+    const value = e.target.value.replace(/\D/g, '').slice(-1);
+
+    setDigits((prev) => {
+      const next = [...prev];
+      next[index] = value;
+      return next;
+    });
+
+    if (value && index < DIGIT_COUNT - 1) {
+      digitRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleDigitKeyDown = (index: number) => (e: KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === 'Backspace') {
+      if (!digits[index] && index > 0) {
+        digitRefs.current[index - 1]?.focus();
+      }
+      return;
+    }
+    if (e.key === 'ArrowLeft' && index > 0) {
+      digitRefs.current[index - 1]?.focus();
+    } else if (e.key === 'ArrowRight' && index < DIGIT_COUNT - 1) {
+      digitRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleDigitPaste = (e: ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, DIGIT_COUNT);
+    if (!pasted) return;
+
+    const next = Array(DIGIT_COUNT).fill('');
+    for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
+    setDigits(next);
+
+    const focusIndex = Math.min(pasted.length, DIGIT_COUNT - 1);
+    digitRefs.current[focusIndex]?.focus();
+  };
+
+  const resetForm = () => {
+    setUsername('');
+    setPassword('');
+    setDigits(Array(DIGIT_COUNT).fill(''));
+    digitRefs.current[0]?.focus();
+  };
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!username.trim() || !password.trim()) {
+
+    const trimmedUsername = username.trim();
+    const studentId = digits.join('');
+
+    if (!trimmedUsername || !password.trim()) {
       setError('Please fill in all fields.');
       return;
     }
+    if (studentId.length !== DIGIT_COUNT) {
+      setError('Please enter all 4 digits of your student ID.');
+      return;
+    }
+
+    const fullUsername = `${trimmedUsername}-${studentId}`;
 
     setLoading(true);
     setError('');
@@ -37,7 +102,7 @@ const LoginPage = () => {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.trim(), password }),
+        body: JSON.stringify({ username: fullUsername, password }),
       });
 
       const data = await res.json();
@@ -86,7 +151,9 @@ const LoginPage = () => {
           </div>
         )}
 
-        <Form className="flex w-96 flex-col gap-4" onSubmit={onSubmit}>
+        {/* autoComplete="off" on the form itself is the first line of defense against
+            browsers/managers trying to be "helpful" with grouped fields */}
+        <Form className="flex w-96 flex-col gap-4" onSubmit={onSubmit} autoComplete="off">
           <TextField
             isDisabled={loading}
             isRequired
@@ -95,92 +162,100 @@ const LoginPage = () => {
             fullWidth
             validate={(value) => {
               if (value.length < 5) {
-                return "username must be at least 5 characters long";
+                return 'username must be at least 5 characters long';
               }
               return null;
             }}
           >
             <Label>Username</Label>
-            <div className='flex gap-2'>
+            {/* Username input and the 4 ID digits share one visual row with a hyphen between
+                them, so it reads as a single "username-XXXX" field instead of two separate
+                inputs. The digit boxes are still plain <input>s outside the TextField's
+                field/name context — that separation is what keeps browser autofill from
+                grouping and duplicating values across all 5 boxes; only the layout is merged. */}
+            <div className="flex items-center gap-1.5">
               <Input
-                autoComplete='off'
-                aria-autocomplete='none'
+                autoComplete="off"
+                aria-autocomplete="none"
+                data-1p-ignore
+                data-lpignore="true"
+                data-bwignore
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
-                className="text-lg border border-slate-300 shadow-none" placeholder="madushan" />
-              <div className='flex gap-2 '>
-                <Input
-                  aria-label="id-digit-1"
-                  autoComplete='off'
-                  aria-autocomplete='none'
-                  className="text-lg border border-slate-300 w-12 text-center shadow-none" placeholder="#" />
-                <Input
-                  aria-label="id-digit-2"
-                  autoComplete='off'
-                  aria-autocomplete='none'
-                  className="text-lg border border-slate-300 w-12 text-center shadow-none" placeholder="#" />
-                <Input
-                  aria-label="id-digit-3"
-                  autoComplete='off'
-                  aria-autocomplete='none'
-                  className="text-lg border border-slate-300 w-12 text-center shadow-none" placeholder="#" />
-                <Input
-                  aria-label="id-digit-4"
-                  autoComplete='off'
-                  aria-autocomplete='none'
-                  className="text-lg border border-slate-300 w-12 text-center shadow-none" placeholder="#" />
+                className="min-w-0 flex-1 text-lg border border-slate-300 shadow-none"
+                placeholder="madushan"
+              />
+              <span className="select-none text-lg font-medium text-slate-400">-</span>
+              <div className="flex shrink-0 gap-1">
+                {digits.map((digit, index) => (
+                  <input
+                    key={index}
+                    ref={(el) => {
+                      digitRefs.current[index] = el;
+                    }}
+                    name={`student-id-segment-${index}`}
+                    aria-label={`student id digit ${index + 1}`}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={1}
+                    autoComplete="off"
+                    aria-autocomplete="none"
+                    data-1p-ignore
+                    data-lpignore="true"
+                    data-bwignore
+                    data-form-type="other"
+                    disabled={loading}
+                    value={digit}
+                    onChange={handleDigitChange(index)}
+                    onKeyDown={handleDigitKeyDown(index)}
+                    onPaste={handleDigitPaste}
+                    className="h-11 w-10 shrink-0 rounded-lg border border-slate-300 text-center text-lg shadow-none outline-none focus:border-slate-500"
+                    placeholder="#"
+                  />
+                ))}
               </div>
             </div>
-            <Description>last 4 digits represents your student id</Description>
+            <Description>last 4 digits represent your student ID</Description>
             <FieldError />
           </TextField>
 
-          <TextField
-            isDisabled={loading}
-            isRequired
-            name="ewiz-password"
-          >
+          <TextField isDisabled={loading} isRequired name="ewiz-password">
             <Label>Password</Label>
             <Input
-              autoComplete='off'
-              aria-autocomplete='none'
+              autoComplete="off"
+              aria-autocomplete="none"
+              data-1p-ignore
+              data-lpignore="true"
               fullWidth
-              type='password'
+              type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="text-lg border border-slate-300 shadow-none" placeholder="••••••••" />
+              className="text-lg border border-slate-300 shadow-none"
+              placeholder="••••••••"
+            />
             <FieldError />
           </TextField>
 
           <div className="flex items-center justify-between gap-2">
-            <Button
-              isDisabled={loading}
-              isPending={loading}
-              fullWidth
-              type="submit"
-              size='lg'
-            >
+            <Button isDisabled={loading} isPending={loading} fullWidth type="submit" size="lg">
               {({ isPending }) => (
                 <>
                   {isPending ? <Spinner color="current" size="sm" /> : null}
-                  {isPending ? "Logging in..." : "Log in"}
+                  {isPending ? 'Logging in...' : 'Log in'}
                 </>
               )}
             </Button>
-            <div className='w-fit'>
-              <Button onPress={() => {
-                setUsername("")
-                setPassword("")
-              }} isIconOnly type="reset" variant="danger">
+            <div className="w-fit">
+              <Button onPress={resetForm} isIconOnly type="reset" variant="danger">
                 <BrushCleaning />
               </Button>
             </div>
           </div>
         </Form>
       </div>
-
     </div>
   );
-}
+};
 
 export default LoginPage;
