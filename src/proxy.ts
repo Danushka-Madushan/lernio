@@ -8,7 +8,8 @@ export async function proxy(request: NextRequest) {
   // Bypass: static assets & Next.js internals
   if (
     pathname.startsWith('/_next') ||
-    pathname.startsWith('/favicon.svg') ||
+    pathname.startsWith('/icon.svg') ||
+    pathname.startsWith('/auth-back.jpg') ||
     pathname.startsWith('/public')
   ) {
     return NextResponse.next();
@@ -54,6 +55,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|favicon.svg|.*\\.png$).*)',
+    '/((?!_next/static|_next/image|icon.svg|.*\\.png$).*)',
   ],
 };
