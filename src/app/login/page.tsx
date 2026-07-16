@@ -1,12 +1,13 @@
 'use client';
 
-import { useState, useEffect, useRef, FormEvent, ChangeEvent, KeyboardEvent, ClipboardEvent } from 'react';
+import { useState, useCallback, useRef, useMemo, FormEvent, ChangeEvent, KeyboardEvent, ClipboardEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { BrushCleaning, GraduationCap, ShieldCheck } from 'lucide-react';
 import { Button } from '@heroui/react/button';
 import { Spinner } from '@heroui/react/spinner';
-import { Description, FieldError, Form, Input, Label, TextField, Tabs, Key } from '@heroui/react';
+import { Form, Tabs, Key, toast } from '@heroui/react';
 import Image from 'next/image';
+import { CredentialFields } from '@/components/CredentialFields';
 
 const DIGIT_COUNT = 4;
 
@@ -20,51 +21,66 @@ const LoginPage = () => {
   const [digits, setDigits] = useState<string[]>(Array(DIGIT_COUNT).fill(''));
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
   const digitRefs = useRef<Array<HTMLInputElement | null>>([]);
 
-  // Clear errors when typing
-  useEffect(() => {
-    if (error) setError('');
+  const resetForm = useCallback(() => {
+    setUsername('');
+    setPassword('');
+    setDigits(Array(DIGIT_COUNT).fill(''));
+  }, []);
 
-  }, [username, password, digits]);
+  const handleSelectionChange = useCallback(
+    (key: Key) => {
+      setActiveKey(key);
+      resetForm();
+    },
+    [resetForm],
+  );
 
-  const handleSelectionChange = (key: Key) => {
-    setActiveKey(key);
-    resetForm();
-  };
+  const setDigitRef = useCallback(
+    (index: number) => (el: HTMLInputElement | null) => {
+      digitRefs.current[index] = el;
+    },
+    [],
+  );
 
-  const handleDigitChange = (index: number) => (e: ChangeEvent<HTMLInputElement>) => {
-    // Keep only the last typed digit; strips anything non-numeric
-    const value = e.target.value.replace(/\D/g, '').slice(-1);
+  const handleDigitChange = useCallback(
+    (index: number) => (e: ChangeEvent<HTMLInputElement>) => {
+      // Keep only the last typed digit; strips anything non-numeric
+      const value = e.target.value.replace(/\D/g, '').slice(-1);
 
-    setDigits((prev) => {
-      const next = [...prev];
-      next[index] = value;
-      return next;
-    });
+      setDigits((prev) => {
+        const next = [...prev];
+        next[index] = value;
+        return next;
+      });
 
-    if (value && index < DIGIT_COUNT - 1) {
-      digitRefs.current[index + 1]?.focus();
-    }
-  };
-
-  const handleDigitKeyDown = (index: number) => (e: KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === 'Backspace') {
-      if (!digits[index] && index > 0) {
-        digitRefs.current[index - 1]?.focus();
+      if (value && index < DIGIT_COUNT - 1) {
+        digitRefs.current[index + 1]?.focus();
       }
-      return;
-    }
-    if (e.key === 'ArrowLeft' && index > 0) {
-      digitRefs.current[index - 1]?.focus();
-    } else if (e.key === 'ArrowRight' && index < DIGIT_COUNT - 1) {
-      digitRefs.current[index + 1]?.focus();
-    }
-  };
+    },
+    [],
+  );
 
-  const handleDigitPaste = (e: ClipboardEvent<HTMLInputElement>) => {
+  const handleDigitKeyDown = useCallback(
+    (index: number) => (e: KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Backspace') {
+        if (!digits[index] && index > 0) {
+          digitRefs.current[index - 1]?.focus();
+        }
+        return;
+      }
+      if (e.key === 'ArrowLeft' && index > 0) {
+        digitRefs.current[index - 1]?.focus();
+      } else if (e.key === 'ArrowRight' && index < DIGIT_COUNT - 1) {
+        digitRefs.current[index + 1]?.focus();
+      }
+    },
+    [digits],
+  );
+
+  const handleDigitPaste = useCallback((e: ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
     const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, DIGIT_COUNT);
     if (!pasted) return;
@@ -75,55 +91,71 @@ const LoginPage = () => {
 
     const focusIndex = Math.min(pasted.length, DIGIT_COUNT - 1);
     digitRefs.current[focusIndex]?.focus();
-  };
+  }, []);
 
-  const resetForm = () => {
-    setUsername('');
-    setPassword('');
-    setDigits(Array(DIGIT_COUNT).fill(''));
-  };
+  const digitProps = useMemo(
+    () => ({
+      digits,
+      onChange: handleDigitChange,
+      onKeyDown: handleDigitKeyDown,
+      onPaste: handleDigitPaste,
+      setRef: setDigitRef,
+    }),
+    [digits, handleDigitChange, handleDigitKeyDown, handleDigitPaste, setDigitRef],
+  );
 
-  const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const onSubmit = useCallback(
+    async (e: FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
 
-    const trimmedUsername = username.trim();
-    const studentId = digits.join('');
+      const trimmedUsername = username.trim();
+      const studentId = digits.join('');
 
-    if (!trimmedUsername || !password.trim()) {
-      setError('Please fill in all fields.');
-      return;
-    }
-    if (activeKey === 'student' && studentId.length !== DIGIT_COUNT) {
-      setError('Please enter all 4 digits of your student ID.');
-      return;
-    }
-
-    const fullUsername = activeKey === 'student' ? `${trimmedUsername}-${studentId}` : trimmedUsername;
-
-    setLoading(true);
-    setError('');
-
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: fullUsername, password }),
-      });
-
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Invalid credentials');
+      if (!trimmedUsername || !password.trim()) {
+        toast.danger('Please fill in all fields.');
+        return;
+      }
+      if (activeKey === 'student' && studentId.length !== DIGIT_COUNT) {
+        toast.danger('Please enter all 4 digits of your student ID.');
+        return;
       }
 
-      router.push(callbackUrl);
-      router.refresh();
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during login.');
-    } finally {
-      setLoading(false);
-    }
-  };
+      const fullUsername = activeKey === 'student' ? `${trimmedUsername}-${studentId}` : trimmedUsername;
+
+      setLoading(true);
+
+      const loadingId = toast('Logging in...', {
+        isLoading: true,
+        timeout: 0,
+      });
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: fullUsername, password }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Invalid credentials');
+        }
+
+        toast.close(loadingId);
+        toast.success('Logged in successfully');
+
+        router.push(callbackUrl);
+        router.refresh();
+      } catch (err: any) {
+        toast.close(loadingId);
+        toast.danger(err.message || 'An error occurred during login.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [activeKey, callbackUrl, digits, password, router, username],
+  );
 
   return (
     <div className="flex min-h-dvh items-center justify-center bg-[#f8f9fa] px-4 py-6 font-sans">
@@ -143,21 +175,12 @@ const LoginPage = () => {
             className="mx-auto mb-2 select-none"
           />
           <h1 className="text-2xl font-medium tracking-tight text-slate-600 select-none sm:text-3xl">
-            Welcome back!
+            Hi Lernio!
           </h1>
         </div>
 
-        {error && (
-          <div
-            className="mb-4 rounded-lg border border-[#fad2cf] bg-[#fce8e6] p-2.5 text-xs text-[#c5221f]"
-            role="alert"
-          >
-            {error}
-          </div>
-        )}
-
         <Tabs onSelectionChange={handleSelectionChange} defaultSelectedKey="student" orientation="horizontal" variant="primary">
-          <Tabs.ListContainer className='w-fit mx-auto'>
+          <Tabs.ListContainer className="w-fit mx-auto">
             <Tabs.List aria-label="sections">
               <Tabs.Tab id="student">
                 <GraduationCap className={activeKey === 'student' ? 'text-blue-500' : 'text-slate-500'} size={20} />
@@ -174,142 +197,27 @@ const LoginPage = () => {
             browsers/managers trying to be "helpful" with grouped fields */}
           <Form className="flex w-full flex-col gap-2" onSubmit={onSubmit} autoComplete="off">
             <Tabs.Panel id="student">
-              <div className='flex w-full flex-col gap-2'>
-                <TextField
-                  isDisabled={loading}
-                  isRequired
-                  name="ewiz-username"
-                  type="text"
-                  fullWidth
-                  validate={(value) => {
-                    if (value.length < 5) {
-                      return 'username must be at least 5 characters long';
-                    }
-                    return null;
-                  }}
-                >
-                  <Label>Username</Label>
-                  {/* Username input and the 4 ID digits share one visual row with a hyphen between
-                them, so it reads as a single "username-XXXX" field instead of two separate
-                inputs. The digit boxes are still plain <input>s outside the TextField's
-                field/name context — that separation is what keeps browser autofill from
-                grouping and duplicating values across all 5 boxes; only the layout is merged. */}
-                  <div className="flex items-center gap-1 sm:gap-1.5">
-                    <Input
-                      autoComplete="off"
-                      aria-autocomplete="none"
-                      data-1p-ignore
-                      data-lpignore="true"
-                      data-bwignore
-                      value={username}
-                      onChange={(event) => setUsername(event.target.value)}
-                      className="min-w-0 flex-1 text-base border border-slate-300 shadow-none sm:text-lg"
-                      placeholder="madushan"
-                    />
-                    <span className="select-none text-base font-medium text-slate-400 sm:text-lg">-</span>
-                    <div className="flex shrink-0 gap-1">
-                      {digits.map((digit, index) => (
-                        <input
-                          key={index}
-                          ref={(el) => {
-                            digitRefs.current[index] = el;
-                          }}
-                          name={`student-id-segment-${index}`}
-                          aria-label={`student id digit ${index + 1}`}
-                          type="text"
-                          inputMode="numeric"
-                          pattern="[0-9]*"
-                          maxLength={1}
-                          autoComplete="off"
-                          aria-autocomplete="none"
-                          data-1p-ignore
-                          data-lpignore="true"
-                          data-bwignore
-                          data-form-type="other"
-                          disabled={loading}
-                          value={digit}
-                          onChange={handleDigitChange(index)}
-                          onKeyDown={handleDigitKeyDown(index)}
-                          onPaste={handleDigitPaste}
-                          className="h-10 w-9 shrink-0 rounded-lg border border-slate-300 text-center text-base shadow-none outline-none focus:border-slate-500 sm:h-11 sm:w-10 sm:text-lg"
-                          placeholder="#"
-                        />
-                      ))}
-                    </div>
-                  </div>
-                  <Description>Last 4 digits represent your student ID</Description>
-                  <FieldError />
-                </TextField>
-
-                <TextField isDisabled={loading} isRequired name="ewiz-password">
-                  <Label>Password</Label>
-                  <Input
-                    autoComplete="off"
-                    aria-autocomplete="none"
-                    data-1p-ignore
-                    data-lpignore="true"
-                    fullWidth
-                    type="password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    className="text-base border border-slate-300 shadow-none sm:text-lg"
-                    placeholder="••••••••"
-                  />
-                  <FieldError />
-                </TextField>
-              </div>
+              <CredentialFields
+                variant="student"
+                loading={loading}
+                username={username}
+                password={password}
+                onUsernameChange={setUsername}
+                onPasswordChange={setPassword}
+                digitProps={digitProps}
+              />
             </Tabs.Panel>
 
             <Tabs.Panel id="staff">
-              <div className='flex w-full flex-col gap-2'>
-                <TextField
-                  isDisabled={loading}
-                  isRequired
-                  name="ewiz-username"
-                  type="text"
-                  fullWidth
-                  validate={(value) => {
-                    if (value.length < 5) {
-                      return 'username must be at least 5 characters long';
-                    }
-                    return null;
-                  }}
-                >
-                  <Label>Username</Label>
-                  <Input
-                    autoComplete="off"
-                    aria-autocomplete="none"
-                    data-1p-ignore
-                    data-lpignore="true"
-                    data-bwignore
-                    value={username}
-                    onChange={(event) => setUsername(event.target.value)}
-                    className="min-w-0 flex-1 text-base border border-slate-300 shadow-none sm:text-lg"
-                    placeholder="Administrator"
-                  />
-                  <Description>You are accessing the system</Description>
-                  <FieldError />
-                </TextField>
-
-                <TextField isDisabled={loading} isRequired name="ewiz-password">
-                  <Label>Password</Label>
-                  <Input
-                    autoComplete="off"
-                    aria-autocomplete="none"
-                    data-1p-ignore
-                    data-lpignore="true"
-                    fullWidth
-                    type="password"
-                    value={password}
-                    onChange={(event) => setPassword(event.target.value)}
-                    className="text-base border border-slate-300 shadow-none sm:text-lg"
-                    placeholder="••••••••"
-                  />
-                  <FieldError />
-                </TextField>
-              </div>
+              <CredentialFields
+                variant="staff"
+                loading={loading}
+                username={username}
+                password={password}
+                onUsernameChange={setUsername}
+                onPasswordChange={setPassword}
+              />
             </Tabs.Panel>
-
 
             <div className="flex items-center justify-between gap-2">
               <Button isDisabled={loading} isPending={loading} fullWidth type="submit" size="lg">

@@ -416,7 +416,7 @@ function UsernameInput({
         value={prefix}
         onChange={(e) => onPrefixChange(e.target.value.replace(/[\s-]/g, ''))}
         disabled={disabled}
-        placeholder="e.g. madushan"
+        placeholder="e.g. kamal"
         className={`min-w-0 flex-1 rounded-lg px-3.5 py-2.5 ${fieldBase}`}
         required
       />
