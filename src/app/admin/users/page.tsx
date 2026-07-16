@@ -292,7 +292,7 @@ function ShareResetModal({
               <p className="text-[13px] font-semibold text-[#92400e]">Password will be reset</p>
               <p className="mt-0.5 text-[12px] leading-[1.55] text-[#78350f]">
                 This will immediately reset{' '}
-                <span className="font-semibold">{target.username}</span>'s password to the value
+                <span className="font-semibold">{target.username}</span>&apos;s password to the value
                 below. Their current password will stop working.
               </p>
             </div>

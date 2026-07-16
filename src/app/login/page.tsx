@@ -75,7 +75,6 @@ const LoginPage = () => {
     setUsername('');
     setPassword('');
     setDigits(Array(DIGIT_COUNT).fill(''));
-    digitRefs.current[0]?.focus();
   };
 
   const onSubmit = async (e: FormEvent<HTMLFormElement>) => {
@@ -121,14 +120,14 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f8f9fa] px-4 font-sans">
+    <div className="flex min-h-dvh items-center justify-center bg-[#f8f9fa] px-4 py-6 font-sans">
       <Image
         alt="Background"
         src="/auth-back.jpg"
         fill
         className="absolute top-0 left-0 select-none object-cover"
       />
-      <div className="w-full z-10 max-w-md rounded-2xl border border-[#e8eaed] bg-white p-8 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_2px_6px_2px_rgba(60,64,67,0.15)] transition-all duration-150">
+      <div className="w-full z-10 max-w-md rounded-2xl border border-[#e8eaed] bg-white p-5 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_2px_6px_2px_rgba(60,64,67,0.15)] transition-all duration-150 sm:p-8">
         <div className="mb-6 text-center">
           <Image
             alt="Logo"
@@ -137,7 +136,7 @@ const LoginPage = () => {
             height={56}
             className="mx-auto mb-2 select-none"
           />
-          <h1 className="text-3xl font-medium tracking-tight text-slate-600 select-none">
+          <h1 className="text-2xl font-medium tracking-tight text-slate-600 select-none sm:text-3xl">
             Welcome back!
           </h1>
         </div>
@@ -153,7 +152,7 @@ const LoginPage = () => {
 
         {/* autoComplete="off" on the form itself is the first line of defense against
             browsers/managers trying to be "helpful" with grouped fields */}
-        <Form className="flex w-96 flex-col gap-4" onSubmit={onSubmit} autoComplete="off">
+        <Form className="flex w-full flex-col gap-4" onSubmit={onSubmit} autoComplete="off">
           <TextField
             isDisabled={loading}
             isRequired
@@ -173,7 +172,7 @@ const LoginPage = () => {
                 inputs. The digit boxes are still plain <input>s outside the TextField's
                 field/name context — that separation is what keeps browser autofill from
                 grouping and duplicating values across all 5 boxes; only the layout is merged. */}
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-1 sm:gap-1.5">
               <Input
                 autoComplete="off"
                 aria-autocomplete="none"
@@ -182,10 +181,10 @@ const LoginPage = () => {
                 data-bwignore
                 value={username}
                 onChange={(event) => setUsername(event.target.value)}
-                className="min-w-0 flex-1 text-lg border border-slate-300 shadow-none"
+                className="min-w-0 flex-1 text-base border border-slate-300 shadow-none sm:text-lg"
                 placeholder="madushan"
               />
-              <span className="select-none text-lg font-medium text-slate-400">-</span>
+              <span className="select-none text-base font-medium text-slate-400 sm:text-lg">-</span>
               <div className="flex shrink-0 gap-1">
                 {digits.map((digit, index) => (
                   <input
@@ -210,7 +209,7 @@ const LoginPage = () => {
                     onChange={handleDigitChange(index)}
                     onKeyDown={handleDigitKeyDown(index)}
                     onPaste={handleDigitPaste}
-                    className="h-11 w-10 shrink-0 rounded-lg border border-slate-300 text-center text-lg shadow-none outline-none focus:border-slate-500"
+                    className="h-10 w-9 shrink-0 rounded-lg border border-slate-300 text-center text-base shadow-none outline-none focus:border-slate-500 sm:h-11 sm:w-10 sm:text-lg"
                     placeholder="#"
                   />
                 ))}
@@ -231,7 +230,7 @@ const LoginPage = () => {
               type="password"
               value={password}
               onChange={(event) => setPassword(event.target.value)}
-              className="text-lg border border-slate-300 shadow-none"
+              className="text-base border border-slate-300 shadow-none sm:text-lg"
               placeholder="••••••••"
             />
             <FieldError />
@@ -247,7 +246,7 @@ const LoginPage = () => {
               )}
             </Button>
             <div className="w-fit">
-              <Button onPress={resetForm} isIconOnly type="reset" variant="danger">
+              <Button onPress={resetForm} isIconOnly type="reset" size="lg" variant="danger">
                 <BrushCleaning />
               </Button>
             </div>

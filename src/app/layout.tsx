@@ -11,7 +11,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
-  title: "Lernio - EWisdom Institute",
+  title: "Lernio",
   description: "Secure, closed-ecosystem educational video hosting for tuition classes.",
   icons: {
     icon: '/icon.svg'
