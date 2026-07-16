@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { headers } from 'next/headers';
-import { isRTL } from '@heroui/react';
+import { isRTL, Toast } from '@heroui/react';
 import { ClientProviders } from './provider';
 import { Inter } from 'next/font/google'
  
@@ -31,6 +31,7 @@ export default async function RootLayout({
       
       <body className="min-h-full flex flex-col bg-surface-muted">
         <ClientProviders lang={lang}>
+          <Toast.Provider />
           {children}
         </ClientProviders>
       </body>
