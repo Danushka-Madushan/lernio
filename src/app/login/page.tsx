@@ -1,164 +1,244 @@
 'use client';
 
-import React, { useState, useEffect, Suspense } from 'react';
+import { useState, useCallback, useRef, useMemo, FormEvent, ChangeEvent, KeyboardEvent, ClipboardEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Lock, User as UserIcon, Loader2, Eye, EyeOff } from 'lucide-react';
+import { BrushCleaning, GraduationCap, ShieldCheck } from 'lucide-react';
+import { Button } from '@heroui/react/button';
+import { Spinner } from '@heroui/react/spinner';
+import { Form, Tabs, Key, toast } from '@heroui/react';
+import Image from 'next/image';
+import { CredentialFields } from '@/components/CredentialFields';
 
-function LoginForm() {
+const DIGIT_COUNT = 4;
+
+const LoginPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams?.get('callbackUrl') || '/';
 
+  const [activeKey, setActiveKey] = useState<Key>('student');
   const [username, setUsername] = useState('');
+  const [digits, setDigits] = useState<string[]>(Array(DIGIT_COUNT).fill(''));
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
 
-  // Clear errors when typing
-  useEffect(() => {
-    if (error) setError('');
-  }, [username, password]);
+  const digitRefs = useRef<Array<HTMLInputElement | null>>([]);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!username.trim() || !password.trim()) {
-      setError('Please fill in all fields.');
-      return;
-    }
+  const resetForm = useCallback(() => {
+    setUsername('');
+    setPassword('');
+    setDigits(Array(DIGIT_COUNT).fill(''));
+  }, []);
 
-    setLoading(true);
-    setError('');
+  const handleSelectionChange = useCallback(
+    (key: Key) => {
+      setActiveKey(key);
+      resetForm();
+    },
+    [resetForm],
+  );
 
-    try {
-      const res = await fetch('/api/auth/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ username: username.trim(), password }),
+  const setDigitRef = useCallback(
+    (index: number) => (el: HTMLInputElement | null) => {
+      digitRefs.current[index] = el;
+    },
+    [],
+  );
+
+  const handleDigitChange = useCallback(
+    (index: number) => (e: ChangeEvent<HTMLInputElement>) => {
+      // Keep only the last typed digit; strips anything non-numeric
+      const value = e.target.value.replace(/\D/g, '').slice(-1);
+
+      setDigits((prev) => {
+        const next = [...prev];
+        next[index] = value;
+        return next;
       });
 
-      const data = await res.json();
+      if (value && index < DIGIT_COUNT - 1) {
+        digitRefs.current[index + 1]?.focus();
+      }
+    },
+    [],
+  );
 
-      if (!res.ok) {
-        throw new Error(data.error || 'Invalid credentials');
+  const handleDigitKeyDown = useCallback(
+    (index: number) => (e: KeyboardEvent<HTMLInputElement>) => {
+      if (e.key === 'Backspace') {
+        if (!digits[index] && index > 0) {
+          digitRefs.current[index - 1]?.focus();
+        }
+        return;
+      }
+      if (e.key === 'ArrowLeft' && index > 0) {
+        digitRefs.current[index - 1]?.focus();
+      } else if (e.key === 'ArrowRight' && index < DIGIT_COUNT - 1) {
+        digitRefs.current[index + 1]?.focus();
+      }
+    },
+    [digits],
+  );
+
+  const handleDigitPaste = useCallback((e: ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, DIGIT_COUNT);
+    if (!pasted) return;
+
+    const next = Array(DIGIT_COUNT).fill('');
+    for (let i = 0; i < pasted.length; i++) next[i] = pasted[i];
+    setDigits(next);
+
+    const focusIndex = Math.min(pasted.length, DIGIT_COUNT - 1);
+    digitRefs.current[focusIndex]?.focus();
+  }, []);
+
+  const digitProps = useMemo(
+    () => ({
+      digits,
+      onChange: handleDigitChange,
+      onKeyDown: handleDigitKeyDown,
+      onPaste: handleDigitPaste,
+      setRef: setDigitRef,
+    }),
+    [digits, handleDigitChange, handleDigitKeyDown, handleDigitPaste, setDigitRef],
+  );
+
+  const onSubmit = useCallback(
+    async (e: FormEvent<HTMLFormElement>) => {
+      e.preventDefault();
+
+      const trimmedUsername = username.trim();
+      const studentId = digits.join('');
+
+      if (!trimmedUsername || !password.trim()) {
+        toast.danger('Please fill in all fields.');
+        return;
+      }
+      if (activeKey === 'student' && studentId.length !== DIGIT_COUNT) {
+        toast.danger('Please enter all 4 digits of your student ID.');
+        return;
       }
 
-      router.push(callbackUrl);
-      router.refresh();
-    } catch (err: any) {
-      setError(err.message || 'An error occurred during login.');
-    } finally {
-      setLoading(false);
-    }
-  };
+      const fullUsername = activeKey === 'student' ? `${trimmedUsername}-${studentId}` : trimmedUsername;
+
+      setLoading(true);
+
+      const loadingId = toast('Logging in...', {
+        isLoading: true,
+        timeout: 0,
+      });
+
+      try {
+        const res = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: fullUsername, password }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || 'Invalid credentials');
+        }
+
+        toast.close(loadingId);
+        toast.success('Logged in successfully');
+
+        router.push(callbackUrl);
+        router.refresh();
+      } catch (err: any) {
+        toast.close(loadingId);
+        toast.danger(err.message || 'An error occurred during login.');
+      } finally {
+        setLoading(false);
+      }
+    },
+    [activeKey, callbackUrl, digits, password, router, username],
+  );
 
   return (
-    <div className="w-full max-w-md rounded-2xl border border-[#e8eaed] bg-white p-8 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_2px_6px_2px_rgba(60,64,67,0.15)] transition-all duration-150">
-      <div className="mb-6 text-center">
-        <h1 className="text-3xl font-medium tracking-tight text-[#202124] select-none">
-          Lernio
-        </h1>
-        <p className="mt-1.5 text-md text-[#5f6368]">
-          E Wisdom Institute
-        </p>
+    <div className="flex min-h-dvh items-center justify-center bg-[#f8f9fa] px-4 py-6 font-sans">
+      <Image
+        alt="Background"
+        src="/auth-back.jpg"
+        fill
+        className="absolute top-0 left-0 select-none object-cover"
+      />
+      <div className="w-full relative z-10 max-w-md rounded-2xl border border-[#e8eaed] bg-white p-5 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_2px_6px_2px_rgba(60,64,67,0.15)] transition-all duration-150 sm:p-8">
+        <div className="mb-6 text-center">
+          <Image
+            alt="Logo"
+            src="/icon.svg"
+            width={56}
+            height={56}
+            className="mx-auto mb-2 select-none"
+          />
+          <h1 className="text-2xl font-medium tracking-tight text-slate-600 select-none sm:text-3xl">
+            Hi Lernio!
+          </h1>
+        </div>
+
+        <Tabs onSelectionChange={handleSelectionChange} defaultSelectedKey="student" orientation="horizontal" variant="primary">
+          <Tabs.ListContainer className="w-fit mx-auto">
+            <Tabs.List aria-label="sections">
+              <Tabs.Tab id="student">
+                <GraduationCap className={activeKey === 'student' ? 'text-blue-500' : 'text-slate-500'} size={20} />
+                <Tabs.Indicator />
+              </Tabs.Tab>
+              <Tabs.Tab id="staff">
+                <ShieldCheck className={activeKey === 'staff' ? 'text-blue-500' : 'text-slate-500'} size={20} />
+                <Tabs.Indicator />
+              </Tabs.Tab>
+            </Tabs.List>
+          </Tabs.ListContainer>
+
+          {/* autoComplete="off" on the form itself is the first line of defense against
+            browsers/managers trying to be "helpful" with grouped fields */}
+          <Form className="flex w-full flex-col gap-2" onSubmit={onSubmit} autoComplete="off">
+            <Tabs.Panel id="student">
+              <CredentialFields
+                variant="student"
+                loading={loading}
+                username={username}
+                password={password}
+                onUsernameChange={setUsername}
+                onPasswordChange={setPassword}
+                digitProps={digitProps}
+              />
+            </Tabs.Panel>
+
+            <Tabs.Panel id="staff">
+              <CredentialFields
+                variant="staff"
+                loading={loading}
+                username={username}
+                password={password}
+                onUsernameChange={setUsername}
+                onPasswordChange={setPassword}
+              />
+            </Tabs.Panel>
+
+            <div className="flex items-center justify-between gap-2">
+              <Button isDisabled={loading} isPending={loading} fullWidth type="submit" size="lg">
+                {({ isPending }) => (
+                  <>
+                    {isPending ? <Spinner color="current" size="sm" /> : null}
+                    {isPending ? 'Logging in...' : 'Log in'}
+                  </>
+                )}
+              </Button>
+              <div className="w-fit">
+                <Button onPress={resetForm} isIconOnly type="reset" size="lg" variant="danger">
+                  <BrushCleaning />
+                </Button>
+              </div>
+            </div>
+          </Form>
+        </Tabs>
       </div>
-
-      {error && (
-        <div
-          className="mb-4 rounded-lg border border-[#fad2cf] bg-[#fce8e6] p-2.5 text-xs text-[#c5221f]"
-          role="alert"
-        >
-          {error}
-        </div>
-      )}
-
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label
-            htmlFor="username"
-            className="mb-1.5 block text-xs font-medium text-[#5f6368]"
-          >
-            Username
-          </label>
-          <div className="relative">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-[#9aa0a6]">
-              <UserIcon size={16} />
-            </span>
-            <input
-              id="username"
-              type="text"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
-              disabled={loading}
-              className="w-full rounded-lg border border-[#dadce0] bg-white py-2.5 pl-10 pr-3 text-sm text-[#202124] placeholder-[#9aa0a6] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4] disabled:text-[#9aa0a6]"
-              placeholder="Enter username"
-              required
-              autoComplete="username"
-            />
-          </div>
-        </div>
-
-        <div>
-          <label
-            htmlFor="password"
-            className="mb-1.5 block text-xs font-medium text-[#5f6368]"
-          >
-            Password
-          </label>
-          <div className="relative">
-            <span className="absolute inset-y-0 left-0 flex items-center pl-3 text-[#9aa0a6]">
-              <Lock size={16} />
-            </span>
-            <input
-              id="password"
-              type={showPassword ? 'text' : 'password'}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              disabled={loading}
-              className="w-full rounded-lg border border-[#dadce0] bg-white py-2.5 pl-10 pr-10 text-sm text-[#202124] placeholder-[#9aa0a6] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4] disabled:text-[#9aa0a6]"
-              placeholder="Enter password"
-              required
-              autoComplete="current-password"
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              disabled={loading}
-              className="absolute inset-y-0 right-0 flex items-center pr-3 text-[#5f6368] outline-none hover:text-[#202124] focus-visible:text-[#1a73e8]"
-            >
-              {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-            </button>
-          </div>
-        </div>
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="flex w-full items-center justify-center rounded-full bg-[#1a73e8] py-2.5 px-4 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md active:scale-[0.98] active:bg-[#185abc] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/40 disabled:opacity-50"
-        >
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 animate-spin" size={16} /> Logging in...
-            </>
-          ) : (
-            'Sign In'
-          )}
-        </button>
-      </form>
     </div>
   );
-}
+};
 
-export default function LoginPage() {
-  return (
-    <div className="flex min-h-screen items-center justify-center bg-[#f8f9fa] px-4 font-sans">
-      <Suspense fallback={
-        <div className="w-full max-w-md rounded-2xl border border-[#e8eaed] bg-white p-8 flex items-center justify-center shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_2px_6px_2px_rgba(60,64,67,0.15)]">
-          <Loader2 className="animate-spin text-[#1a73e8]" size={24} />
-        </div>
-      }>
-        <LoginForm />
-      </Suspense>
-    </div>
-  );
-}
+export default LoginPage;

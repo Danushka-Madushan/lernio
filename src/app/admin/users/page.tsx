@@ -292,7 +292,7 @@ function ShareResetModal({
               <p className="text-[13px] font-semibold text-[#92400e]">Password will be reset</p>
               <p className="mt-0.5 text-[12px] leading-[1.55] text-[#78350f]">
                 This will immediately reset{' '}
-                <span className="font-semibold">{target.username}</span>'s password to the value
+                <span className="font-semibold">{target.username}</span>&apos;s password to the value
                 below. Their current password will stop working.
               </p>
             </div>
@@ -416,7 +416,7 @@ function UsernameInput({
         value={prefix}
         onChange={(e) => onPrefixChange(e.target.value.replace(/[\s-]/g, ''))}
         disabled={disabled}
-        placeholder="e.g. madushan"
+        placeholder="e.g. kamal"
         className={`min-w-0 flex-1 rounded-lg px-3.5 py-2.5 ${fieldBase}`}
         required
       />
