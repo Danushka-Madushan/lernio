@@ -38,6 +38,11 @@ export default function VideoUploadPage() {
       return;
     }
 
+    if (visibility === 'GRADE' && !grade) {
+      setError('Grade band is required when visibility is set to Grade Only.');
+      return;
+    }
+
     setSaving(true);
     setError('');
     setSuccess('');
@@ -185,7 +190,12 @@ export default function VideoUploadPage() {
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-[#5f6368]" htmlFor="upload-grade">
-                    Grade Band <span className="font-normal text-[#9aa0a6]">(optional)</span>
+                    Grade Band{' '}
+                    {visibility === 'GRADE' ? (
+                      <span className="text-[#d93025]">*</span>
+                    ) : (
+                      <span className="font-normal text-[#9aa0a6]">(optional)</span>
+                    )}
                   </label>
                   <select
                     id="upload-grade"

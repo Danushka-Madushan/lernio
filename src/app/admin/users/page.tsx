@@ -344,30 +344,30 @@ function ShareResetModal({ target, password, loading, onPasswordChange, onConfir
   );
 }
 
-// ─── ReactivateModal ──────────────────────────────────────────────────────────
+// ─── EditStudentModal ──────────────────────────────────────────────────────────
 
-function ReactivateModal({ student, loading, onConfirm, onCancel }: {
+function EditStudentModal({ student, loading, onConfirm, onCancel }: {
   student: Student; loading: boolean;
-  onConfirm: (activeFrom: string, activeTo: string) => void; onCancel: () => void;
+  onConfirm: (activeFrom: string, activeTo: string, accessMode: AccessMode, grade: Grade | '') => void; onCancel: () => void;
 }) {
-  const now = new Date();
   const pad = (n: number) => String(n).padStart(2, '0');
-  const toLocalDatetime = (d: Date) =>
-    `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  const toLocalDatetime = (d: Date | null) =>
+    d ? `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}` : '';
 
-  const [activeFrom, setActiveFrom] = useState(toLocalDatetime(now));
-  const [activeTo, setActiveTo] = useState('');
+  const [activeFrom, setActiveFrom] = useState(student.activeFrom ? toLocalDatetime(new Date(student.activeFrom)) : '');
+  const [activeTo, setActiveTo] = useState(student.activeTo ? toLocalDatetime(new Date(student.activeTo)) : '');
+  const [accessMode, setAccessMode] = useState<AccessMode>(student.accessMode);
+  const [grade, setGrade] = useState<Grade | ''>(student.grade || '');
 
   return (
     <div role="dialog" aria-modal="true"
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm overflow-y-auto"
       onKeyDown={(e) => e.key === 'Escape' && !loading && onCancel()}>
-      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
-        <div className="relative bg-linear-to-br from-[#137333] via-[#0d652d] to-[#0a5327] px-6 py-4">
+      <div className="w-full max-w-md my-auto overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
+        <div className="relative bg-linear-to-br from-[#1a73e8] via-[#1557b0] to-[#0d47a1] px-6 py-4">
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-2.5">
-              <RotateCcw size={16} className="text-white" />
-              <span className="text-[15px] font-semibold text-white">Reactivate Account</span>
+              <span className="text-[15px] font-semibold text-white">Edit Student Account</span>
             </div>
             <button type="button" onClick={onCancel} disabled={loading} aria-label="Close"
               className="rounded-full p-1.5 text-white/50 transition-colors hover:bg-white/15 hover:text-white disabled:opacity-40">
@@ -375,23 +375,62 @@ function ReactivateModal({ student, loading, onConfirm, onCancel }: {
             </button>
           </div>
         </div>
-        <div className="space-y-4 px-6 py-5">
+        <div className="space-y-4 px-6 py-5 max-h-[70vh] overflow-y-auto">
           <p className="text-[13px] text-[#5f6368]">
-            Set a new active period for <span className="font-semibold text-[#202124]">{student.username}</span>.
+            Editing settings for <span className="font-semibold text-[#202124]">{student.username}</span>.
           </p>
-          <DateTimePicker label="Active From" value={activeFrom} onChange={setActiveFrom} disabled={loading} />
-          <DateTimePicker label="Active Until (leave blank for no expiry)" value={activeTo} onChange={setActiveTo} disabled={loading} minDate={activeFrom} />
+
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Grade <span className="font-normal text-[#9aa0a6]">(optional)</span></label>
+            <div className="relative">
+              <select value={grade} onChange={(e) => setGrade(e.target.value as Grade | '')} disabled={loading}
+                className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4]">
+                <option value="">— Select grade —</option>
+                {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => (
+                  <option key={val} value={val}>{label}</option>
+                ))}
+              </select>
+              <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
+            </div>
+          </div>
+
+          <div>
+            <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Access Mode</label>
+            <div className="grid grid-cols-2 gap-2">
+              {(['GRADE', 'CUSTOM'] as AccessMode[]).map((mode) => (
+                <button key={mode} type="button" onClick={() => setAccessMode(mode)} disabled={loading}
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-medium transition-all ${
+                    accessMode === mode
+                      ? mode === 'CUSTOM'
+                        ? 'border-purple-300 bg-purple-50 text-purple-700'
+                        : 'border-[#1a73e8]/30 bg-[#e8f0fe] text-[#1a73e8]'
+                      : 'border-[#e8eaed] bg-white text-[#5f6368] hover:bg-[#f8f9fa]'
+                  }`}>
+                  {mode === 'CUSTOM' ? <Lock size={12} /> : <BookOpen size={12} />}
+                  {mode === 'CUSTOM' ? 'Custom' : 'Grade'}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2 rounded-xl border border-[#e8eaed] bg-[#f8f9fa] p-3">
+            <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-[#5f6368]">
+              <Clock size={11} /> Account Validity
+            </p>
+            <DateTimePicker label="Active From (blank = immediate)" value={activeFrom} onChange={setActiveFrom} disabled={loading} />
+            <DateTimePicker label="Active Until (blank = no expiry)" value={activeTo} onChange={setActiveTo} disabled={loading} minDate={activeFrom} />
+          </div>
+
         </div>
         <div className="flex items-center justify-end gap-2.5 border-t border-[#e8eaed] bg-[#f8f9fa] px-6 py-4">
           <button type="button" onClick={onCancel} disabled={loading}
             className="rounded-full px-4 py-2 text-sm font-medium text-[#5f6368] transition-colors hover:bg-[#e8eaed] disabled:opacity-40">
             Cancel
           </button>
-          <button type="button" onClick={() => onConfirm(activeFrom, activeTo)} disabled={loading || !activeFrom}
-            className="inline-flex items-center gap-2 rounded-full bg-[#137333] px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#0d652d] hover:shadow-md disabled:cursor-not-allowed disabled:bg-[#c4c7cc] disabled:shadow-none">
+          <button type="button" onClick={() => onConfirm(activeFrom, activeTo, accessMode, grade)} disabled={loading}
+            className="inline-flex items-center gap-2 rounded-full bg-[#1a73e8] px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#1765cc] hover:shadow-md disabled:cursor-not-allowed disabled:bg-[#c4c7cc] disabled:shadow-none">
             {loading && <Loader2 size={14} className="animate-spin" />}
-            <RotateCcw size={13} />
-            Reactivate
+            Save Changes
           </button>
         </div>
       </div>
@@ -679,9 +718,9 @@ export default function UsersAdminPage() {
   const [shareResetPassword, setShareResetPassword] = useState('');
   const [shareResetLoading, setShareResetLoading] = useState(false);
 
-  // Reactivate modal
-  const [reactivateTarget, setReactivateTarget] = useState<Student | null>(null);
-  const [reactivateLoading, setReactivateLoading] = useState(false);
+  // Edit modal
+  const [editTarget, setEditTarget] = useState<Student | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
 
   // Custom video picker modal
   const [customVideoTarget, setCustomVideoTarget] = useState<Student | null>(null);
@@ -820,29 +859,31 @@ export default function UsersAdminPage() {
     finally { setShareResetLoading(false); }
   };
 
-  const handleReactivate = async (activeFrom: string, activeTo: string) => {
-    if (!reactivateTarget) return;
-    setReactivateLoading(true);
+  const handleEditStudent = async (activeFrom: string, activeTo: string, accessMode: AccessMode, grade: Grade | '') => {
+    if (!editTarget) return;
+    setEditLoading(true);
     try {
-      const res = await fetch(`/api/users/${reactivateTarget.id}`, {
+      const res = await fetch(`/api/users/${editTarget.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           activeFrom: activeFrom || null,
           activeTo: activeTo || null,
+          accessMode,
+          grade: grade || null,
         }),
       });
       if (res.ok) {
-        setSuccess(`Account '${reactivateTarget.username}' reactivated.`);
-        setReactivateTarget(null);
+        setSuccess(`Account '${editTarget.username}' updated.`);
+        setEditTarget(null);
         fetchStudents();
       } else {
         const data = await res.json();
-        setError(data.error || 'Failed to reactivate account');
-        setReactivateTarget(null);
+        setError(data.error || 'Failed to update account');
+        setEditTarget(null);
       }
-    } catch { setError('Connection error reactivating account'); setReactivateTarget(null); }
-    finally { setReactivateLoading(false); }
+    } catch { setError('Connection error updating account'); setEditTarget(null); }
+    finally { setEditLoading(false); }
   };
 
   const handleSaveCustomVideos = async (videoIds: string[]) => {
@@ -942,6 +983,10 @@ export default function UsersAdminPage() {
           </div>
         ) : (
           <div className="inline-flex items-center gap-1">
+            <button type="button" onClick={() => setEditTarget(student)} title="Edit Student"
+              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#1a73e8] transition-colors hover:bg-[#e8f0fe]">
+              <span>Edit</span>
+            </button>
             {student.accessMode === 'CUSTOM' && (
               <button type="button" onClick={() => setCustomVideoTarget(student)} title="Manage Videos"
                 className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-purple-700 transition-colors hover:bg-purple-50">
@@ -977,10 +1022,10 @@ export default function UsersAdminPage() {
           onConfirm={handleConfirmShareReset}
           onCancel={() => { setShareResetTarget(null); setShareResetPassword(''); }} />
       )}
-      {reactivateTarget && (
-        <ReactivateModal student={reactivateTarget} loading={reactivateLoading}
-          onConfirm={handleReactivate}
-          onCancel={() => setReactivateTarget(null)} />
+      {editTarget && (
+        <EditStudentModal student={editTarget} loading={editLoading}
+          onConfirm={handleEditStudent}
+          onCancel={() => setEditTarget(null)} />
       )}
       {customVideoTarget && (
         <CustomVideoPickerModal student={customVideoTarget}
@@ -995,9 +1040,9 @@ export default function UsersAdminPage() {
             <p className="mt-1 text-sm text-[#5f6368]">Create, manage, and remove student login accounts</p>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-6">
+          <div className="grid grid-cols-1 gap-6">
             {/* ── Left panel: Create ─────────────────────────────────────── */}
-            <div className="h-fit w-full min-w-0 rounded-2xl bg-white p-6 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] lg:col-span-2">
+            <div className="h-fit w-full min-w-0 rounded-2xl bg-white p-6 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
               <div className="mb-5 flex items-center gap-2.5">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8f0fe]">
                   <UserPlus size={17} className="text-[#1a73e8]" />
@@ -1101,7 +1146,7 @@ export default function UsersAdminPage() {
             </div>
 
             {/* ── Right panel: Students list ─────────────────────────────── */}
-            <div className="flex flex-col gap-6 w-full min-w-0 lg:col-span-4">
+            <div className="flex flex-col gap-6 w-full min-w-0">
               {/* Filters row */}
               <div className="rounded-2xl bg-white p-4 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -1235,9 +1280,9 @@ export default function UsersAdminPage() {
                                 <td className="py-3.5 text-[12px] text-[#9aa0a6]">{formatDate(student.activeTo)}</td>
                                 <td className="py-3.5 text-right">
                                   <div className="inline-flex items-center gap-1">
-                                    <button type="button" onClick={() => setReactivateTarget(student)}
-                                      className="inline-flex items-center gap-1.5 rounded-full bg-[#e6f4ea] px-3 py-1.5 text-xs font-medium text-[#137333] transition-colors hover:bg-[#ceead6]">
-                                      <RotateCcw size={13} /><span>Reactivate</span>
+                                    <button type="button" onClick={() => setEditTarget(student)}
+                                      className="inline-flex items-center gap-1.5 rounded-full bg-[#e8f0fe] px-3 py-1.5 text-xs font-medium text-[#1a73e8] transition-colors hover:bg-[#c2d7fa]">
+                                      <span>Edit / Reactivate</span>
                                     </button>
                                     <button type="button" onClick={() => handleDeleteStudent(student.id, student.username)}
                                       className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#d93025] transition-colors hover:bg-[#fce8e6]">
