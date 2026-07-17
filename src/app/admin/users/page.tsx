@@ -70,10 +70,10 @@ const GRADE_LABELS: Record<Grade, string> = {
 };
 
 const GRADE_COLORS: Record<Grade, string> = {
-  GRADE_6:  'bg-purple-50 text-purple-700',
-  GRADE_7:  'bg-blue-50 text-blue-700',
-  GRADE_8:  'bg-cyan-50 text-cyan-700',
-  GRADE_9:  'bg-green-50 text-green-700',
+  GRADE_6: 'bg-purple-50 text-purple-700',
+  GRADE_7: 'bg-blue-50 text-blue-700',
+  GRADE_8: 'bg-cyan-50 text-cyan-700',
+  GRADE_9: 'bg-green-50 text-green-700',
   GRADE_10: 'bg-yellow-50 text-yellow-700',
   GRADE_11: 'bg-orange-50 text-orange-700',
 };
@@ -126,13 +126,42 @@ async function copyText(text: string): Promise<boolean> {
 
 function buildShareMessage(username: string, password: string): string {
   return [
-    'Hi, this is your Lernio logins',
+    'Hi, Here are your Lernio logins',
     '',
     `Username: ${username}`,
     `Password: ${password}`,
     '',
-    'If not working pls contact +94XXXXXXX',
+    'Having issues? Contact +94 70 700 8041',
   ].join('\n');
+}
+
+/**
+ * Attempts to open the WhatsApp desktop app (e.g. on Windows, via its registered
+ * `whatsapp://` URI scheme) with the given text pre-filled. If the app isn't
+ * installed/registered, the page won't lose focus in time, so we fall back to
+ * opening web.whatsapp.com in a new tab — the user can still copy the message
+ * manually (via the Copy button) and paste it into whatever app they prefer.
+ */
+function openWhatsApp(text: string): void {
+  if (!text) return;
+  const encoded = encodeURIComponent(text);
+  const appUrl = `whatsapp://send?text=${encoded}`;
+  const webUrl = `https://wa.me/?text=${encoded}`;
+
+  let appLikelyOpened = false;
+  const onVisibilityChange = () => {
+    if (document.hidden) appLikelyOpened = true;
+  };
+  document.addEventListener('visibilitychange', onVisibilityChange);
+
+  window.location.href = appUrl;
+
+  setTimeout(() => {
+    document.removeEventListener('visibilitychange', onVisibilityChange);
+    if (!appLikelyOpened) {
+      window.open(webUrl, '_blank', 'noopener,noreferrer');
+    }
+  }, 1000);
 }
 
 /** Returns account status for a student */
@@ -218,6 +247,33 @@ function CopyButton({ text, label, variant = 'ghost', tiny = false }: {
   );
 }
 
+// ─── WhatsAppButton ───────────────────────────────────────────────────────────
+
+function WhatsAppIcon({ size = 12 }: { size?: number }) {
+  return (
+    <svg viewBox="0 0 24 24" width={size} height={size} fill="currentColor" aria-hidden="true">
+      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347z" />
+      <path d="M12.004 2C6.477 2 2 6.477 2 12c0 1.87.505 3.687 1.463 5.274L2 22l4.834-1.436A9.955 9.955 0 0 0 12.004 22C17.53 22 22 17.523 22 12S17.53 2 12.004 2zm0 18.09a8.06 8.06 0 0 1-4.11-1.126l-.294-.174-3.043.905.916-2.97-.19-.305A8.084 8.084 0 0 1 3.91 12c0-4.47 3.638-8.09 8.094-8.09 4.457 0 8.096 3.62 8.096 8.09 0 4.47-3.639 8.09-8.096 8.09z" />
+    </svg>
+  );
+}
+
+/** Opens WhatsApp (desktop app on Windows if installed, else web fallback) with `text` pre-filled. */
+function WhatsAppButton({ text, label, tiny = false }: { text: string; label?: string; tiny?: boolean }) {
+  return (
+    <button type="button" disabled={!text} onClick={() => openWhatsApp(text)}
+      title="Share via WhatsApp"
+      className={[
+        'inline-flex shrink-0 items-center gap-1 rounded-full font-medium text-white shadow-sm transition-all hover:bg-[#20bd5a] disabled:opacity-40',
+        tiny ? 'px-2 py-1 text-[11px]' : 'px-2.5 py-1.5 text-xs',
+        'bg-[#25D366]',
+      ].join(' ')}>
+      <WhatsAppIcon size={tiny ? 11 : 12} />
+      {label && <span>{label}</span>}
+    </button>
+  );
+}
+
 // ─── CredentialPill ───────────────────────────────────────────────────────────
 
 function CredentialPill({ label, value }: { label: string; value: string }) {
@@ -237,7 +293,7 @@ function CredentialPill({ label, value }: { label: string; value: string }) {
 function ShareCredentialsCard({ info, onDismiss }: { info: ShareInfo; onDismiss: () => void }) {
   const message = buildShareMessage(info.username, info.password);
   return (
-    <div className="mt-5 overflow-hidden rounded-2xl shadow-lg ring-1 ring-black/5">
+    <div className="my-5 overflow-hidden rounded-2xl shadow-lg ring-1 ring-black/5">
       <div className="relative bg-linear-to-br from-[#1a73e8] via-[#1557b0] to-[#0d47a1] px-4 py-4">
         <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/5" />
         <div className="pointer-events-none absolute -bottom-4 right-10 h-14 w-14 rounded-full bg-white/5" />
@@ -263,8 +319,9 @@ function ShareCredentialsCard({ info, onDismiss }: { info: ShareInfo; onDismiss:
         <div className="pt-1">
           <p className="mb-2 text-[10px] font-semibold uppercase tracking-widest text-[#9aa0a6]">Share Message</p>
           <div className="relative overflow-hidden rounded-xl border border-[#c7d2fe] bg-[#eef2ff]">
-            <div className="absolute left-2.5 top-2.5 z-10">
+            <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1.5">
               <CopyButton text={message} label="Copy" variant="solid" tiny />
+              <WhatsAppButton text={message} label="WhatsApp" tiny />
             </div>
             <div className="pointer-events-none absolute inset-0 opacity-[0.04]"
               style={{ backgroundImage: 'radial-gradient(circle, #3730a3 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
@@ -399,13 +456,12 @@ function EditStudentModal({ student, loading, onConfirm, onCancel }: {
             <div className="grid grid-cols-2 gap-2">
               {(['GRADE', 'CUSTOM'] as AccessMode[]).map((mode) => (
                 <button key={mode} type="button" onClick={() => setAccessMode(mode)} disabled={loading}
-                  className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-medium transition-all ${
-                    accessMode === mode
-                      ? mode === 'CUSTOM'
-                        ? 'border-purple-300 bg-purple-50 text-purple-700'
-                        : 'border-[#1a73e8]/30 bg-[#e8f0fe] text-[#1a73e8]'
-                      : 'border-[#e8eaed] bg-white text-[#5f6368] hover:bg-[#f8f9fa]'
-                  }`}>
+                  className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-medium transition-all ${accessMode === mode
+                    ? mode === 'CUSTOM'
+                      ? 'border-purple-300 bg-purple-50 text-purple-700'
+                      : 'border-[#1a73e8]/30 bg-[#e8f0fe] text-[#1a73e8]'
+                    : 'border-[#e8eaed] bg-white text-[#5f6368] hover:bg-[#f8f9fa]'
+                    }`}>
                   {mode === 'CUSTOM' ? <Lock size={12} /> : <BookOpen size={12} />}
                   {mode === 'CUSTOM' ? 'Custom' : 'Grade'}
                 </button>
@@ -535,15 +591,13 @@ function CustomVideoPickerModal({ student, onSave, onCancel }: {
             <div className="space-y-1.5 py-2">
               {filtered.map((video) => (
                 <button key={video.id} type="button" onClick={() => toggleVideo(video.id)}
-                  className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-all duration-150 ${
-                    selectedIds.has(video.id)
-                      ? 'border-[#6d28d9]/30 bg-purple-50'
-                      : 'border-[#e8eaed] bg-white hover:bg-[#f8f9fa]'
-                  }`}>
+                  className={`flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition-all duration-150 ${selectedIds.has(video.id)
+                    ? 'border-[#6d28d9]/30 bg-purple-50'
+                    : 'border-[#e8eaed] bg-white hover:bg-[#f8f9fa]'
+                    }`}>
                   {/* Checkbox */}
-                  <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-all ${
-                    selectedIds.has(video.id) ? 'border-[#6d28d9] bg-[#6d28d9]' : 'border-[#dadce0] bg-white'
-                  }`}>
+                  <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-all ${selectedIds.has(video.id) ? 'border-[#6d28d9] bg-[#6d28d9]' : 'border-[#dadce0] bg-white'
+                    }`}>
                     {selectedIds.has(video.id) && <Check size={11} className="text-white" />}
                   </div>
                   {/* Thumbnail */}
@@ -564,9 +618,8 @@ function CustomVideoPickerModal({ student, onSave, onCancel }: {
                           {GRADE_LABELS[video.grade]}
                         </span>
                       )}
-                      <span className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                        video.visibility === 'PUBLIC' ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'
-                      }`}>
+                      <span className={`inline-flex items-center gap-0.5 rounded-full px-2 py-0.5 text-[10px] font-medium ${video.visibility === 'PUBLIC' ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'
+                        }`}>
                         {video.visibility === 'PUBLIC' ? <Globe size={9} /> : <Lock size={9} />}
                         {video.visibility === 'PUBLIC' ? 'Public' : 'Grade'}
                       </span>
@@ -662,6 +715,187 @@ function UsernameInput({ prefix, suffix, disabled, onPrefixChange, onSuffixChang
   );
 }
 
+// ─── AddStudentModal ───────────────────────────────────────────────────────────
+
+function AddStudentModal({
+  usernamePrefix, usernameSuffix, password, grade, accessMode, activeFrom, activeTo,
+  creating, error, success, shareInfo,
+  onPrefixChange, onSuffixChange, onSuffixBulkSet, onPasswordChange,
+  onGradeChange, onAccessModeChange, onActiveFromChange, onActiveToChange,
+  onSubmit, onCancel, onDismissShareInfo,
+}: {
+  usernamePrefix: string; usernameSuffix: string[]; password: string;
+  grade: Grade | ''; accessMode: AccessMode; activeFrom: string; activeTo: string;
+  creating: boolean; error: string; success: string; shareInfo: ShareInfo | null;
+  onPrefixChange: (v: string) => void;
+  onSuffixChange: (i: number, v: string) => void;
+  onSuffixBulkSet: (digits: string[]) => void;
+  onPasswordChange: (v: string) => void;
+  onGradeChange: (v: Grade | '') => void;
+  onAccessModeChange: (v: AccessMode) => void;
+  onActiveFromChange: (v: string) => void;
+  onActiveToChange: (v: string) => void;
+  onSubmit: (e: React.FormEvent) => void;
+  onCancel: () => void;
+  onDismissShareInfo: () => void;
+}) {
+  const computedUsername =
+    usernamePrefix && usernameSuffix.every((d) => d)
+      ? `${usernamePrefix}-${usernameSuffix.join('')}`
+      : '';
+
+  return (
+    <div role="dialog" aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm overflow-y-auto"
+      onKeyDown={(e) => e.key === 'Escape' && !creating && onCancel()}>
+      <div className="w-full max-w-fit my-auto overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
+        <div className="relative bg-linear-to-br from-[#1a73e8] via-[#1557b0] to-[#0d47a1] px-6 py-4">
+          <div className="pointer-events-none absolute -right-4 -top-4 h-20 w-20 rounded-full bg-white/5" />
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <UserPlus size={16} className="text-white" />
+              <span className="text-[15px] font-semibold text-white">Create Student Account</span>
+            </div>
+            <button type="button" onClick={onCancel} disabled={creating} aria-label="Close"
+              className="rounded-full p-1.5 text-white/50 transition-colors hover:bg-white/15 hover:text-white disabled:opacity-40">
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+
+        <div className="max-h-[75vh] overflow-y-auto px-6 py-5">
+          {error && (
+            <div className="mb-4 rounded-lg border border-[#fad2cf] bg-[#fce8e6] px-3.5 py-2.5 text-[13px] leading-5 text-[#c5221f]">{error}</div>
+          )}
+          {success && (
+            <div className="mb-4 rounded-lg border border-[#ceead6] bg-[#e6f4ea] px-3.5 py-2.5 text-[13px] leading-5 text-[#137333]">{success}</div>
+          )}
+
+          <form id="add-student-form" onSubmit={onSubmit} className="space-x-4 flex">
+            <div className="space-y-4">
+              {/* Username */}
+              <div>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label className="text-xs font-medium text-[#5f6368]">Username</label>
+                  <CopyButton text={computedUsername} label="Copy" />
+                </div>
+                <UsernameInput prefix={usernamePrefix} suffix={usernameSuffix} disabled={creating}
+                  onPrefixChange={onPrefixChange}
+                  onSuffixChange={onSuffixChange}
+                  onSuffixBulkSet={onSuffixBulkSet} />
+                <p className="mt-1 text-[11px] text-[#9aa0a6]">Format: <span className="font-mono">username-XXXX</span></p>
+              </div>
+
+              {/* Password */}
+              <div>
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label className="text-xs font-medium text-[#5f6368]">Password</label>
+                  <div className="flex items-center gap-1">
+                    <button type="button" onClick={() => onPasswordChange(generatePassword(6))} disabled={creating}
+                      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-[#1a73e8] transition-colors hover:bg-[#e8f0fe] disabled:cursor-not-allowed disabled:opacity-40">
+                      <RefreshCw size={12} /><span>Generate</span>
+                    </button>
+                    <CopyButton text={password} label="Copy" />
+                  </div>
+                </div>
+                <input type="text" value={password} onChange={(e) => onPasswordChange(e.target.value)}
+                  disabled={creating} placeholder="Initial password"
+                  className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all placeholder:text-[#9aa0a6] hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4] disabled:text-[#9aa0a6]"
+                  required />
+              </div>
+
+              {/* Grade */}
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Grade <span className="font-normal text-[#9aa0a6]">(optional)</span></label>
+                <div className="relative">
+                  <select value={grade} onChange={(e) => onGradeChange(e.target.value as Grade | '')} disabled={creating}
+                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4]">
+                    <option value="">— Select grade —</option>
+                    {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => (
+                      <option key={val} value={val}>{label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
+                </div>
+              </div>
+
+              {/* Access Mode */}
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Access Mode</label>
+                <div className="grid grid-cols-2 gap-2">
+                  {(['GRADE', 'CUSTOM'] as AccessMode[]).map((mode) => (
+                    <button key={mode} type="button" onClick={() => onAccessModeChange(mode)} disabled={creating}
+                      className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-medium transition-all ${accessMode === mode
+                        ? mode === 'CUSTOM'
+                          ? 'border-purple-300 bg-purple-50 text-purple-700'
+                          : 'border-[#1a73e8]/30 bg-[#e8f0fe] text-[#1a73e8]'
+                        : 'border-[#e8eaed] bg-white text-[#5f6368] hover:bg-[#f8f9fa]'
+                        }`}>
+                      {mode === 'CUSTOM' ? <Lock size={12} /> : <BookOpen size={12} />}
+                      {mode === 'CUSTOM' ? 'Custom' : 'Grade'}
+                    </button>
+                  ))}
+                </div>
+                <p className="mt-1 text-[11px] text-[#9aa0a6]">
+                  {accessMode === 'CUSTOM' ? 'Manually pick which videos this student can access.' : 'Student sees videos matching their grade.'}
+                </p>
+              </div>
+            </div>
+
+            {/* Active Period */}
+            <div className="space-y-2 h-fit rounded-xl border border-[#e8eaed] bg-[#f8f9fa] p-3">
+              <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-[#5f6368]">
+                <Clock size={11} /> Account Validity
+              </p>
+              <DateTimePicker label="Active From (blank = immediate)" value={activeFrom} onChange={onActiveFromChange} disabled={creating} />
+              <DateTimePicker label="Active Until (blank = no expiry)" value={activeTo} onChange={onActiveToChange} disabled={creating} minDate={activeFrom} />
+            </div>
+          </form>
+
+          {shareInfo && <ShareCredentialsCard info={shareInfo} onDismiss={onDismissShareInfo} />}
+        </div>
+
+        <div className="flex items-center justify-end gap-2.5 border-t border-[#e8eaed] bg-[#f8f9fa] px-6 py-4">
+          <button type="button" onClick={onCancel} disabled={creating}
+            className="rounded-full px-4 py-2 text-sm font-medium text-[#5f6368] transition-colors hover:bg-[#e8eaed] disabled:opacity-40">
+            Cancel
+          </button>
+          <button type="submit" form="add-student-form" disabled={creating}
+            className="inline-flex items-center gap-2 rounded-full bg-[#1a73e8] px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#1765cc] hover:shadow-md disabled:cursor-not-allowed disabled:bg-[#c4c7cc] disabled:shadow-none">
+            {creating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+            Create Student
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── StatCard ──────────────────────────────────────────────────────────────────
+
+function StatCard({ label, value, icon, tone = 'default' }: {
+  label: string; value: number | string; icon: React.ReactNode;
+  tone?: 'default' | 'success' | 'danger' | 'info';
+}) {
+  const toneClasses: Record<string, string> = {
+    default: 'bg-[#f1f3f4] text-[#5f6368]',
+    success: 'bg-green-50 text-green-700',
+    danger: 'bg-red-50 text-red-500',
+    info: 'bg-[#e8f0fe] text-[#1a73e8]',
+  };
+  return (
+    <div className="flex items-center gap-3.5 rounded-2xl bg-white p-4 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
+      <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${toneClasses[tone]}`}>
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <p className="text-[20px] font-medium leading-tight text-[#202124]">{value}</p>
+        <p className="truncate text-[12px] text-[#5f6368]">{label}</p>
+      </div>
+    </div>
+  );
+}
+
 // ─── AccountStatusBadge ────────────────────────────────────────────────────────
 
 function AccountStatusBadge({ student }: { student: Student }) {
@@ -725,6 +959,9 @@ export default function UsersAdminPage() {
   // Custom video picker modal
   const [customVideoTarget, setCustomVideoTarget] = useState<Student | null>(null);
 
+  // Add student modal
+  const [showAddModal, setShowAddModal] = useState(false);
+
   // Table filters
   const [searchQuery, setSearchQuery] = useState('');
   const [gradeFilter, setGradeFilter] = useState<Grade | ''>('');
@@ -732,23 +969,35 @@ export default function UsersAdminPage() {
 
   // ── Derived ──────────────────────────────────────────────────────────────
 
-  const computedUsername =
-    newUsernamePrefix && newUsernameSuffix.every((d) => d)
-      ? `${newUsernamePrefix}-${newUsernameSuffix.join('')}`
-      : '';
+  const activeStudents = React.useMemo(
+    () => students.filter((s) => !isExpiredOrInactive(s)),
+    [students],
+  );
+  const expiredStudents = React.useMemo(
+    () => students.filter((s) => isExpiredOrInactive(s)),
+    [students],
+  );
 
-  const activeStudents = students.filter((s) => !isExpiredOrInactive(s));
-  const expiredStudents = students.filter((s) => isExpiredOrInactive(s));
+  const filterStudents = useCallback(
+    (list: Student[]) => {
+      const q = searchQuery.trim().toLowerCase();
+      return list.filter((s) => {
+        const matchSearch = s.username.toLowerCase().includes(q);
+        const matchGrade = gradeFilter ? s.grade === gradeFilter : true;
+        return matchSearch && matchGrade;
+      });
+    },
+    [searchQuery, gradeFilter],
+  );
 
-  const filterStudents = (list: Student[]) =>
-    list.filter((s) => {
-      const matchSearch = s.username.toLowerCase().includes(searchQuery.trim().toLowerCase());
-      const matchGrade = gradeFilter ? s.grade === gradeFilter : true;
-      return matchSearch && matchGrade;
-    });
-
-  const filteredActive = filterStudents(activeStudents);
-  const filteredExpired = filterStudents(expiredStudents);
+  const filteredActive = React.useMemo(
+    () => filterStudents(activeStudents),
+    [filterStudents, activeStudents],
+  );
+  const filteredExpired = React.useMemo(
+    () => filterStudents(expiredStudents),
+    [filterStudents, expiredStudents],
+  );
 
   // ── API calls ─────────────────────────────────────────────────────────────
 
@@ -805,6 +1054,7 @@ export default function UsersAdminPage() {
         setShareInfo({ username, password });
         setNewUsernamePrefix(''); setNewUsernameSuffix(['', '', '', '']); setNewPassword('');
         setNewGrade(''); setNewActiveFrom(''); setNewActiveTo(''); setNewAccessMode('GRADE');
+        setShowAddModal(false);
         fetchStudents();
       } else {
         setError(data.error || 'Failed to create student account');
@@ -1016,6 +1266,25 @@ export default function UsersAdminPage() {
   return (
     <>
       {/* Modals */}
+      {showAddModal && (
+        <AddStudentModal
+          usernamePrefix={newUsernamePrefix} usernameSuffix={newUsernameSuffix}
+          password={newPassword} grade={newGrade} accessMode={newAccessMode}
+          activeFrom={newActiveFrom} activeTo={newActiveTo}
+          creating={creating} error={error} success={success} shareInfo={shareInfo}
+          onPrefixChange={setNewUsernamePrefix}
+          onSuffixChange={(i, v) => setNewUsernameSuffix((prev) => prev.map((d, idx) => (idx === i ? v : d)))}
+          onSuffixBulkSet={setNewUsernameSuffix}
+          onPasswordChange={setNewPassword}
+          onGradeChange={setNewGrade}
+          onAccessModeChange={setNewAccessMode}
+          onActiveFromChange={setNewActiveFrom}
+          onActiveToChange={setNewActiveTo}
+          onSubmit={handleCreateStudent}
+          onCancel={() => setShowAddModal(false)}
+          onDismissShareInfo={() => setShareInfo(null)}
+        />
+      )}
       {shareResetTarget && (
         <ShareResetModal target={shareResetTarget} password={shareResetPassword}
           loading={shareResetLoading} onPasswordChange={setShareResetPassword}
@@ -1033,119 +1302,42 @@ export default function UsersAdminPage() {
           onCancel={() => setCustomVideoTarget(null)} />
       )}
 
-      <div className="min-h-100vh bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl">
-          <div className="mb-6">
-            <h1 className="text-[22px] font-medium tracking-tight text-[#202124]">Student Accounts</h1>
-            <p className="mt-1 text-sm text-[#5f6368]">Create, manage, and remove student login accounts</p>
+          <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h1 className="text-[22px] font-medium tracking-tight text-[#202124]">Student Accounts</h1>
+              <p className="mt-1 text-sm text-[#5f6368]">Create, manage, and remove student login accounts</p>
+            </div>
+            <button type="button" onClick={() => setShowAddModal(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1a73e8] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#1765cc] hover:shadow-md active:bg-[#185abc]">
+              <UserPlus size={16} /><span>New Student</span>
+            </button>
           </div>
 
-          <div className="grid grid-cols-1 gap-6">
-            {/* ── Left panel: Create ─────────────────────────────────────── */}
-            <div className="h-fit w-full min-w-0 rounded-2xl bg-white p-6 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
-              <div className="mb-5 flex items-center gap-2.5">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8f0fe]">
-                  <UserPlus size={17} className="text-[#1a73e8]" />
-                </div>
-                <h2 className="text-[15px] font-medium text-[#202124]">Create Student Account</h2>
-              </div>
+          {/* Page-level feedback (shown once the modal that triggered it has closed) */}
+          {error && !showAddModal && (
+            <div className="mb-4 rounded-lg border border-[#fad2cf] bg-[#fce8e6] px-3.5 py-2.5 text-[13px] leading-5 text-[#c5221f]">{error}</div>
+          )}
+          {success && !showAddModal && (
+            <div className="mb-4 rounded-lg border border-[#ceead6] bg-[#e6f4ea] px-3.5 py-2.5 text-[13px] leading-5 text-[#137333]">{success}</div>
+          )}
+          {shareInfo && !showAddModal && (
+            <ShareCredentialsCard info={shareInfo} onDismiss={() => setShareInfo(null)} />
+          )}
 
-              {error && (
-                <div className="mb-4 rounded-lg border border-[#fad2cf] bg-[#fce8e6] px-3.5 py-2.5 text-[13px] leading-5 text-[#c5221f]">{error}</div>
-              )}
-              {success && (
-                <div className="mb-4 rounded-lg border border-[#ceead6] bg-[#e6f4ea] px-3.5 py-2.5 text-[13px] leading-5 text-[#137333]">{success}</div>
-              )}
+          {/* ── Summary ──────────────────────────────────────────────────── */}
+          <div className="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-3">
+            <StatCard label="Total Students" value={students.length} tone="default"
+              icon={<UserPlus size={17} />} />
+            <StatCard label="Active Accounts" value={activeStudents.length} tone="success"
+              icon={<Check size={17} />} />
+            <StatCard label="Deactivated Accounts" value={expiredStudents.length} tone="danger"
+              icon={<ShieldAlert size={17} />} />
+          </div>
 
-              <form onSubmit={handleCreateStudent} className="space-y-4">
-                {/* Username */}
-                <div>
-                  <div className="mb-1.5 flex items-center justify-between">
-                    <label className="text-xs font-medium text-[#5f6368]">Username</label>
-                    <CopyButton text={computedUsername} label="Copy" />
-                  </div>
-                  <UsernameInput prefix={newUsernamePrefix} suffix={newUsernameSuffix} disabled={creating}
-                    onPrefixChange={setNewUsernamePrefix}
-                    onSuffixChange={(i, v) => setNewUsernameSuffix((prev) => prev.map((d, idx) => (idx === i ? v : d)))}
-                    onSuffixBulkSet={setNewUsernameSuffix} />
-                  <p className="mt-1 text-[11px] text-[#9aa0a6]">Format: <span className="font-mono">username-XXXX</span></p>
-                </div>
-
-                {/* Password */}
-                <div>
-                  <div className="mb-1.5 flex items-center justify-between">
-                    <label className="text-xs font-medium text-[#5f6368]">Password</label>
-                    <div className="flex items-center gap-1">
-                      <button type="button" onClick={() => setNewPassword(generatePassword(6))} disabled={creating}
-                        className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-[#1a73e8] transition-colors hover:bg-[#e8f0fe] disabled:cursor-not-allowed disabled:opacity-40">
-                        <RefreshCw size={12} /><span>Generate</span>
-                      </button>
-                      <CopyButton text={newPassword} label="Copy" />
-                    </div>
-                  </div>
-                  <input type="text" value={newPassword} onChange={(e) => setNewPassword(e.target.value)}
-                    disabled={creating} placeholder="Initial password"
-                    className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all placeholder:text-[#9aa0a6] hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4] disabled:text-[#9aa0a6]"
-                    required />
-                </div>
-
-                {/* Grade */}
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Grade <span className="font-normal text-[#9aa0a6]">(optional)</span></label>
-                  <div className="relative">
-                    <select value={newGrade} onChange={(e) => setNewGrade(e.target.value as Grade | '')} disabled={creating}
-                      className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4]">
-                      <option value="">— Select grade —</option>
-                      {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => (
-                        <option key={val} value={val}>{label}</option>
-                      ))}
-                    </select>
-                    <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
-                  </div>
-                </div>
-
-                {/* Access Mode */}
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Access Mode</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {(['GRADE', 'CUSTOM'] as AccessMode[]).map((mode) => (
-                      <button key={mode} type="button" onClick={() => setNewAccessMode(mode)} disabled={creating}
-                        className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-medium transition-all ${
-                          newAccessMode === mode
-                            ? mode === 'CUSTOM'
-                              ? 'border-purple-300 bg-purple-50 text-purple-700'
-                              : 'border-[#1a73e8]/30 bg-[#e8f0fe] text-[#1a73e8]'
-                            : 'border-[#e8eaed] bg-white text-[#5f6368] hover:bg-[#f8f9fa]'
-                        }`}>
-                        {mode === 'CUSTOM' ? <Lock size={12} /> : <BookOpen size={12} />}
-                        {mode === 'CUSTOM' ? 'Custom' : 'Grade'}
-                      </button>
-                    ))}
-                  </div>
-                  <p className="mt-1 text-[11px] text-[#9aa0a6]">
-                    {newAccessMode === 'CUSTOM' ? 'Manually pick which videos this student can access.' : 'Student sees videos matching their grade.'}
-                  </p>
-                </div>
-
-                {/* Active Period */}
-                <div className="space-y-2 rounded-xl border border-[#e8eaed] bg-[#f8f9fa] p-3">
-                  <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-[#5f6368]">
-                    <Clock size={11} /> Account Validity
-                  </p>
-                  <DateTimePicker label="Active From (blank = immediate)" value={newActiveFrom} onChange={setNewActiveFrom} disabled={creating} />
-                  <DateTimePicker label="Active Until (blank = no expiry)" value={newActiveTo} onChange={setNewActiveTo} disabled={creating} minDate={newActiveFrom} />
-                </div>
-
-                <button type="submit" disabled={creating}
-                  className="flex w-full items-center justify-center gap-2 rounded-full bg-[#1a73e8] py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#1765cc] hover:shadow-md active:bg-[#185abc] disabled:cursor-not-allowed disabled:bg-[#c4c7cc] disabled:shadow-none">
-                  {creating ? <Loader2 className="animate-spin" size={16} /> : <><Plus size={16} /><span>Create Student</span></>}
-                </button>
-              </form>
-
-              {shareInfo && <ShareCredentialsCard info={shareInfo} onDismiss={() => setShareInfo(null)} />}
-            </div>
-
-            {/* ── Right panel: Students list ─────────────────────────────── */}
+          <div className="w-full">
+            {/* ── Students list ────────────────────────────────────────────── */}
             <div className="flex flex-col gap-6 w-full min-w-0">
               {/* Filters row */}
               <div className="rounded-2xl bg-white p-4 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
