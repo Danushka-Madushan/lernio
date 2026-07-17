@@ -16,7 +16,8 @@ export default function VideoUploadPage() {
 
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [grade, setGrade] = useState<Grade>(Grade.GRADE_6);
+  const [grade, setGrade] = useState<Grade | ''>('');
+  const [visibility, setVisibility] = useState<'PUBLIC' | 'GRADE'>('PUBLIC');
   const [cloudflareR2Key, setCloudflareR2Key] = useState('');
   const [thumbnailKey, setThumbnailKey] = useState('');
 
@@ -32,8 +33,8 @@ export default function VideoUploadPage() {
 
   const handleSaveVideo = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !cloudflareR2Key || !grade) {
-      setError('Title, grade, and a video file are required.');
+    if (!title.trim() || !cloudflareR2Key) {
+      setError('Title and a video file are required.');
       return;
     }
 
@@ -48,9 +49,10 @@ export default function VideoUploadPage() {
         body: JSON.stringify({
           title: title.trim(),
           description: description.trim() || null,
-          grade,
+          grade: grade || null,
           cloudflareR2Key,
           cloudflareR2ThumbnailKey: thumbnailKey || null,
+          visibility,
         }),
       });
 
@@ -180,23 +182,39 @@ export default function VideoUploadPage() {
                 <ThumbnailUploader onSuccess={handleThumbnailSuccess} />
               </div>
 
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]" htmlFor="upload-grade">
-                  Grade Band <span className="text-[#d93025]">*</span>
-                </label>
-                <div className="relative">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-[#5f6368]" htmlFor="upload-grade">
+                    Grade Band <span className="font-normal text-[#9aa0a6]">(optional)</span>
+                  </label>
                   <select
                     id="upload-grade"
                     value={grade}
-                    onChange={(e) => setGrade(e.target.value as Grade)}
+                    onChange={(e) => setGrade(e.target.value as Grade | '')}
                     disabled={saving}
                     className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20"
                   >
+                    <option value="">— No grade —</option>
                     {Object.values(Grade).map((g) => (
                       <option key={g} value={g}>
                         {g.replace('GRADE_', 'Grade ')}
                       </option>
                     ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-[#5f6368]" htmlFor="upload-visibility">
+                    Visibility <span className="text-[#d93025]">*</span>
+                  </label>
+                  <select
+                    id="upload-visibility"
+                    value={visibility}
+                    onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'GRADE')}
+                    disabled={saving}
+                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20"
+                  >
+                    <option value="PUBLIC">🌐 Public — All students can see</option>
+                    <option value="GRADE">🔒 Grade Only — Matching grade required</option>
                   </select>
                 </div>
               </div>
