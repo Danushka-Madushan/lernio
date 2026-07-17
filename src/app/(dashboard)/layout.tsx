@@ -2,6 +2,7 @@ import React from 'react';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/jwt';
 import Link from 'next/link';
+import Image from 'next/image';
 import LogoutButton from '@/components/LogoutButton';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -11,32 +12,66 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8f9fa] text-[#202124]">
-      <header className="sticky top-0 z-40 bg-white border-b border-[#e8eaed] px-4 py-3 shadow-[0_1px_2px_0_rgba(60,64,67,0.15)]">
-        <div className="max-w-6xl mx-auto flex justify-between items-center">
-          <Link href="/" className="text-xl font-medium tracking-tight text-[#1a73e8] hover:opacity-90 transition-opacity">
-            Lernio
+      {/* 
+        Upgraded Header: 
+        - bg-white/90 and backdrop-blur-md create a modern "frosted glass" effect.
+        - shadow-sm gives it just enough lift off the page to eliminate the "flat" feeling.
+      */}
+      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm transition-all duration-300">
+        <div className="max-w-6xl mx-auto px-4 py-3 flex justify-between items-center">
+          
+          {/* Logo Section */}
+          <Link 
+            href="/" 
+            className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8] rounded-lg"
+          >
+            <div className="relative w-8 h-8 shrink-0 transition-transform duration-200 group-hover:scale-105">
+              <Image 
+                src="/icon.svg" 
+                alt="Lernio Logo" 
+                fill
+                className="object-contain"
+                priority
+              />
+            </div>
+            <span className="text-xl font-semibold tracking-tight text-[#1a73e8]">
+              Lernio
+            </span>
           </Link>
-          <div className="flex items-center space-x-4 text-sm">
+
+          {/* User Controls Section */}
+          <div className="flex items-center space-x-3 sm:space-x-5 text-sm">
             {user && (
               <>
-                <span className="text-[#5f6368]">
-                  Hello, <span className="text-[#202124] font-medium">{user.username}</span>
-                </span>
+                <div className="hidden sm:flex flex-col text-right">
+                  <span className="text-xs text-[#5f6368] font-medium uppercase tracking-wider">
+                    Welcome back
+                  </span>
+                  <span className="text-[#202124] font-semibold">
+                    {user.username}
+                  </span>
+                </div>
+
                 {user.role === 'ADMIN' && (
                   <Link
                     href="/admin"
-                    className="text-[#1a73e8] font-medium hover:underline focus-visible:ring-2 focus-visible:ring-[#1a73e8]/40 outline-none rounded-full px-1"
+                    className="flex items-center px-3 py-1.5 bg-[#e8f0fe] text-[#1a73e8] font-medium text-xs rounded-full hover:bg-[#d2e3fc] transition-colors focus-visible:ring-2 focus-visible:ring-[#1a73e8]/40 outline-none"
                   >
                     Admin Panel
                   </Link>
                 )}
+                
+                {/* Vertical Divider */}
+                <div className="hidden sm:block w-px h-6 bg-gray-300"></div>
+
                 <LogoutButton />
               </>
             )}
           </div>
         </div>
       </header>
-      <main className="flex-1 max-w-6xl w-full mx-auto p-4 sm:p-6">
+
+      <main className="flex-1 w-full mx-auto">
         {children}
       </main>
     </div>
