@@ -326,7 +326,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
     setUploadFile(remuxedFile);
     setPhase('uploading');
     await startNewUpload(remuxedFile);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  }, []);
 
   // ── File input handler ─────────────────────────────────────────────────────
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -379,7 +379,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
           accept="video/*"
           onChange={handleFileChange}
           disabled={isActive}
-          className="w-full cursor-pointer text-xs text-[#5f6368] file:mr-3 file:cursor-pointer file:rounded-full file:border-0 file:bg-[#e8f0fe] file:px-3.5 file:py-1.5 file:text-xs file:font-medium file:text-[#1a73e8] hover:file:bg-[#d2e3fc]"
+          className="w-full cursor-pointer text-xs text-[#5f6368] file:mr-3 file:rounded-full file:border-0 file:bg-[#e8f0fe] file:px-3.5 file:py-1.5  file:font-medium hover:file:bg-[#d2e3fc]"
         />
 
         {rawFile && (
@@ -496,7 +496,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
               type="button"
               onClick={() => rawFile && preprocessAndUpload(rawFile)}
               disabled={!rawFile}
-              className="flex items-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-1.5 text-xs font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md disabled:cursor-not-allowed disabled:bg-[#c4c7cc] disabled:shadow-none"
+              className="flex items-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-1.5 text-xs font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md disabled:cursor-not-allowed"
             >
               <Upload size={13} />
               Start Upload

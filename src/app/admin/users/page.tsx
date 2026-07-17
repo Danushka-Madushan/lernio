@@ -212,7 +212,7 @@ function DateTimePicker({
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         min={minDate}
-        className="w-full rounded-lg border border-[#dadce0] bg-white px-3 py-2 text-xs text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4] disabled:text-[#9aa0a6]"
+        className="w-full rounded-lg border bg-white px-3 py-2 text-xs text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-[#1a73e8]/20"
       />
     </div>
   );
@@ -382,7 +382,7 @@ function ShareResetModal({ target, password, loading, onPasswordChange, onConfir
             </div>
             <input type="text" value={password} onChange={(e) => onPasswordChange(e.target.value)}
               placeholder="Enter or generate a password"
-              className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 font-mono text-sm text-[#202124] outline-none transition-all placeholder:font-sans placeholder:text-[#9aa0a6] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20" />
+              className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 font-mono text-sm text-[#202124] outline-none transition-all focus:ring-2 focus:ring-[#1a73e8]/20" />
           </div>
         </div>
         <div className="flex items-center justify-end gap-2.5 border-t border-[#e8eaed] bg-[#f8f9fa] px-6 py-4">
@@ -391,7 +391,7 @@ function ShareResetModal({ target, password, loading, onPasswordChange, onConfir
             Cancel
           </button>
           <button type="button" onClick={onConfirm} disabled={loading || !password.trim()}
-            className="inline-flex items-center gap-2 rounded-full bg-[#1a73e8] px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#1765cc] hover:shadow-md disabled:cursor-not-allowed disabled:bg-[#c4c7cc] disabled:shadow-none">
+            className="inline-flex items-center gap-2 rounded-full bg-[#1a73e8] px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#1765cc] hover:shadow-md disabled:cursor-not-allowed">
             {loading && <Loader2 size={14} className="animate-spin" />}
             Confirm & Share
           </button>
@@ -441,7 +441,7 @@ function EditStudentModal({ student, loading, onConfirm, onCancel }: {
             <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Grade <span className="font-normal text-[#9aa0a6]">(optional)</span></label>
             <div className="relative">
               <select value={grade} onChange={(e) => setGrade(e.target.value as Grade | '')} disabled={loading}
-                className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4]">
+                className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc]focus:ring-2 focus:ring-[#1a73e8]/20">
                 <option value="">— Select grade —</option>
                 {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => (
                   <option key={val} value={val}>{label}</option>
@@ -484,7 +484,7 @@ function EditStudentModal({ student, loading, onConfirm, onCancel }: {
             Cancel
           </button>
           <button type="button" onClick={() => onConfirm(activeFrom, activeTo, accessMode, grade)} disabled={loading}
-            className="inline-flex items-center gap-2 rounded-full bg-[#1a73e8] px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#1765cc] hover:shadow-md disabled:cursor-not-allowed disabled:bg-[#c4c7cc] disabled:shadow-none">
+            className="inline-flex items-center gap-2 rounded-full bg-[#1a73e8] px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#1765cc] hover:shadow-md disabled:cursor-not-allowed">
             {loading && <Loader2 size={14} className="animate-spin" />}
             Save Changes
           </button>
@@ -574,7 +574,7 @@ function CustomVideoPickerModal({ student, onSave, onCancel }: {
             <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa0a6]" />
             <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search videos…"
-              className="w-full rounded-full border border-[#dadce0] bg-white py-2 pl-9 pr-4 text-sm text-[#202124] outline-none transition-all placeholder:text-[#9aa0a6] hover:border-[#c4c7cc] focus:border-[#6d28d9] focus:ring-2 focus:ring-[#6d28d9]/20" />
+              className="w-full rounded-full border border-[#dadce0] bg-white py-2 pl-9 pr-4 text-sm text-[#202124] outline-none transition-allhover:border-[#c4c7cc] focus:ring-2 focus:ring-[#6d28d9]/20" />
           </div>
           <p className="mt-2 text-[11px] text-[#9aa0a6]">
             {selectedIds.size} of {allVideos.length} videos selected
@@ -640,7 +640,7 @@ function CustomVideoPickerModal({ student, onSave, onCancel }: {
               Cancel
             </button>
             <button type="button" onClick={handleSave} disabled={saving}
-              className="inline-flex items-center gap-2 rounded-full bg-[#6d28d9] px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#5b21b6] disabled:cursor-not-allowed disabled:bg-[#c4c7cc]">
+              className="inline-flex items-center gap-2 rounded-full bg-[#6d28d9] px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#5b21b6] disabled:cursor-not-allowed ">
               {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
               Save Access List
             </button>
@@ -663,8 +663,8 @@ function UsernameInput({ prefix, suffix, disabled, onPrefixChange, onSuffixChang
   const fieldBase = [
     'border border-[#dadce0] bg-white text-sm text-[#202124] outline-none transition-all',
     'placeholder:text-[#9aa0a6] hover:border-[#c4c7cc]',
-    'focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20',
-    'disabled:bg-[#f1f3f4] disabled:text-[#9aa0a6]',
+    ' focus:ring-2 focus:ring-[#1a73e8]/20',
+    ' ',
   ].join(' ');
 
   const handleDigitChange = (i: number, raw: string) => {
@@ -800,7 +800,7 @@ function AddStudentModal({
                 </div>
                 <input type="text" value={password} onChange={(e) => onPasswordChange(e.target.value)}
                   disabled={creating} placeholder="Initial password"
-                  className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all placeholder:text-[#9aa0a6] hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4] disabled:text-[#9aa0a6]"
+                  className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all  hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20  "
                   required />
               </div>
 
@@ -809,7 +809,7 @@ function AddStudentModal({
                 <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Grade <span className="font-normal text-[#9aa0a6]">(optional)</span></label>
                 <div className="relative">
                   <select value={grade} onChange={(e) => onGradeChange(e.target.value as Grade | '')} disabled={creating}
-                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4]">
+                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20 ">
                     <option value="">— Select grade —</option>
                     {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => (
                       <option key={val} value={val}>{label}</option>
@@ -861,7 +861,7 @@ function AddStudentModal({
             Cancel
           </button>
           <button type="submit" form="add-student-form" disabled={creating}
-            className="inline-flex items-center gap-2 rounded-full bg-[#1a73e8] px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#1765cc] hover:shadow-md disabled:cursor-not-allowed disabled:bg-[#c4c7cc] disabled:shadow-none">
+            className="inline-flex items-center gap-2 rounded-full bg-[#1a73e8] px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#1765cc] hover:shadow-md disabled:cursor-not-allowed ">
             {creating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
             Create Student
           </button>
@@ -1217,7 +1217,7 @@ export default function UsersAdminPage() {
           <div className="inline-flex items-center gap-1.5">
             <input type="text" placeholder="New password" value={resetPassword}
               onChange={(e) => setResetPassword(e.target.value)}
-              className="w-28 rounded-md border border-[#dadce0] px-2.5 py-1.5 font-mono text-xs outline-none transition-colors focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20" />
+              className="w-28 rounded-md border border-[#dadce0] px-2.5 py-1.5 font-mono text-xs outline-none transition-colors  focus:ring-2 focus:ring-[#1a73e8]/20" />
             <button type="button" onClick={() => setResetPassword(generatePassword(6))} title="Generate"
               className="rounded-full p-1.5 text-[#1a73e8] transition-colors hover:bg-[#e8f0fe]">
               <RefreshCw size={13} />
@@ -1310,7 +1310,7 @@ export default function UsersAdminPage() {
               <p className="mt-1 text-sm text-[#5f6368]">Create, manage, and remove student login accounts</p>
             </div>
             <button type="button" onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1a73e8] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#1765cc] hover:shadow-md active:bg-[#185abc]">
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1a73e8] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#1765cc] hover:shadow-md ">
               <UserPlus size={16} /><span>New Student</span>
             </button>
           </div>
@@ -1354,7 +1354,7 @@ export default function UsersAdminPage() {
                     {/* Grade filter */}
                     <div className="relative">
                       <select value={gradeFilter} onChange={(e) => setGradeFilter(e.target.value as Grade | '')}
-                        className="appearance-none rounded-full border border-[#dadce0] bg-white py-2 pl-3 pr-7 text-xs text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20">
+                        className="appearance-none rounded-full border border-[#dadce0] bg-white py-2 pl-3 pr-7 text-xs text-[#202124] outline-none transition-all hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20">
                         <option value="">All Grades</option>
                         {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => (
                           <option key={val} value={val}>{label}</option>
@@ -1367,7 +1367,7 @@ export default function UsersAdminPage() {
                       <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa0a6]" />
                       <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Search students…"
-                        className="w-48 rounded-full border border-[#dadce0] bg-white py-2 pl-9 pr-8 text-sm text-[#202124] outline-none transition-all placeholder:text-[#9aa0a6] hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20" />
+                        className="w-48 rounded-full border border-[#dadce0] bg-white py-2 pl-9 pr-8 text-sm text-[#202124] outline-none transition-all  hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20" />
                       {searchQuery && (
                         <button type="button" onClick={() => setSearchQuery('')} aria-label="Clear search"
                           className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9aa0a6] transition-colors hover:text-[#202124]">

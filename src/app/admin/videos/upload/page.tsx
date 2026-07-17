@@ -160,7 +160,7 @@ export default function VideoUploadPage() {
                   onChange={(e) => setTitle(e.target.value)}
                   disabled={saving}
                   placeholder="e.g. Grade 10 Math – Lesson 1: Algebra Basics"
-                  className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 placeholder:text-[#9aa0a6] hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4] disabled:text-[#9aa0a6]"
+                  className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150  hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20 "
                   required
                 />
               </div>
@@ -176,7 +176,7 @@ export default function VideoUploadPage() {
                   disabled={saving}
                   placeholder="Brief overview of what this lesson covers…"
                   rows={3}
-                  className="w-full resize-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 placeholder:text-[#9aa0a6] hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4] disabled:text-[#9aa0a6]"
+                  className="w-full resize-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150  hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20 "
                 />
               </div>
 
@@ -202,7 +202,7 @@ export default function VideoUploadPage() {
                     value={grade}
                     onChange={(e) => setGrade(e.target.value as Grade | '')}
                     disabled={saving}
-                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20"
+                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20"
                   >
                     <option value="">— No grade —</option>
                     {Object.values(Grade).map((g) => (
@@ -221,7 +221,7 @@ export default function VideoUploadPage() {
                     value={visibility}
                     onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'GRADE')}
                     disabled={saving}
-                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20"
+                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20"
                   >
                     <option value="PUBLIC">🌐 Public — All students can see</option>
                     <option value="GRADE">🔒 Grade Only — Matching grade required</option>
@@ -232,7 +232,7 @@ export default function VideoUploadPage() {
               <button
                 type="submit"
                 disabled={saving || !cloudflareR2Key}
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-[#1a73e8] py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md active:bg-[#185abc] disabled:cursor-not-allowed disabled:bg-[#c4c7cc] disabled:shadow-none"
+                className="flex w-full items-center justify-center gap-2 rounded-full bg-[#1a73e8] py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md  disabled:cursor-not-allowed "
               >
                 {saving ? (
                   <><Loader2 className="animate-spin" size={16} /><span>Publishing…</span></>

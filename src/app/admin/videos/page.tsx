@@ -28,6 +28,10 @@ interface Video {
   viewsCount: number;
   cloudflareR2ThumbnailKey: string | null;
   createdAt: string;
+  _count: {
+    likes: number;
+    comments: number;
+  };
 }
 
 const GRADE_LABELS: Record<Grade, string> = {
@@ -82,7 +86,7 @@ function EditableRow({
             autoFocus
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full rounded-lg border border-[#dadce0] bg-white px-3 py-2 text-xs text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20"
+            className="w-full rounded-lg border border-[#dadce0] bg-white px-3 py-2 text-xs text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20"
             placeholder="Video title"
           />
           <textarea
@@ -90,7 +94,7 @@ function EditableRow({
             onChange={(e) => setDescription(e.target.value)}
             rows={2}
             placeholder="Description (optional)"
-            className="w-full resize-none rounded-lg border border-[#dadce0] bg-white px-3 py-2 text-xs text-[#5f6368] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20"
+            className="w-full resize-none rounded-lg border border-[#dadce0] bg-white px-3 py-2 text-xs text-[#5f6368] outline-none transition-all duration-150 hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20"
           />
           {/* Thumbnail editor inside row */}
           <div className="space-y-1.5 pt-1">
@@ -109,7 +113,7 @@ function EditableRow({
           <select
             value={grade}
             onChange={(e) => setGrade(e.target.value as Grade | '')}
-            className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3 py-2 pr-7 text-xs text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20"
+            className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3 py-2 pr-7 text-xs text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20"
           >
             <option value="">— No grade —</option>
             {Object.entries(GRADE_LABELS).map(([val, label]) => (
@@ -128,7 +132,7 @@ function EditableRow({
           <select
             value={visibility}
             onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'GRADE')}
-            className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3 py-2 pr-7 text-xs text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20"
+            className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3 py-2 pr-7 text-xs text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20"
           >
             <option value="PUBLIC">Public</option>
             <option value="GRADE">Grade Only</option>
@@ -151,7 +155,7 @@ function EditableRow({
           <button
             onClick={handleSave}
             disabled={saving || !title.trim()}
-            className="flex items-center gap-1.5 rounded-full bg-[#1a73e8] px-3 py-1.5 text-[11px] font-medium text-white transition-colors hover:bg-[#1765cc] disabled:cursor-not-allowed disabled:bg-[#c4c7cc]"
+            className="flex items-center gap-1.5 rounded-full bg-[#1a73e8] px-3 py-1.5 text-[11px] font-medium text-white transition-colors hover:bg-[#1765cc] disabled:cursor-not-allowed "
           >
             {saving ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />}
             Save
@@ -188,6 +192,7 @@ export default function VideosAdminPage() {
     try {
       const res = await fetch('/api/videos');
       const data = await res.json();
+      console.log(data.videos)
       if (res.ok) setVideos(data.videos);
       else showToast(data.error || 'Failed to load catalog', 'err');
     } catch {
@@ -282,7 +287,7 @@ export default function VideosAdminPage() {
           </div>
           <Link
             href="/admin/videos/upload"
-            className="flex items-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md active:bg-[#185abc]"
+            className="flex items-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md "
           >
             <Plus size={15} />
             Upload New Video
@@ -332,6 +337,8 @@ export default function VideosAdminPage() {
                     <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
                       <span className="flex items-center gap-1"><Eye size={11} /> Views</span>
                     </th>
+                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Likes</th>
+                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Comments</th>
                     <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Published</th>
                     <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-[#5f6368]">Actions</th>
                   </tr>
@@ -408,6 +415,16 @@ export default function VideosAdminPage() {
                         {/* Views */}
                         <td className="px-4 py-3 text-[#5f6368]">
                           {video.viewsCount.toLocaleString()}
+                        </td>
+
+                        {/* Likes */}
+                        <td className="px-4 py-3 text-[#5f6368]">
+                          {video._count.likes.toLocaleString()}
+                        </td>
+
+                        {/* Comments */}
+                        <td className="px-4 py-3 text-[#5f6368]">
+                          {video._count.comments.toLocaleString()}
                         </td>
 
                         {/* Date */}
