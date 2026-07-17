@@ -72,8 +72,22 @@ export async function GET(
       headers.set('Content-Range', r2Response.ContentRange);
     }
 
-    // Tell browsers not to cache the raw stream URL
-    headers.set('Cache-Control', 'no-store');
+    if (r2Response.AcceptRanges) {
+      headers.set('Accept-Ranges', r2Response.AcceptRanges);
+    } else {
+      headers.set('Accept-Ranges', 'bytes');
+    }
+
+    if (r2Response.ETag) {
+      headers.set('ETag', r2Response.ETag);
+    }
+
+    if (r2Response.LastModified) {
+      headers.set('Last-Modified', r2Response.LastModified.toUTCString());
+    }
+
+    // Tell browsers not to cache the raw stream URL but allow range requests
+    headers.set('Cache-Control', 'no-cache');
 
     // Security: prevent the browser from sniffing the URL
     headers.set('Content-Security-Policy', "media-src 'self'");
@@ -81,7 +95,7 @@ export async function GET(
     // Convert the AWS SDK's readable stream to a Web ReadableStream
     const webStream = r2Response.Body.transformToWebStream();
 
-    const statusCode = rangeHeader ? 206 : 200;
+    const statusCode = r2Response.$metadata.httpStatusCode ?? (rangeHeader ? 206 : 200);
     return new NextResponse(webStream, { status: statusCode, headers });
   } catch (err: any) {
     console.error('[stream] R2 error:', err);
