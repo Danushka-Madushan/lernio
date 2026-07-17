@@ -3,6 +3,14 @@ import { db } from '@/lib/db';
 import { signToken } from '@/lib/jwt';
 import bcrypt from 'bcryptjs';
 
+// Helper: check if a student account is currently active
+function isAccountActive(activeFrom: Date | null, activeTo: Date | null): boolean {
+  const now = new Date();
+  if (activeFrom && now < activeFrom) return false;
+  if (activeTo && now > activeTo) return false;
+  return true;
+}
+
 export async function POST(request: Request) {
   try {
     const { username, password } = await request.json();
@@ -47,6 +55,16 @@ export async function POST(request: Request) {
       if (!passwordMatch) {
         return NextResponse.json({ error: 'Invalid username or password' }, { status: 401 });
       }
+
+      // Check account validity for students
+      if (user.role === 'STUDENT') {
+        if (!isAccountActive(user.activeFrom, user.activeTo)) {
+          return NextResponse.json(
+            { error: 'account_inactive', message: 'Your account is not active. Please contact staff.' },
+            { status: 403 }
+          );
+        }
+      }
     }
 
     // Generate JWT token
@@ -75,7 +93,7 @@ export async function POST(request: Request) {
     });
 
     return response;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Login error:', error);
     return NextResponse.json({ error: 'An unexpected error occurred' }, { status: 500 });
   }
