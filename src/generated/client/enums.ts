@@ -27,3 +27,19 @@ export const Grade = {
 } as const
 
 export type Grade = (typeof Grade)[keyof typeof Grade]
+
+
+export const VideoVisibility = {
+  PUBLIC: 'PUBLIC',
+  GRADE: 'GRADE'
+} as const
+
+export type VideoVisibility = (typeof VideoVisibility)[keyof typeof VideoVisibility]
+
+
+export const AccessMode = {
+  GRADE: 'GRADE',
+  CUSTOM: 'CUSTOM'
+} as const
+
+export type AccessMode = (typeof AccessMode)[keyof typeof AccessMode]

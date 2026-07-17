@@ -52,6 +52,11 @@ export type User = Prisma.UserModel
  */
 export type Video = Prisma.VideoModel
 /**
+ * Model CustomVideoAccess
+ * 
+ */
+export type CustomVideoAccess = Prisma.CustomVideoAccessModel
+/**
  * Model Comment
  * 
  */

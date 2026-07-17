@@ -15,7 +15,7 @@ interface VideoType {
   id: string;
   title: string;
   description: string | null;
-  grade: string;
+  grade: string | null;
   viewsCount: number;
   likesCount: number;
   createdAt: string;
@@ -140,9 +140,11 @@ export default function VideoDetails({
       <div className="space-y-4 rounded-2xl bg-white p-5 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div className="space-y-1.5">
-            <span className="inline-block rounded-full bg-[#e8f0fe] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#1a73e8]">
-              {video.grade.replace('GRADE_', 'Grade ')}
-            </span>
+            {video.grade && (
+              <span className="inline-block rounded-full bg-[#e8f0fe] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#1a73e8]">
+                {video.grade.replace('GRADE_', 'Grade ')}
+              </span>
+            )}
             <h1 className="text-xl font-medium leading-tight tracking-tight text-[#202124]">
               {video.title}
             </h1>

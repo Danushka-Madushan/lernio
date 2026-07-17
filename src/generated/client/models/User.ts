@@ -29,6 +29,10 @@ export type UserMinAggregateOutputType = {
   username: string | null
   hashedPassword: string | null
   role: $Enums.Role | null
+  grade: $Enums.Grade | null
+  activeFrom: Date | null
+  activeTo: Date | null
+  accessMode: $Enums.AccessMode | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -38,6 +42,10 @@ export type UserMaxAggregateOutputType = {
   username: string | null
   hashedPassword: string | null
   role: $Enums.Role | null
+  grade: $Enums.Grade | null
+  activeFrom: Date | null
+  activeTo: Date | null
+  accessMode: $Enums.AccessMode | null
   createdAt: Date | null
   updatedAt: Date | null
 }
@@ -47,6 +55,10 @@ export type UserCountAggregateOutputType = {
   username: number
   hashedPassword: number
   role: number
+  grade: number
+  activeFrom: number
+  activeTo: number
+  accessMode: number
   createdAt: number
   updatedAt: number
   _all: number
@@ -58,6 +70,10 @@ export type UserMinAggregateInputType = {
   username?: true
   hashedPassword?: true
   role?: true
+  grade?: true
+  activeFrom?: true
+  activeTo?: true
+  accessMode?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -67,6 +83,10 @@ export type UserMaxAggregateInputType = {
   username?: true
   hashedPassword?: true
   role?: true
+  grade?: true
+  activeFrom?: true
+  activeTo?: true
+  accessMode?: true
   createdAt?: true
   updatedAt?: true
 }
@@ -76,6 +96,10 @@ export type UserCountAggregateInputType = {
   username?: true
   hashedPassword?: true
   role?: true
+  grade?: true
+  activeFrom?: true
+  activeTo?: true
+  accessMode?: true
   createdAt?: true
   updatedAt?: true
   _all?: true
@@ -158,6 +182,10 @@ export type UserGroupByOutputType = {
   username: string
   hashedPassword: string
   role: $Enums.Role
+  grade: $Enums.Grade | null
+  activeFrom: Date | null
+  activeTo: Date | null
+  accessMode: $Enums.AccessMode
   createdAt: Date
   updatedAt: Date
   _count: UserCountAggregateOutputType | null
@@ -188,11 +216,16 @@ export type UserWhereInput = {
   username?: Prisma.StringFilter<"User"> | string
   hashedPassword?: Prisma.StringFilter<"User"> | string
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
+  grade?: Prisma.EnumGradeNullableFilter<"User"> | $Enums.Grade | null
+  activeFrom?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  activeTo?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  accessMode?: Prisma.EnumAccessModeFilter<"User"> | $Enums.AccessMode
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   comments?: Prisma.CommentListRelationFilter
   likes?: Prisma.LikeListRelationFilter
   views?: Prisma.ViewListRelationFilter
+  customVideos?: Prisma.CustomVideoAccessListRelationFilter
 }
 
 export type UserOrderByWithRelationInput = {
@@ -200,11 +233,16 @@ export type UserOrderByWithRelationInput = {
   username?: Prisma.SortOrder
   hashedPassword?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  grade?: Prisma.SortOrderInput | Prisma.SortOrder
+  activeFrom?: Prisma.SortOrderInput | Prisma.SortOrder
+  activeTo?: Prisma.SortOrderInput | Prisma.SortOrder
+  accessMode?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   comments?: Prisma.CommentOrderByRelationAggregateInput
   likes?: Prisma.LikeOrderByRelationAggregateInput
   views?: Prisma.ViewOrderByRelationAggregateInput
+  customVideos?: Prisma.CustomVideoAccessOrderByRelationAggregateInput
 }
 
 export type UserWhereUniqueInput = Prisma.AtLeast<{
@@ -215,11 +253,16 @@ export type UserWhereUniqueInput = Prisma.AtLeast<{
   NOT?: Prisma.UserWhereInput | Prisma.UserWhereInput[]
   hashedPassword?: Prisma.StringFilter<"User"> | string
   role?: Prisma.EnumRoleFilter<"User"> | $Enums.Role
+  grade?: Prisma.EnumGradeNullableFilter<"User"> | $Enums.Grade | null
+  activeFrom?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  activeTo?: Prisma.DateTimeNullableFilter<"User"> | Date | string | null
+  accessMode?: Prisma.EnumAccessModeFilter<"User"> | $Enums.AccessMode
   createdAt?: Prisma.DateTimeFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeFilter<"User"> | Date | string
   comments?: Prisma.CommentListRelationFilter
   likes?: Prisma.LikeListRelationFilter
   views?: Prisma.ViewListRelationFilter
+  customVideos?: Prisma.CustomVideoAccessListRelationFilter
 }, "id" | "username">
 
 export type UserOrderByWithAggregationInput = {
@@ -227,6 +270,10 @@ export type UserOrderByWithAggregationInput = {
   username?: Prisma.SortOrder
   hashedPassword?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  grade?: Prisma.SortOrderInput | Prisma.SortOrder
+  activeFrom?: Prisma.SortOrderInput | Prisma.SortOrder
+  activeTo?: Prisma.SortOrderInput | Prisma.SortOrder
+  accessMode?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
   _count?: Prisma.UserCountOrderByAggregateInput
@@ -242,6 +289,10 @@ export type UserScalarWhereWithAggregatesInput = {
   username?: Prisma.StringWithAggregatesFilter<"User"> | string
   hashedPassword?: Prisma.StringWithAggregatesFilter<"User"> | string
   role?: Prisma.EnumRoleWithAggregatesFilter<"User"> | $Enums.Role
+  grade?: Prisma.EnumGradeNullableWithAggregatesFilter<"User"> | $Enums.Grade | null
+  activeFrom?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  activeTo?: Prisma.DateTimeNullableWithAggregatesFilter<"User"> | Date | string | null
+  accessMode?: Prisma.EnumAccessModeWithAggregatesFilter<"User"> | $Enums.AccessMode
   createdAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
   updatedAt?: Prisma.DateTimeWithAggregatesFilter<"User"> | Date | string
 }
@@ -251,11 +302,16 @@ export type UserCreateInput = {
   username: string
   hashedPassword: string
   role?: $Enums.Role
+  grade?: $Enums.Grade | null
+  activeFrom?: Date | string | null
+  activeTo?: Date | string | null
+  accessMode?: $Enums.AccessMode
   createdAt?: Date | string
   updatedAt?: Date | string
   comments?: Prisma.CommentCreateNestedManyWithoutUserInput
   likes?: Prisma.LikeCreateNestedManyWithoutUserInput
   views?: Prisma.ViewCreateNestedManyWithoutUserInput
+  customVideos?: Prisma.CustomVideoAccessCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateInput = {
@@ -263,11 +319,16 @@ export type UserUncheckedCreateInput = {
   username: string
   hashedPassword: string
   role?: $Enums.Role
+  grade?: $Enums.Grade | null
+  activeFrom?: Date | string | null
+  activeTo?: Date | string | null
+  accessMode?: $Enums.AccessMode
   createdAt?: Date | string
   updatedAt?: Date | string
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutUserInput
   likes?: Prisma.LikeUncheckedCreateNestedManyWithoutUserInput
   views?: Prisma.ViewUncheckedCreateNestedManyWithoutUserInput
+  customVideos?: Prisma.CustomVideoAccessUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserUpdateInput = {
@@ -275,11 +336,16 @@ export type UserUpdateInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   hashedPassword?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  grade?: Prisma.NullableEnumGradeFieldUpdateOperationsInput | $Enums.Grade | null
+  activeFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  activeTo?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessMode?: Prisma.EnumAccessModeFieldUpdateOperationsInput | $Enums.AccessMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   comments?: Prisma.CommentUpdateManyWithoutUserNestedInput
   likes?: Prisma.LikeUpdateManyWithoutUserNestedInput
   views?: Prisma.ViewUpdateManyWithoutUserNestedInput
+  customVideos?: Prisma.CustomVideoAccessUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateInput = {
@@ -287,11 +353,16 @@ export type UserUncheckedUpdateInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   hashedPassword?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  grade?: Prisma.NullableEnumGradeFieldUpdateOperationsInput | $Enums.Grade | null
+  activeFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  activeTo?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessMode?: Prisma.EnumAccessModeFieldUpdateOperationsInput | $Enums.AccessMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   comments?: Prisma.CommentUncheckedUpdateManyWithoutUserNestedInput
   likes?: Prisma.LikeUncheckedUpdateManyWithoutUserNestedInput
   views?: Prisma.ViewUncheckedUpdateManyWithoutUserNestedInput
+  customVideos?: Prisma.CustomVideoAccessUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateManyInput = {
@@ -299,6 +370,10 @@ export type UserCreateManyInput = {
   username: string
   hashedPassword: string
   role?: $Enums.Role
+  grade?: $Enums.Grade | null
+  activeFrom?: Date | string | null
+  activeTo?: Date | string | null
+  accessMode?: $Enums.AccessMode
   createdAt?: Date | string
   updatedAt?: Date | string
 }
@@ -308,6 +383,10 @@ export type UserUpdateManyMutationInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   hashedPassword?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  grade?: Prisma.NullableEnumGradeFieldUpdateOperationsInput | $Enums.Grade | null
+  activeFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  activeTo?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessMode?: Prisma.EnumAccessModeFieldUpdateOperationsInput | $Enums.AccessMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -317,6 +396,10 @@ export type UserUncheckedUpdateManyInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   hashedPassword?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  grade?: Prisma.NullableEnumGradeFieldUpdateOperationsInput | $Enums.Grade | null
+  activeFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  activeTo?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessMode?: Prisma.EnumAccessModeFieldUpdateOperationsInput | $Enums.AccessMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
 }
@@ -326,6 +409,10 @@ export type UserCountOrderByAggregateInput = {
   username?: Prisma.SortOrder
   hashedPassword?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  grade?: Prisma.SortOrder
+  activeFrom?: Prisma.SortOrder
+  activeTo?: Prisma.SortOrder
+  accessMode?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -335,6 +422,10 @@ export type UserMaxOrderByAggregateInput = {
   username?: Prisma.SortOrder
   hashedPassword?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  grade?: Prisma.SortOrder
+  activeFrom?: Prisma.SortOrder
+  activeTo?: Prisma.SortOrder
+  accessMode?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -344,6 +435,10 @@ export type UserMinOrderByAggregateInput = {
   username?: Prisma.SortOrder
   hashedPassword?: Prisma.SortOrder
   role?: Prisma.SortOrder
+  grade?: Prisma.SortOrder
+  activeFrom?: Prisma.SortOrder
+  activeTo?: Prisma.SortOrder
+  accessMode?: Prisma.SortOrder
   createdAt?: Prisma.SortOrder
   updatedAt?: Prisma.SortOrder
 }
@@ -361,8 +456,34 @@ export type EnumRoleFieldUpdateOperationsInput = {
   set?: $Enums.Role
 }
 
+export type NullableEnumGradeFieldUpdateOperationsInput = {
+  set?: $Enums.Grade | null
+}
+
+export type NullableDateTimeFieldUpdateOperationsInput = {
+  set?: Date | string | null
+}
+
+export type EnumAccessModeFieldUpdateOperationsInput = {
+  set?: $Enums.AccessMode
+}
+
 export type DateTimeFieldUpdateOperationsInput = {
   set?: Date | string
+}
+
+export type UserCreateNestedOneWithoutCustomVideosInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCustomVideosInput, Prisma.UserUncheckedCreateWithoutCustomVideosInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCustomVideosInput
+  connect?: Prisma.UserWhereUniqueInput
+}
+
+export type UserUpdateOneRequiredWithoutCustomVideosNestedInput = {
+  create?: Prisma.XOR<Prisma.UserCreateWithoutCustomVideosInput, Prisma.UserUncheckedCreateWithoutCustomVideosInput>
+  connectOrCreate?: Prisma.UserCreateOrConnectWithoutCustomVideosInput
+  upsert?: Prisma.UserUpsertWithoutCustomVideosInput
+  connect?: Prisma.UserWhereUniqueInput
+  update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutCustomVideosInput, Prisma.UserUpdateWithoutCustomVideosInput>, Prisma.UserUncheckedUpdateWithoutCustomVideosInput>
 }
 
 export type UserCreateNestedOneWithoutCommentsInput = {
@@ -407,15 +528,100 @@ export type UserUpdateOneRequiredWithoutViewsNestedInput = {
   update?: Prisma.XOR<Prisma.XOR<Prisma.UserUpdateToOneWithWhereWithoutViewsInput, Prisma.UserUpdateWithoutViewsInput>, Prisma.UserUncheckedUpdateWithoutViewsInput>
 }
 
+export type UserCreateWithoutCustomVideosInput = {
+  id?: string
+  username: string
+  hashedPassword: string
+  role?: $Enums.Role
+  grade?: $Enums.Grade | null
+  activeFrom?: Date | string | null
+  activeTo?: Date | string | null
+  accessMode?: $Enums.AccessMode
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  comments?: Prisma.CommentCreateNestedManyWithoutUserInput
+  likes?: Prisma.LikeCreateNestedManyWithoutUserInput
+  views?: Prisma.ViewCreateNestedManyWithoutUserInput
+}
+
+export type UserUncheckedCreateWithoutCustomVideosInput = {
+  id?: string
+  username: string
+  hashedPassword: string
+  role?: $Enums.Role
+  grade?: $Enums.Grade | null
+  activeFrom?: Date | string | null
+  activeTo?: Date | string | null
+  accessMode?: $Enums.AccessMode
+  createdAt?: Date | string
+  updatedAt?: Date | string
+  comments?: Prisma.CommentUncheckedCreateNestedManyWithoutUserInput
+  likes?: Prisma.LikeUncheckedCreateNestedManyWithoutUserInput
+  views?: Prisma.ViewUncheckedCreateNestedManyWithoutUserInput
+}
+
+export type UserCreateOrConnectWithoutCustomVideosInput = {
+  where: Prisma.UserWhereUniqueInput
+  create: Prisma.XOR<Prisma.UserCreateWithoutCustomVideosInput, Prisma.UserUncheckedCreateWithoutCustomVideosInput>
+}
+
+export type UserUpsertWithoutCustomVideosInput = {
+  update: Prisma.XOR<Prisma.UserUpdateWithoutCustomVideosInput, Prisma.UserUncheckedUpdateWithoutCustomVideosInput>
+  create: Prisma.XOR<Prisma.UserCreateWithoutCustomVideosInput, Prisma.UserUncheckedCreateWithoutCustomVideosInput>
+  where?: Prisma.UserWhereInput
+}
+
+export type UserUpdateToOneWithWhereWithoutCustomVideosInput = {
+  where?: Prisma.UserWhereInput
+  data: Prisma.XOR<Prisma.UserUpdateWithoutCustomVideosInput, Prisma.UserUncheckedUpdateWithoutCustomVideosInput>
+}
+
+export type UserUpdateWithoutCustomVideosInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  hashedPassword?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  grade?: Prisma.NullableEnumGradeFieldUpdateOperationsInput | $Enums.Grade | null
+  activeFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  activeTo?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessMode?: Prisma.EnumAccessModeFieldUpdateOperationsInput | $Enums.AccessMode
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  comments?: Prisma.CommentUpdateManyWithoutUserNestedInput
+  likes?: Prisma.LikeUpdateManyWithoutUserNestedInput
+  views?: Prisma.ViewUpdateManyWithoutUserNestedInput
+}
+
+export type UserUncheckedUpdateWithoutCustomVideosInput = {
+  id?: Prisma.StringFieldUpdateOperationsInput | string
+  username?: Prisma.StringFieldUpdateOperationsInput | string
+  hashedPassword?: Prisma.StringFieldUpdateOperationsInput | string
+  role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  grade?: Prisma.NullableEnumGradeFieldUpdateOperationsInput | $Enums.Grade | null
+  activeFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  activeTo?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessMode?: Prisma.EnumAccessModeFieldUpdateOperationsInput | $Enums.AccessMode
+  createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
+  comments?: Prisma.CommentUncheckedUpdateManyWithoutUserNestedInput
+  likes?: Prisma.LikeUncheckedUpdateManyWithoutUserNestedInput
+  views?: Prisma.ViewUncheckedUpdateManyWithoutUserNestedInput
+}
+
 export type UserCreateWithoutCommentsInput = {
   id?: string
   username: string
   hashedPassword: string
   role?: $Enums.Role
+  grade?: $Enums.Grade | null
+  activeFrom?: Date | string | null
+  activeTo?: Date | string | null
+  accessMode?: $Enums.AccessMode
   createdAt?: Date | string
   updatedAt?: Date | string
   likes?: Prisma.LikeCreateNestedManyWithoutUserInput
   views?: Prisma.ViewCreateNestedManyWithoutUserInput
+  customVideos?: Prisma.CustomVideoAccessCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutCommentsInput = {
@@ -423,10 +629,15 @@ export type UserUncheckedCreateWithoutCommentsInput = {
   username: string
   hashedPassword: string
   role?: $Enums.Role
+  grade?: $Enums.Grade | null
+  activeFrom?: Date | string | null
+  activeTo?: Date | string | null
+  accessMode?: $Enums.AccessMode
   createdAt?: Date | string
   updatedAt?: Date | string
   likes?: Prisma.LikeUncheckedCreateNestedManyWithoutUserInput
   views?: Prisma.ViewUncheckedCreateNestedManyWithoutUserInput
+  customVideos?: Prisma.CustomVideoAccessUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutCommentsInput = {
@@ -450,10 +661,15 @@ export type UserUpdateWithoutCommentsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   hashedPassword?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  grade?: Prisma.NullableEnumGradeFieldUpdateOperationsInput | $Enums.Grade | null
+  activeFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  activeTo?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessMode?: Prisma.EnumAccessModeFieldUpdateOperationsInput | $Enums.AccessMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   likes?: Prisma.LikeUpdateManyWithoutUserNestedInput
   views?: Prisma.ViewUpdateManyWithoutUserNestedInput
+  customVideos?: Prisma.CustomVideoAccessUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutCommentsInput = {
@@ -461,10 +677,15 @@ export type UserUncheckedUpdateWithoutCommentsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   hashedPassword?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  grade?: Prisma.NullableEnumGradeFieldUpdateOperationsInput | $Enums.Grade | null
+  activeFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  activeTo?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessMode?: Prisma.EnumAccessModeFieldUpdateOperationsInput | $Enums.AccessMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   likes?: Prisma.LikeUncheckedUpdateManyWithoutUserNestedInput
   views?: Prisma.ViewUncheckedUpdateManyWithoutUserNestedInput
+  customVideos?: Prisma.CustomVideoAccessUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutLikesInput = {
@@ -472,10 +693,15 @@ export type UserCreateWithoutLikesInput = {
   username: string
   hashedPassword: string
   role?: $Enums.Role
+  grade?: $Enums.Grade | null
+  activeFrom?: Date | string | null
+  activeTo?: Date | string | null
+  accessMode?: $Enums.AccessMode
   createdAt?: Date | string
   updatedAt?: Date | string
   comments?: Prisma.CommentCreateNestedManyWithoutUserInput
   views?: Prisma.ViewCreateNestedManyWithoutUserInput
+  customVideos?: Prisma.CustomVideoAccessCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutLikesInput = {
@@ -483,10 +709,15 @@ export type UserUncheckedCreateWithoutLikesInput = {
   username: string
   hashedPassword: string
   role?: $Enums.Role
+  grade?: $Enums.Grade | null
+  activeFrom?: Date | string | null
+  activeTo?: Date | string | null
+  accessMode?: $Enums.AccessMode
   createdAt?: Date | string
   updatedAt?: Date | string
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutUserInput
   views?: Prisma.ViewUncheckedCreateNestedManyWithoutUserInput
+  customVideos?: Prisma.CustomVideoAccessUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutLikesInput = {
@@ -510,10 +741,15 @@ export type UserUpdateWithoutLikesInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   hashedPassword?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  grade?: Prisma.NullableEnumGradeFieldUpdateOperationsInput | $Enums.Grade | null
+  activeFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  activeTo?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessMode?: Prisma.EnumAccessModeFieldUpdateOperationsInput | $Enums.AccessMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   comments?: Prisma.CommentUpdateManyWithoutUserNestedInput
   views?: Prisma.ViewUpdateManyWithoutUserNestedInput
+  customVideos?: Prisma.CustomVideoAccessUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutLikesInput = {
@@ -521,10 +757,15 @@ export type UserUncheckedUpdateWithoutLikesInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   hashedPassword?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  grade?: Prisma.NullableEnumGradeFieldUpdateOperationsInput | $Enums.Grade | null
+  activeFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  activeTo?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessMode?: Prisma.EnumAccessModeFieldUpdateOperationsInput | $Enums.AccessMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   comments?: Prisma.CommentUncheckedUpdateManyWithoutUserNestedInput
   views?: Prisma.ViewUncheckedUpdateManyWithoutUserNestedInput
+  customVideos?: Prisma.CustomVideoAccessUncheckedUpdateManyWithoutUserNestedInput
 }
 
 export type UserCreateWithoutViewsInput = {
@@ -532,10 +773,15 @@ export type UserCreateWithoutViewsInput = {
   username: string
   hashedPassword: string
   role?: $Enums.Role
+  grade?: $Enums.Grade | null
+  activeFrom?: Date | string | null
+  activeTo?: Date | string | null
+  accessMode?: $Enums.AccessMode
   createdAt?: Date | string
   updatedAt?: Date | string
   comments?: Prisma.CommentCreateNestedManyWithoutUserInput
   likes?: Prisma.LikeCreateNestedManyWithoutUserInput
+  customVideos?: Prisma.CustomVideoAccessCreateNestedManyWithoutUserInput
 }
 
 export type UserUncheckedCreateWithoutViewsInput = {
@@ -543,10 +789,15 @@ export type UserUncheckedCreateWithoutViewsInput = {
   username: string
   hashedPassword: string
   role?: $Enums.Role
+  grade?: $Enums.Grade | null
+  activeFrom?: Date | string | null
+  activeTo?: Date | string | null
+  accessMode?: $Enums.AccessMode
   createdAt?: Date | string
   updatedAt?: Date | string
   comments?: Prisma.CommentUncheckedCreateNestedManyWithoutUserInput
   likes?: Prisma.LikeUncheckedCreateNestedManyWithoutUserInput
+  customVideos?: Prisma.CustomVideoAccessUncheckedCreateNestedManyWithoutUserInput
 }
 
 export type UserCreateOrConnectWithoutViewsInput = {
@@ -570,10 +821,15 @@ export type UserUpdateWithoutViewsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   hashedPassword?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  grade?: Prisma.NullableEnumGradeFieldUpdateOperationsInput | $Enums.Grade | null
+  activeFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  activeTo?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessMode?: Prisma.EnumAccessModeFieldUpdateOperationsInput | $Enums.AccessMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   comments?: Prisma.CommentUpdateManyWithoutUserNestedInput
   likes?: Prisma.LikeUpdateManyWithoutUserNestedInput
+  customVideos?: Prisma.CustomVideoAccessUpdateManyWithoutUserNestedInput
 }
 
 export type UserUncheckedUpdateWithoutViewsInput = {
@@ -581,10 +837,15 @@ export type UserUncheckedUpdateWithoutViewsInput = {
   username?: Prisma.StringFieldUpdateOperationsInput | string
   hashedPassword?: Prisma.StringFieldUpdateOperationsInput | string
   role?: Prisma.EnumRoleFieldUpdateOperationsInput | $Enums.Role
+  grade?: Prisma.NullableEnumGradeFieldUpdateOperationsInput | $Enums.Grade | null
+  activeFrom?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  activeTo?: Prisma.NullableDateTimeFieldUpdateOperationsInput | Date | string | null
+  accessMode?: Prisma.EnumAccessModeFieldUpdateOperationsInput | $Enums.AccessMode
   createdAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   updatedAt?: Prisma.DateTimeFieldUpdateOperationsInput | Date | string
   comments?: Prisma.CommentUncheckedUpdateManyWithoutUserNestedInput
   likes?: Prisma.LikeUncheckedUpdateManyWithoutUserNestedInput
+  customVideos?: Prisma.CustomVideoAccessUncheckedUpdateManyWithoutUserNestedInput
 }
 
 
@@ -596,12 +857,14 @@ export type UserCountOutputType = {
   comments: number
   likes: number
   views: number
+  customVideos: number
 }
 
 export type UserCountOutputTypeSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   comments?: boolean | UserCountOutputTypeCountCommentsArgs
   likes?: boolean | UserCountOutputTypeCountLikesArgs
   views?: boolean | UserCountOutputTypeCountViewsArgs
+  customVideos?: boolean | UserCountOutputTypeCountCustomVideosArgs
 }
 
 /**
@@ -635,17 +898,29 @@ export type UserCountOutputTypeCountViewsArgs<ExtArgs extends runtime.Types.Exte
   where?: Prisma.ViewWhereInput
 }
 
+/**
+ * UserCountOutputType without action
+ */
+export type UserCountOutputTypeCountCustomVideosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  where?: Prisma.CustomVideoAccessWhereInput
+}
+
 
 export type UserSelect<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetSelect<{
   id?: boolean
   username?: boolean
   hashedPassword?: boolean
   role?: boolean
+  grade?: boolean
+  activeFrom?: boolean
+  activeTo?: boolean
+  accessMode?: boolean
   createdAt?: boolean
   updatedAt?: boolean
   comments?: boolean | Prisma.User$commentsArgs<ExtArgs>
   likes?: boolean | Prisma.User$likesArgs<ExtArgs>
   views?: boolean | Prisma.User$viewsArgs<ExtArgs>
+  customVideos?: boolean | Prisma.User$customVideosArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }, ExtArgs["result"]["user"]>
 
@@ -654,6 +929,10 @@ export type UserSelectCreateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   username?: boolean
   hashedPassword?: boolean
   role?: boolean
+  grade?: boolean
+  activeFrom?: boolean
+  activeTo?: boolean
+  accessMode?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -663,6 +942,10 @@ export type UserSelectUpdateManyAndReturn<ExtArgs extends runtime.Types.Extensio
   username?: boolean
   hashedPassword?: boolean
   role?: boolean
+  grade?: boolean
+  activeFrom?: boolean
+  activeTo?: boolean
+  accessMode?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }, ExtArgs["result"]["user"]>
@@ -672,15 +955,20 @@ export type UserSelectScalar = {
   username?: boolean
   hashedPassword?: boolean
   role?: boolean
+  grade?: boolean
+  activeFrom?: boolean
+  activeTo?: boolean
+  accessMode?: boolean
   createdAt?: boolean
   updatedAt?: boolean
 }
 
-export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "username" | "hashedPassword" | "role" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
+export type UserOmit<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = runtime.Types.Extensions.GetOmit<"id" | "username" | "hashedPassword" | "role" | "grade" | "activeFrom" | "activeTo" | "accessMode" | "createdAt" | "updatedAt", ExtArgs["result"]["user"]>
 export type UserInclude<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
   comments?: boolean | Prisma.User$commentsArgs<ExtArgs>
   likes?: boolean | Prisma.User$likesArgs<ExtArgs>
   views?: boolean | Prisma.User$viewsArgs<ExtArgs>
+  customVideos?: boolean | Prisma.User$customVideosArgs<ExtArgs>
   _count?: boolean | Prisma.UserCountOutputTypeDefaultArgs<ExtArgs>
 }
 export type UserIncludeCreateManyAndReturn<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {}
@@ -692,12 +980,17 @@ export type $UserPayload<ExtArgs extends runtime.Types.Extensions.InternalArgs =
     comments: Prisma.$CommentPayload<ExtArgs>[]
     likes: Prisma.$LikePayload<ExtArgs>[]
     views: Prisma.$ViewPayload<ExtArgs>[]
+    customVideos: Prisma.$CustomVideoAccessPayload<ExtArgs>[]
   }
   scalars: runtime.Types.Extensions.GetPayloadResult<{
     id: string
     username: string
     hashedPassword: string
     role: $Enums.Role
+    grade: $Enums.Grade | null
+    activeFrom: Date | null
+    activeTo: Date | null
+    accessMode: $Enums.AccessMode
     createdAt: Date
     updatedAt: Date
   }, ExtArgs["result"]["user"]>
@@ -1097,6 +1390,7 @@ export interface Prisma__UserClient<T, Null = never, ExtArgs extends runtime.Typ
   comments<T extends Prisma.User$commentsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$commentsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CommentPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   likes<T extends Prisma.User$likesArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$likesArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$LikePayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   views<T extends Prisma.User$viewsArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$viewsArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$ViewPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
+  customVideos<T extends Prisma.User$customVideosArgs<ExtArgs> = {}>(args?: Prisma.Subset<T, Prisma.User$customVideosArgs<ExtArgs>>): Prisma.PrismaPromise<runtime.Types.Result.GetResult<Prisma.$CustomVideoAccessPayload<ExtArgs>, T, "findMany", GlobalOmitOptions> | Null>
   /**
    * Attaches callbacks for the resolution and/or rejection of the Promise.
    * @param onfulfilled The callback to execute when the Promise is resolved.
@@ -1130,6 +1424,10 @@ export interface UserFieldRefs {
   readonly username: Prisma.FieldRef<"User", 'String'>
   readonly hashedPassword: Prisma.FieldRef<"User", 'String'>
   readonly role: Prisma.FieldRef<"User", 'Role'>
+  readonly grade: Prisma.FieldRef<"User", 'Grade'>
+  readonly activeFrom: Prisma.FieldRef<"User", 'DateTime'>
+  readonly activeTo: Prisma.FieldRef<"User", 'DateTime'>
+  readonly accessMode: Prisma.FieldRef<"User", 'AccessMode'>
   readonly createdAt: Prisma.FieldRef<"User", 'DateTime'>
   readonly updatedAt: Prisma.FieldRef<"User", 'DateTime'>
 }
@@ -1594,6 +1892,30 @@ export type User$viewsArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs
   take?: number
   skip?: number
   distinct?: Prisma.ViewScalarFieldEnum | Prisma.ViewScalarFieldEnum[]
+}
+
+/**
+ * User.customVideos
+ */
+export type User$customVideosArgs<ExtArgs extends runtime.Types.Extensions.InternalArgs = runtime.Types.Extensions.DefaultArgs> = {
+  /**
+   * Select specific fields to fetch from the CustomVideoAccess
+   */
+  select?: Prisma.CustomVideoAccessSelect<ExtArgs> | null
+  /**
+   * Omit specific fields from the CustomVideoAccess
+   */
+  omit?: Prisma.CustomVideoAccessOmit<ExtArgs> | null
+  /**
+   * Choose, which related nodes to fetch as well
+   */
+  include?: Prisma.CustomVideoAccessInclude<ExtArgs> | null
+  where?: Prisma.CustomVideoAccessWhereInput
+  orderBy?: Prisma.CustomVideoAccessOrderByWithRelationInput | Prisma.CustomVideoAccessOrderByWithRelationInput[]
+  cursor?: Prisma.CustomVideoAccessWhereUniqueInput
+  take?: number
+  skip?: number
+  distinct?: Prisma.CustomVideoAccessScalarFieldEnum | Prisma.CustomVideoAccessScalarFieldEnum[]
 }
 
 /**
