@@ -13,6 +13,8 @@ import {
   Eye,
   ChevronDown,
   Image as ImageIcon,
+  Globe,
+  Lock,
 } from 'lucide-react';
 import { Grade } from '@/generated/client/enums';
 import ThumbnailUploader from '@/components/ThumbnailUploader';
@@ -21,7 +23,8 @@ interface Video {
   id: string;
   title: string;
   description: string | null;
-  grade: Grade;
+  grade: Grade | null;
+  visibility: 'PUBLIC' | 'GRADE';
   viewsCount: number;
   cloudflareR2ThumbnailKey: string | null;
   createdAt: string;
@@ -43,12 +46,13 @@ function EditableRow({
   onCancel,
 }: {
   video: Video;
-  onSave: (id: string, data: { title: string; description: string | null; grade: Grade; cloudflareR2ThumbnailKey: string | null }) => Promise<void>;
+  onSave: (id: string, data: { title: string; description: string | null; grade: Grade | null; cloudflareR2ThumbnailKey: string | null; visibility: 'PUBLIC' | 'GRADE' }) => Promise<void>;
   onCancel: () => void;
 }) {
   const [title, setTitle] = useState(video.title);
   const [description, setDescription] = useState(video.description ?? '');
-  const [grade, setGrade] = useState<Grade>(video.grade);
+  const [grade, setGrade] = useState<Grade | ''>(video.grade ?? '');
+  const [visibility, setVisibility] = useState<'PUBLIC' | 'GRADE'>(video.visibility);
   const [thumbnailKey, setThumbnailKey] = useState<string | null>(video.cloudflareR2ThumbnailKey);
   const [saving, setSaving] = useState(false);
 
@@ -62,8 +66,9 @@ function EditableRow({
     await onSave(video.id, {
       title: title.trim(),
       description: description.trim() || null,
-      grade,
+      grade: grade ? (grade as Grade) : null,
       cloudflareR2ThumbnailKey: thumbnailKey,
+      visibility,
     });
     setSaving(false);
   };
@@ -103,14 +108,30 @@ function EditableRow({
         <div className="relative mt-0.5">
           <select
             value={grade}
-            onChange={(e) => setGrade(e.target.value as Grade)}
+            onChange={(e) => setGrade(e.target.value as Grade | '')}
             className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3 py-2 pr-7 text-xs text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20"
           >
+            <option value="">— No grade —</option>
             {Object.entries(GRADE_LABELS).map(([val, label]) => (
               <option key={val} value={val}>
                 {label}
               </option>
             ))}
+          </select>
+          <ChevronDown size={11} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5f6368]" />
+        </div>
+      </td>
+
+      {/* Visibility */}
+      <td className="vertical-align-top py-4 px-4">
+        <div className="relative mt-0.5">
+          <select
+            value={visibility}
+            onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'GRADE')}
+            className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3 py-2 pr-7 text-xs text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20"
+          >
+            <option value="PUBLIC">Public</option>
+            <option value="GRADE">Grade Only</option>
           </select>
           <ChevronDown size={11} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5f6368]" />
         </div>
@@ -182,7 +203,7 @@ export default function VideosAdminPage() {
 
   const handleSave = async (
     id: string,
-    data: { title: string; description: string | null; grade: Grade; cloudflareR2ThumbnailKey: string | null }
+    data: { title: string; description: string | null; grade: Grade | null; cloudflareR2ThumbnailKey: string | null; visibility: 'PUBLIC' | 'GRADE' }
   ) => {
     try {
       const res = await fetch(`/api/videos/${id}`, {
@@ -201,6 +222,7 @@ export default function VideosAdminPage() {
                   description: data.description,
                   grade: data.grade,
                   cloudflareR2ThumbnailKey: data.cloudflareR2ThumbnailKey,
+                  visibility: data.visibility,
                 }
               : v
           )
@@ -306,6 +328,7 @@ export default function VideosAdminPage() {
                   <tr className="border-b border-[#e8eaed] bg-[#f8f9fa]">
                     <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Lesson Title</th>
                     <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Grade</th>
+                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Visibility</th>
                     <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
                       <span className="flex items-center gap-1"><Eye size={11} /> Views</span>
                     </th>
@@ -358,9 +381,28 @@ export default function VideosAdminPage() {
 
                         {/* Grade badge */}
                         <td className="px-4 py-3">
-                          <span className="rounded-full bg-[#e8f0fe] px-2.5 py-1 text-[11px] font-medium text-[#1a73e8]">
-                            {GRADE_LABELS[video.grade]}
-                          </span>
+                          {video.grade ? (
+                            <span className="rounded-full bg-[#e8f0fe] px-2.5 py-1 text-[11px] font-medium text-[#1a73e8]">
+                              {GRADE_LABELS[video.grade]}
+                            </span>
+                          ) : (
+                            <span className="text-[11px] text-[#9aa0a6]">—</span>
+                          )}
+                        </td>
+
+                        {/* Visibility badge */}
+                        <td className="px-4 py-3">
+                          {video.visibility === 'PUBLIC' ? (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-[#e6f4ea] px-2.5 py-1 text-[11px] font-medium text-[#137333]">
+                              <Globe size={10} />
+                              Public
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-[#fef3c7] px-2.5 py-1 text-[11px] font-medium text-[#92400e]">
+                              <Lock size={10} />
+                              Grade Only
+                            </span>
+                          )}
                         </td>
 
                         {/* Views */}
