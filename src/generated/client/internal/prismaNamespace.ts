@@ -386,6 +386,7 @@ type FieldRefInputType<Model, FieldType> = Model extends never ? never : FieldRe
 export const ModelName = {
   User: 'User',
   Video: 'Video',
+  CustomVideoAccess: 'CustomVideoAccess',
   Comment: 'Comment',
   Like: 'Like',
   View: 'View'
@@ -404,7 +405,7 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
     omit: GlobalOmitOptions
   }
   meta: {
-    modelProps: "user" | "video" | "comment" | "like" | "view"
+    modelProps: "user" | "video" | "customVideoAccess" | "comment" | "like" | "view"
     txIsolationLevel: TransactionIsolationLevel
   }
   model: {
@@ -553,6 +554,80 @@ export type TypeMap<ExtArgs extends runtime.Types.Extensions.InternalArgs = runt
         count: {
           args: Prisma.VideoCountArgs<ExtArgs>
           result: runtime.Types.Utils.Optional<Prisma.VideoCountAggregateOutputType> | number
+        }
+      }
+    }
+    CustomVideoAccess: {
+      payload: Prisma.$CustomVideoAccessPayload<ExtArgs>
+      fields: Prisma.CustomVideoAccessFieldRefs
+      operations: {
+        findUnique: {
+          args: Prisma.CustomVideoAccessFindUniqueArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomVideoAccessPayload> | null
+        }
+        findUniqueOrThrow: {
+          args: Prisma.CustomVideoAccessFindUniqueOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomVideoAccessPayload>
+        }
+        findFirst: {
+          args: Prisma.CustomVideoAccessFindFirstArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomVideoAccessPayload> | null
+        }
+        findFirstOrThrow: {
+          args: Prisma.CustomVideoAccessFindFirstOrThrowArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomVideoAccessPayload>
+        }
+        findMany: {
+          args: Prisma.CustomVideoAccessFindManyArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomVideoAccessPayload>[]
+        }
+        create: {
+          args: Prisma.CustomVideoAccessCreateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomVideoAccessPayload>
+        }
+        createMany: {
+          args: Prisma.CustomVideoAccessCreateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        createManyAndReturn: {
+          args: Prisma.CustomVideoAccessCreateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomVideoAccessPayload>[]
+        }
+        delete: {
+          args: Prisma.CustomVideoAccessDeleteArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomVideoAccessPayload>
+        }
+        update: {
+          args: Prisma.CustomVideoAccessUpdateArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomVideoAccessPayload>
+        }
+        deleteMany: {
+          args: Prisma.CustomVideoAccessDeleteManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateMany: {
+          args: Prisma.CustomVideoAccessUpdateManyArgs<ExtArgs>
+          result: BatchPayload
+        }
+        updateManyAndReturn: {
+          args: Prisma.CustomVideoAccessUpdateManyAndReturnArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomVideoAccessPayload>[]
+        }
+        upsert: {
+          args: Prisma.CustomVideoAccessUpsertArgs<ExtArgs>
+          result: runtime.Types.Utils.PayloadToResult<Prisma.$CustomVideoAccessPayload>
+        }
+        aggregate: {
+          args: Prisma.CustomVideoAccessAggregateArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.AggregateCustomVideoAccess>
+        }
+        groupBy: {
+          args: Prisma.CustomVideoAccessGroupByArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CustomVideoAccessGroupByOutputType>[]
+        }
+        count: {
+          args: Prisma.CustomVideoAccessCountArgs<ExtArgs>
+          result: runtime.Types.Utils.Optional<Prisma.CustomVideoAccessCountAggregateOutputType> | number
         }
       }
     }
@@ -822,6 +897,10 @@ export const UserScalarFieldEnum = {
   username: 'username',
   hashedPassword: 'hashedPassword',
   role: 'role',
+  grade: 'grade',
+  activeFrom: 'activeFrom',
+  activeTo: 'activeTo',
+  accessMode: 'accessMode',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -836,12 +915,22 @@ export const VideoScalarFieldEnum = {
   cloudflareR2Key: 'cloudflareR2Key',
   cloudflareR2ThumbnailKey: 'cloudflareR2ThumbnailKey',
   grade: 'grade',
+  visibility: 'visibility',
   viewsCount: 'viewsCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type VideoScalarFieldEnum = (typeof VideoScalarFieldEnum)[keyof typeof VideoScalarFieldEnum]
+
+
+export const CustomVideoAccessScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  videoId: 'videoId'
+} as const
+
+export type CustomVideoAccessScalarFieldEnum = (typeof CustomVideoAccessScalarFieldEnum)[keyof typeof CustomVideoAccessScalarFieldEnum]
 
 
 export const CommentScalarFieldEnum = {
@@ -934,6 +1023,20 @@ export type ListEnumRoleFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
+ * Reference to a field of type 'Grade'
+ */
+export type EnumGradeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Grade'>
+    
+
+
+/**
+ * Reference to a field of type 'Grade[]'
+ */
+export type ListEnumGradeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Grade[]'>
+    
+
+
+/**
  * Reference to a field of type 'DateTime'
  */
 export type DateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'DateTime'>
@@ -948,16 +1051,30 @@ export type ListDateTimeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaM
 
 
 /**
- * Reference to a field of type 'Grade'
+ * Reference to a field of type 'AccessMode'
  */
-export type EnumGradeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Grade'>
+export type EnumAccessModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AccessMode'>
     
 
 
 /**
- * Reference to a field of type 'Grade[]'
+ * Reference to a field of type 'AccessMode[]'
  */
-export type ListEnumGradeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'Grade[]'>
+export type ListEnumAccessModeFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'AccessMode[]'>
+    
+
+
+/**
+ * Reference to a field of type 'VideoVisibility'
+ */
+export type EnumVideoVisibilityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'VideoVisibility'>
+    
+
+
+/**
+ * Reference to a field of type 'VideoVisibility[]'
+ */
+export type ListEnumVideoVisibilityFieldRefInput<$PrismaModel> = FieldRefInputType<$PrismaModel, 'VideoVisibility[]'>
     
 
 
@@ -1100,6 +1217,7 @@ export type PrismaClientOptions = ({
 export type GlobalOmitConfig = {
   user?: Prisma.UserOmit
   video?: Prisma.VideoOmit
+  customVideoAccess?: Prisma.CustomVideoAccessOmit
   comment?: Prisma.CommentOmit
   like?: Prisma.LikeOmit
   view?: Prisma.ViewOmit

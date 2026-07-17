@@ -5,8 +5,17 @@ import { cookies } from 'next/headers';
 import { s3, bucketName } from '@/lib/r2';
 import { GetObjectCommand, DeleteObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { Grade, VideoVisibility } from '@/generated/client/enums';
 
-// GET: Retrieve a video, increment views, check like status, and return pre-signed play URL
+// Helper: check if a student account is currently active
+function isAccountActive(activeFrom: Date | null, activeTo: Date | null): boolean {
+  const now = new Date();
+  if (activeFrom && now < activeFrom) return false;
+  if (activeTo && now > activeTo) return false;
+  return true;
+}
+
+// GET: Retrieve a video, enforce access rules, increment views, return pre-signed URL
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -45,7 +54,52 @@ export async function GET(
       return NextResponse.json({ error: 'Video not found' }, { status: 404 });
     }
 
-    // 2. Increment View Count & Track View
+    // 2. For students: enforce access rules
+    if (user.role === 'STUDENT') {
+      const studentRecord = await db.user.findUnique({
+        where: { id: user.id },
+        select: {
+          grade: true,
+          activeFrom: true,
+          activeTo: true,
+          accessMode: true,
+        },
+      });
+
+      if (!studentRecord) {
+        return NextResponse.json({ error: 'User not found' }, { status: 404 });
+      }
+
+      // Account validity check
+      if (!isAccountActive(studentRecord.activeFrom, studentRecord.activeTo)) {
+        return NextResponse.json(
+          { error: 'account_inactive', message: 'Your account is not active. Please contact staff.' },
+          { status: 403 }
+        );
+      }
+
+      // Access mode check
+      if (studentRecord.accessMode === 'CUSTOM') {
+        // Must be in their custom list
+        const customEntry = await db.customVideoAccess.findUnique({
+          where: { userId_videoId: { userId: user.id, videoId: id } },
+        });
+        if (!customEntry) {
+          return NextResponse.json({ error: 'Access denied to this video' }, { status: 403 });
+        }
+      } else {
+        // GRADE mode
+        if (video.visibility === VideoVisibility.GRADE) {
+          // Must have a matching grade
+          if (!studentRecord.grade || !video.grade || studentRecord.grade !== video.grade) {
+            return NextResponse.json({ error: 'Access denied to this video' }, { status: 403 });
+          }
+        }
+        // PUBLIC videos are always accessible in GRADE mode
+      }
+    }
+
+    // 3. Increment View Count & Track View
     try {
       await db.$transaction([
         db.view.create({
@@ -66,14 +120,14 @@ export async function GET(
       console.warn('View tracking transaction issue:', viewErr);
     }
 
-    // 3. Generate presigned URL (valid for 5 minutes)
+    // 4. Generate presigned URL (valid for 5 minutes)
     const getCommand = new GetObjectCommand({
       Bucket: bucketName,
       Key: video.cloudflareR2Key,
     });
     const presignedUrl = await getSignedUrl(s3, getCommand, { expiresIn: 300 });
 
-    // 4. Check if current user liked this video
+    // 5. Check if current user liked this video
     const userHasLiked = await db.like.findUnique({
       where: {
         userId_videoId: {
@@ -91,7 +145,7 @@ export async function GET(
       presignedUrl,
       hasLiked: !!userHasLiked,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Retrieve video details error:', error);
     return NextResponse.json({ error: 'Failed to retrieve video details' }, { status: 500 });
   }
@@ -112,30 +166,42 @@ export async function PUT(
   }
 
   try {
-    const { title, description, grade, cloudflareR2ThumbnailKey } = await request.json();
+    const { title, description, grade, cloudflareR2ThumbnailKey, visibility } = await request.json();
 
-    if (!title || !grade) {
-      return NextResponse.json({ error: 'Title and grade are required' }, { status: 400 });
+    if (!title) {
+      return NextResponse.json({ error: 'Title is required' }, { status: 400 });
+    }
+
+    // Validate grade if provided
+    if (grade && !Object.values(Grade).includes(grade as Grade)) {
+      return NextResponse.json({ error: 'Invalid grade value' }, { status: 400 });
+    }
+
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const updateData: any = {
+      title,
+      description,
+      grade: grade ? (grade as Grade) : null,
+      ...(cloudflareR2ThumbnailKey !== undefined ? { cloudflareR2ThumbnailKey } : {}),
+    };
+
+    if (visibility !== undefined) {
+      updateData.visibility = visibility === 'GRADE' ? VideoVisibility.GRADE : VideoVisibility.PUBLIC;
     }
 
     const updatedVideo = await db.video.update({
       where: { id },
-      data: {
-        title,
-        description,
-        grade,
-        ...(cloudflareR2ThumbnailKey !== undefined ? { cloudflareR2ThumbnailKey } : {}),
-      },
+      data: updateData,
     });
 
     return NextResponse.json({ success: true, video: updatedVideo });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Update video error:', error);
     return NextResponse.json({ error: 'Failed to update video metadata' }, { status: 500 });
   }
 }
 
-// DELETE: Delete video from R2 and Supabase (ADMIN only)
+// DELETE: Delete video from R2 and DB (ADMIN only)
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -168,16 +234,16 @@ export async function DELETE(
       await s3.send(deleteCommand);
     } catch (r2Err) {
       console.error('Failed to delete file from R2 bucket:', r2Err);
-      // Continue deleting DB entry even if R2 deletion failed (to prevent state inconsistency)
+      // Continue deleting DB entry even if R2 deletion failed
     }
 
-    // 3. Delete database record (cascading deletes comments, likes, views automatically via schema cascade relation)
+    // 3. Delete database record (cascading deletes comments, likes, views automatically)
     await db.video.delete({
       where: { id },
     });
 
     return NextResponse.json({ success: true, message: 'Video deleted successfully' });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Delete video error:', error);
     return NextResponse.json({ error: 'Failed to delete video' }, { status: 500 });
   }

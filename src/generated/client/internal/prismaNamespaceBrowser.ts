@@ -53,6 +53,7 @@ export const AnyNull = runtime.AnyNull
 export const ModelName = {
   User: 'User',
   Video: 'Video',
+  CustomVideoAccess: 'CustomVideoAccess',
   Comment: 'Comment',
   Like: 'Like',
   View: 'View'
@@ -79,6 +80,10 @@ export const UserScalarFieldEnum = {
   username: 'username',
   hashedPassword: 'hashedPassword',
   role: 'role',
+  grade: 'grade',
+  activeFrom: 'activeFrom',
+  activeTo: 'activeTo',
+  accessMode: 'accessMode',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
@@ -93,12 +98,22 @@ export const VideoScalarFieldEnum = {
   cloudflareR2Key: 'cloudflareR2Key',
   cloudflareR2ThumbnailKey: 'cloudflareR2ThumbnailKey',
   grade: 'grade',
+  visibility: 'visibility',
   viewsCount: 'viewsCount',
   createdAt: 'createdAt',
   updatedAt: 'updatedAt'
 } as const
 
 export type VideoScalarFieldEnum = (typeof VideoScalarFieldEnum)[keyof typeof VideoScalarFieldEnum]
+
+
+export const CustomVideoAccessScalarFieldEnum = {
+  id: 'id',
+  userId: 'userId',
+  videoId: 'videoId'
+} as const
+
+export type CustomVideoAccessScalarFieldEnum = (typeof CustomVideoAccessScalarFieldEnum)[keyof typeof CustomVideoAccessScalarFieldEnum]
 
 
 export const CommentScalarFieldEnum = {
