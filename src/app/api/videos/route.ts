@@ -28,7 +28,6 @@ export async function GET(request: Request) {
 
     // ADMIN: return all videos with optional grade filter
     if (user.role === 'ADMIN') {
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let whereClause: any = {};
       if (gradeParam) {
         if (Object.values(Grade).includes(gradeParam as Grade)) {
@@ -104,7 +103,6 @@ export async function GET(request: Request) {
       videos = customAccess.map((ca) => ca.video);
     } else {
       // GRADE mode: PUBLIC videos + GRADE videos matching student's grade
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const whereClause: any = {
         OR: [
           { visibility: VideoVisibility.PUBLIC },

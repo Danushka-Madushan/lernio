@@ -132,25 +132,27 @@ export default function VideoDetails({
   };
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 p-4 sm:space-y-5">
       {/* Secure Video Player */}
       <CustomPlayer videoId={video.id} />
 
       {/* Video Info Section */}
-      <div className="space-y-4 rounded-2xl bg-white p-5 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
-        <div className="flex flex-wrap items-start justify-between gap-3">
-          <div className="space-y-1.5">
+      <div className="space-y-4 rounded-2xl bg-white p-4 sm:p-5 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
+        {/* Responsive Header: Stacks on mobile, inline on sm+ screens */}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1.5 w-full sm:flex-1 sm:pr-4">
             {video.grade && (
               <span className="inline-block rounded-full bg-[#e8f0fe] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-[#1a73e8]">
                 {video.grade.replace('GRADE_', 'Grade ')}
               </span>
             )}
-            <h1 className="text-xl font-medium leading-tight tracking-tight text-[#202124]">
+            <h1 className="text-lg sm:text-xl font-medium leading-tight tracking-tight text-[#202124] wrap-break-word">
               {video.title}
             </h1>
           </div>
 
-          <div className="flex items-center space-x-2">
+          {/* Stats & Actions: Uses flex-wrap for very narrow screens (like iPhone SE) */}
+          <div className="flex flex-wrap items-center gap-2 mt-1 sm:mt-0 sm:shrink-0">
             {/* View Counter */}
             <span className="flex items-center space-x-1.5 rounded-full bg-[#f1f3f4] px-3 py-1.5 text-xs text-[#5f6368]">
               <Eye size={14} />
@@ -174,37 +176,37 @@ export default function VideoDetails({
         </div>
 
         {video.description && (
-          <p className="rounded-xl border border-[#e8eaed] bg-[#f8f9fa] p-3.5 text-xs leading-relaxed text-[#3c4043]">
+          <p className="rounded-xl border border-[#e8eaed] bg-[#f8f9fa] p-3 sm:p-3.5 text-xs leading-relaxed text-[#3c4043]">
             {video.description}
           </p>
         )}
       </div>
 
       {/* Engagement / Comments Section */}
-      <div className="space-y-5 rounded-2xl bg-white p-5 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
-        <h2 className="flex items-center space-x-2 text-[15px] font-medium text-[#202124]">
+      <div className="space-y-4 sm:space-y-5 rounded-2xl bg-white p-4 sm:p-5 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
+        <h2 className="flex items-center space-x-2 text-[14px] sm:text-[15px] font-medium text-[#202124]">
           <MessageSquare size={17} className="text-[#5f6368]" />
           <span>Comments ({optimisticComments.length})</span>
         </h2>
 
         {/* Comment Form */}
-        <form onSubmit={handleCommentSubmit} className="flex items-center gap-2.5">
+        <form onSubmit={handleCommentSubmit} className="flex items-center gap-2 sm:gap-2.5">
           <input
             type="text"
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             placeholder="Write a comment..."
             disabled={commentLoading}
-            className="flex-1 rounded-full border border-[#dadce0] bg-white px-4 py-2.5 text-sm text-[#202124] placeholder-[#9aa0a6] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:border-[#1a73e8] focus:ring-2 focus:ring-[#1a73e8]/20 disabled:bg-[#f1f3f4] disabled:opacity-70"
+            className="flex-1 w-full min-w-0 rounded-full border border-[#dadce0] bg-white px-3 py-2 sm:px-4 sm:py-2.5 text-[13px] sm:text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20  disabled:opacity-70"
             aria-label="Add comment input"
           />
           <button
             type="submit"
             disabled={!commentText.trim() || commentLoading}
-            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#1a73e8] text-white shadow-sm outline-none transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#1a73e8]/40 disabled:cursor-not-allowed disabled:bg-[#c4c7cc] disabled:shadow-none"
+            className="flex h-9 w-9 sm:h-10 sm:w-10 shrink-0 items-center justify-center rounded-full bg-[#1a73e8] text-white shadow-sm outline-none transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md focus-visible:ring-2 focus-visible:ring-[#1a73e8]/40 disabled:cursor-not-allowed "
             aria-label="Submit comment"
           >
-            <Send size={16} />
+            <Send size={14} className="sm:w-4 sm:h-4" />
           </button>
         </form>
 
@@ -218,14 +220,14 @@ export default function VideoDetails({
             optimisticComments.map((c) => (
               <div key={c.id} className="space-y-1 py-3.5 first:pt-0">
                 <div className="flex items-center gap-2 text-[10px] text-[#5f6368]">
-                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-[#e8f0fe] text-[10px] font-medium text-[#1a73e8]">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#e8f0fe] text-[10px] font-medium text-[#1a73e8]">
                     {c.username.charAt(0).toUpperCase()}
                   </div>
-                  <span className="font-medium text-[#3c4043]">{c.username}</span>
+                  <span className="font-medium text-[#3c4043] truncate">{c.username}</span>
                   <span>·</span>
-                  <span>{new Date(c.createdAt).toLocaleDateString()}</span>
+                  <span className="shrink-0">{new Date(c.createdAt).toLocaleDateString()}</span>
                 </div>
-                <p className="pl-8 text-xs leading-normal text-[#202124]">{c.content}</p>
+                <p className="pl-8 text-xs leading-normal text-[#202124] wrap-break-word">{c.content}</p>
               </div>
             ))
           )}
