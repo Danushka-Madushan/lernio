@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Grade } from '@/generated/client/enums';
 import ThumbnailUploader from '@/components/ThumbnailUploader';
+import { notoSans } from '@/lib/fonts';
 
 interface Video {
   id: string;
@@ -361,7 +362,7 @@ export default function VideosAdminPage() {
                         <td className="max-w-xs px-4 py-3">
                           <div className="flex items-center space-x-3">
                             {/* Small thumbnail in admin panel catalog list */}
-                            <div className="flex h-8 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[#e8eaed] bg-[#202124] text-[#9aa0a6]">
+                            <div className="flex h-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[#e8eaed] bg-[#202124] text-[#9aa0a6]">
                               {video.cloudflareR2ThumbnailKey ? (
                                 // eslint-disable-next-line @next/next/no-img-element
                                 <img
@@ -374,11 +375,11 @@ export default function VideosAdminPage() {
                               )}
                             </div>
                             <div className="min-w-0">
-                              <span className="block truncate font-medium text-[#202124]">
+                              <span className={`block truncate text-wrap font-medium text-[#202124] ${notoSans.className}`}>
                                 {video.title}
                               </span>
                               {video.description && (
-                                <span className="mt-0.5 block truncate text-[11px] text-[#5f6368]">
+                                <span className={`mt-0.5 block truncate text-[11px] text-[#5f6368] ${notoSans.className}`}>
                                   {video.description}
                                 </span>
                               )}

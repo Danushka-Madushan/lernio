@@ -3,6 +3,7 @@
 import React, { useState, useOptimistic, startTransition } from 'react';
 import CustomPlayer from '@/components/CustomPlayer';
 import { Heart, Send, MessageSquare, Eye } from 'lucide-react';
+import { notoSans } from '@/lib/fonts';
 
 interface CommentType {
   id: string;
@@ -146,7 +147,7 @@ export default function VideoDetails({
                 {video.grade.replace('GRADE_', 'Grade ')}
               </span>
             )}
-            <h1 className="text-lg sm:text-xl font-medium leading-tight tracking-tight text-[#202124] wrap-break-word">
+            <h1 className={`text-lg sm:text-xl font-medium leading-tight tracking-tight text-[#202124] wrap-break-word ${notoSans.className}`}>
               {video.title}
             </h1>
           </div>
@@ -176,7 +177,7 @@ export default function VideoDetails({
         </div>
 
         {video.description && (
-          <p className="rounded-xl border border-[#e8eaed] bg-[#f8f9fa] p-3 sm:p-3.5 text-xs leading-relaxed text-[#3c4043]">
+          <p className={`rounded-xl border border-[#e8eaed] bg-[#f8f9fa] p-3 sm:p-3.5 text-xs leading-relaxed text-[#3c4043] ${notoSans.className}`}>
             {video.description}
           </p>
         )}

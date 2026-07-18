@@ -7,6 +7,7 @@ import { Plus, Loader2, CheckCircle2, Film, ArrowLeft } from 'lucide-react';
 import { Grade } from '@/generated/client/enums';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { notoSans } from '@/lib/fonts';
 
 export default function VideoUploadPage() {
   const router = useRouter();
@@ -160,7 +161,7 @@ export default function VideoUploadPage() {
                   onChange={(e) => setTitle(e.target.value)}
                   disabled={saving}
                   placeholder="e.g. Grade 10 Math – Lesson 1: Algebra Basics"
-                  className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150  hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20 "
+                  className={`w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150  hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20 ${notoSans.className}`}
                   required
                 />
               </div>
@@ -176,7 +177,7 @@ export default function VideoUploadPage() {
                   disabled={saving}
                   placeholder="Brief overview of what this lesson covers…"
                   rows={3}
-                  className="w-full resize-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150  hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20 "
+                  className={`w-full resize-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150  hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20 ${notoSans.className}`}
                 />
               </div>
 

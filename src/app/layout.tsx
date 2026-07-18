@@ -3,19 +3,11 @@ import "./globals.css";
 import { headers } from 'next/headers';
 import { isRTL, Toast } from '@heroui/react';
 import { ClientProviders } from './provider';
-import { Inter } from 'next/font/google'
- 
-const inter = Inter({
-  subsets: ['latin'],
-  display: 'swap',
-})
+import { inter } from '@/lib/fonts';
 
 export const metadata: Metadata = {
   title: "Lernio",
-  description: "Secure, closed-ecosystem educational video hosting for tuition classes.",
-  icons: {
-    icon: '/icon.svg'
-  }
+  description: "Secure, closed-ecosystem educational video hosting for tuition classes."
 };
 
 export default async function RootLayout({
