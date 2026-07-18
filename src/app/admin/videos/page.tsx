@@ -20,6 +20,7 @@ import { Grade } from '@/generated/client/enums';
 import ThumbnailUploader from '@/components/ThumbnailUploader';
 import { notoSans } from '@/lib/fonts';
 import VideoThumbnail from '@/components/VideoThumbnail';
+import CloudflareR2Widget from '@/components/CloudflareR2Widget';
 
 interface Video {
   id: string;
@@ -286,6 +287,8 @@ export default function VideosAdminPage() {
               </span>
             )}
           </div>
+          {/* Cloudflare Metrics */}
+          <CloudflareR2Widget />
           <Link
             href="/admin/videos/upload"
             className="flex items-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md "
