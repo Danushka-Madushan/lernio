@@ -9,6 +9,7 @@ export async function proxy(request: NextRequest) {
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/icon.svg') ||
+    pathname.startsWith('/favicon.ico') ||
     pathname.startsWith('/auth-back.jpg') ||
     pathname.startsWith('/public')
   ) {
@@ -55,6 +56,6 @@ export async function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
-    '/((?!_next/static|_next/image|icon.svg|.*\\.png$).*)',
+    '/((?!_next/static|_next/image|icon.svg|favicon.ico|.*\\.png$).*)',
   ],
 };
