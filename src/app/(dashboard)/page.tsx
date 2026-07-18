@@ -3,8 +3,10 @@ import { Grade, VideoVisibility } from '@/generated/client/enums';
 import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/jwt';
 import Link from 'next/link';
-import { Play, Heart, MessageSquare, Eye } from 'lucide-react';
+import { Heart, MessageSquare, Eye } from 'lucide-react';
 import AccountInactiveScreen from '@/components/AccountInactiveScreen';
+import VideoThumbnail from '@/components/VideoThumbnail';
+import { notoSans } from '@/lib/fonts';
 
 const gradeMapping = [
   { label: 'Grade 6', value: Grade.GRADE_6 },
@@ -203,42 +205,20 @@ function VideoGrid({ videos }: { videos: VideoWithCounts[] }) {
           key={vid.id}
           className="flex flex-col overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)] transition-shadow duration-150 hover:shadow-[0_1px_3px_0_rgba(60,64,67,0.3),0_4px_8px_3px_rgba(60,64,67,0.15)]"
         >
-          <Link
-            href={`/video/${vid.id}`}
-            className="group/thumb relative aspect-video select-none overflow-hidden bg-[#202124] flex items-center justify-center text-[#9aa0a6]"
-          >
-            {vid.cloudflareR2ThumbnailKey ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
-                src={`/api/videos/${vid.id}/thumbnail`}
-                alt={vid.title}
-                className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover/thumb:scale-105"
-              />
-            ) : (
-              <div className="absolute inset-0 bg-linear-to-br from-[#3c4043] to-[#202124]" />
-            )}
-            {/* Play icon overlay on hover */}
-            <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-200 group-hover/thumb:opacity-100">
-              <Play size={36} className="fill-white text-white" />
-            </div>
-            {/* Static indicator play button */}
-            <div className="absolute inset-0 flex items-center justify-center transition-opacity duration-200 group-hover/thumb:opacity-0">
-              <Play size={32} className="text-white opacity-80" />
-            </div>
-            {vid.grade && (
-              <span className="absolute bottom-2 right-2 z-10 rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-medium text-white">
-                {vid.grade.replace('GRADE_', 'Grade ')}
-              </span>
-            )}
-          </Link>
+          <VideoThumbnail
+            videoId={vid.id}
+            title={vid.title}
+            grade={vid.grade}
+            hasThumbnail={!!vid.cloudflareR2ThumbnailKey}
+          />
           <div className="flex flex-1 flex-col justify-between p-4">
             <div>
               <h3 className="mb-1 line-clamp-1 text-[15px] font-medium leading-tight text-[#202124] transition-colors hover:text-[#1a73e8]">
-                <Link href={`/video/${vid.id}`}>
+                <Link className={notoSans.className} href={`/video/${vid.id}`}>
                   {vid.title}
                 </Link>
               </h3>
-              <p className="mb-3 line-clamp-2 text-xs text-[#5f6368]">
+              <p className={`mb-3 line-clamp-2 text-xs text-[#5f6368] ${notoSans.className}`}>
                 {vid.description || 'No description provided.'}
               </p>
             </div>
