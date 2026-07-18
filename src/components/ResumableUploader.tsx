@@ -57,6 +57,51 @@ function formatMB(bytes: number) {
   return (bytes / (1024 * 1024)).toFixed(1);
 }
 
+/**
+ * PUT a chunk to a pre-signed URL using XMLHttpRequest instead of fetch.
+ *
+ * fetch() resolves its promise only once the *entire* request body has been
+ * sent, so any progress UI driven by it can only update once per chunk.
+ * XHR's `upload.onprogress` event fires continuously as bytes actually go
+ * out over the wire, so we use it here purely to get smooth, byte-level
+ * progress — everything else about the request is unchanged.
+ */
+function putChunkWithProgress(
+  url: string,
+  chunk: Blob,
+  contentType: string,
+  onProgress: (loadedBytes: number) => void,
+): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('PUT', url, true);
+    if (contentType) xhr.setRequestHeader('Content-Type', contentType);
+
+    xhr.upload.onprogress = (e) => {
+      if (e.lengthComputable) onProgress(e.loaded);
+    };
+
+    xhr.onload = () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        const etag = xhr.getResponseHeader('ETag');
+        if (!etag) {
+          reject(new Error('No ETag returned for part'));
+          return;
+        }
+        onProgress(chunk.size); // snap to 100% for this chunk on completion
+        resolve(etag);
+      } else {
+        reject(new Error(`Failed to upload part (status ${xhr.status})`));
+      }
+    };
+
+    xhr.onerror = () => reject(new Error('Network error while uploading part'));
+    xhr.onabort = () => reject(new Error('Upload aborted'));
+
+    xhr.send(chunk);
+  });
+}
+
 // ─── Component ───────────────────────────────────────────────────────────────
 
 export default function ResumableUploader({ onSuccess }: ResumableUploaderProps) {
@@ -154,17 +199,21 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
         const signData = await signRes.json();
         if (!signRes.ok) throw new Error(signData.error || 'Failed to sign part');
 
-        // 2. PUT the chunk directly to R2
-        const uploadRes = await fetch(signData.url, {
-          method: 'PUT',
-          body: chunk,
-          headers: { 'Content-Type': currentFile.type },
-        });
-
-        if (!uploadRes.ok) throw new Error(`Failed to upload part ${currentPart}`);
-
-        const etag = uploadRes.headers.get('ETag');
-        if (!etag) throw new Error(`No ETag returned for part ${currentPart}`);
+        // 2. PUT the chunk directly to R2, reporting real byte-level progress
+        //    as it streams (see putChunkWithProgress above for why this
+        //    needs XHR instead of fetch).
+        const etag = await putChunkWithProgress(
+          signData.url,
+          chunk,
+          currentFile.type,
+          (loadedInChunk) => {
+            const overallBytes = start + loadedInChunk;
+            const livePct = Math.min(99, Math.round((overallBytes / currentFile.size) * 100));
+            setProgress(livePct);
+            setUploadedBytes(overallBytes);
+            setStatusText(`Part ${currentPart}/${totalChunks} — ${formatMB(overallBytes)} MB / ${totalLabel} MB`);
+          },
+        );
 
         parts.push({ partNumber: currentPart, etag });
         bytesDone = end;
@@ -352,10 +401,10 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
 
   // Phase-specific labels
   const phaseIcon: Record<string, React.ReactNode> = {
-    'checking':       <Loader2 size={11} className="animate-spin text-[#9334e9]" />,
+    'checking': <Loader2 size={11} className="animate-spin text-[#9334e9]" />,
     'loading-ffmpeg': <Loader2 size={11} className="animate-spin text-[#9334e9]" />,
-    'remuxing':       <Zap size={11} className="text-[#9334e9]" />,
-    'uploading':      <Loader2 size={11} className="animate-spin text-[#1a73e8]" />,
+    'remuxing': <Zap size={11} className="text-[#9334e9]" />,
+    'uploading': <Loader2 size={11} className="animate-spin text-[#1a73e8]" />,
   };
 
   return (
