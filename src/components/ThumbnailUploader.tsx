@@ -3,64 +3,67 @@
 /**
  * ThumbnailUploader
  *
- * Validates, compresses, and uploads a video thumbnail image.
+ * Validates, compresses, crops, and uploads a video thumbnail image.
  *
- * Rules (matching YouTube's standard):
+ * Rules:
  *  - Accepted formats: JPG, PNG only
- *  - Aspect ratio must be exactly 16:9 (tolerance ±2%)
- *  - Resized to 1280×720 via Canvas before upload
- *  - Compressed to JPEG quality 0.88 — resulting file is always ≤ 2 MB in practice
- *  - If the canvas output somehow exceeds 2 MB the file is rejected with an error
- *
- * On success calls onSuccess(url) with the ImgBB direct image URL.
+ *  - If aspect ratio is exactly 16:9, uploads automatically.
+ *  - If aspect ratio differs, opens a real-time visual cropper.
+ *  - Resized to 1280×720 via Canvas before upload.
+ *  - Compressed to JPEG quality 0.88 (≤ 2 MB).
  */
 
-import React, { useState, useRef } from 'react';
-import { ImagePlus, CheckCircle2, Loader2, X, AlertTriangle } from 'lucide-react';
+import React, { useState, useRef, useCallback } from 'react';
+import { ImagePlus, CheckCircle2, Loader2, X, AlertTriangle, Crop as CropIcon } from 'lucide-react';
+import Cropper from 'react-easy-crop';
+import 'react-easy-crop/react-easy-crop.css';
 
 const TARGET_WIDTH = 1280;
 const TARGET_HEIGHT = 720;
-const MAX_BYTES = 2 * 1024 * 1024; // 2 MB
+const MAX_BYTES = 1.3 * 1024 * 1024; // 1.3 MB
 const ACCEPTED_TYPES = ['image/jpeg', 'image/jpg', 'image/png'];
 const ASPECT_RATIO = 16 / 9;
 const ASPECT_TOLERANCE = 0.02; // ±2%
 
 interface ThumbnailUploaderProps {
   onSuccess: (url: string) => void;
-  existingPreview?: string; // Optional existing thumbnail URL for edit mode
+  existingPreview?: string;
 }
 
 /**
- * Compress an image File to 1280×720 JPEG using the Canvas API.
- * Returns a Blob ready for upload.
+ * Extract a cropped area from an image source and compress it to 1280x720 JPEG.
  */
-async function compressToYouTubeStandard(file: File): Promise<{ blob: Blob; previewUrl: string; error?: string }> {
+async function getCroppedImg(
+  imageSrc: string,
+  pixelCrop: { x: number; y: number; width: number; height: number }
+): Promise<{ blob: Blob; previewUrl: string; error?: string }> {
   return new Promise((resolve) => {
-    const img = new Image();
-    const objectUrl = URL.createObjectURL(file);
-
-    img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-
-      const { naturalWidth: w, naturalHeight: h } = img;
-      const ratio = w / h;
-      const deviation = Math.abs(ratio - ASPECT_RATIO) / ASPECT_RATIO;
-
-      if (deviation > ASPECT_TOLERANCE) {
-        resolve({
-          blob: new Blob(),
-          previewUrl: '',
-          error: `Image aspect ratio is ${ratio.toFixed(2)}:1 — must be 16:9 (${ASPECT_RATIO.toFixed(2)}:1). Please crop your image before uploading.`,
-        });
-        return;
-      }
-
-      // Draw onto a 1280×720 canvas
+    const image = new Image();
+    image.src = imageSrc;
+    
+    image.onload = () => {
       const canvas = document.createElement('canvas');
       canvas.width = TARGET_WIDTH;
       canvas.height = TARGET_HEIGHT;
-      const ctx = canvas.getContext('2d')!;
-      ctx.drawImage(img, 0, 0, TARGET_WIDTH, TARGET_HEIGHT);
+      const ctx = canvas.getContext('2d');
+
+      if (!ctx) {
+        resolve({ blob: new Blob(), previewUrl: '', error: 'Canvas not supported by browser.' });
+        return;
+      }
+
+      // Draw the exact cropped box mapped to 1280x720 output
+      ctx.drawImage(
+        image,
+        pixelCrop.x,
+        pixelCrop.y,
+        pixelCrop.width,
+        pixelCrop.height,
+        0,
+        0,
+        TARGET_WIDTH,
+        TARGET_HEIGHT
+      );
 
       canvas.toBlob(
         (blob) => {
@@ -73,7 +76,7 @@ async function compressToYouTubeStandard(file: File): Promise<{ blob: Blob; prev
             resolve({
               blob,
               previewUrl: '',
-              error: `Compressed file is ${(blob.size / 1024 / 1024).toFixed(1)} MB — still exceeds 2 MB after compression. Use a less complex image.`,
+              error: `Compressed file is ${(blob.size / 1024 / 1024).toFixed(1)} MB — still exceeds 2 MB. Use a less complex image.`,
             });
             return;
           }
@@ -86,25 +89,29 @@ async function compressToYouTubeStandard(file: File): Promise<{ blob: Blob; prev
       );
     };
 
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      resolve({ blob: new Blob(), previewUrl: '', error: 'Could not load the selected image file.' });
+    image.onerror = () => {
+      resolve({ blob: new Blob(), previewUrl: '', error: 'Could not load the image file into canvas.' });
     };
-
-    img.src = objectUrl;
   });
 }
 
 export default function ThumbnailUploader({ onSuccess, existingPreview }: ThumbnailUploaderProps) {
+  // Base State
   const [preview, setPreview] = useState<string>(existingPreview ?? '');
   const [uploading, setUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0); // 0–100 simulated
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [status, setStatus] = useState<'idle' | 'compressing' | 'uploading' | 'done' | 'error'>('idle');
   const [errorMsg, setErrorMsg] = useState('');
   const [compressedSize, setCompressedSize] = useState('');
   const inputRef = useRef<HTMLInputElement>(null);
 
-  // Simulate XHR upload progress (ImgBB doesn't support streaming progress, but we can still show animation)
+  // Cropper State
+  const [originalImageSrc, setOriginalImageSrc] = useState<string>('');
+  const [showCropper, setShowCropper] = useState(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<{ x: number; y: number; width: number; height: number } | null>(null);
+
   const simulateProgress = () => {
     let p = 0;
     setUploadProgress(0);
@@ -124,13 +131,14 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
     const file = e.target.files?.[0];
     if (!file) return;
 
-    // Reset
+    // Reset base UI
     setErrorMsg('');
     setStatus('idle');
     setPreview('');
     setUploadProgress(0);
+    setCrop({ x: 0, y: 0 });
+    setZoom(1);
 
-    // Format check
     if (!ACCEPTED_TYPES.includes(file.type)) {
       setErrorMsg('Only JPG and PNG images are accepted.');
       setStatus('error');
@@ -138,12 +146,42 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
       return;
     }
 
-    // Step 1: Compress client-side
-    setStatus('compressing');
-    const { blob, previewUrl, error } = await compressToYouTubeStandard(file);
+    const src = URL.createObjectURL(file);
+    setOriginalImageSrc(src);
 
-    if (error) {
-      setErrorMsg(error);
+    // Dimension Check
+    const img = new Image();
+    img.onload = async () => {
+      const ratio = img.naturalWidth / img.naturalHeight;
+      const deviation = Math.abs(ratio - ASPECT_RATIO) / ASPECT_RATIO;
+
+      if (deviation > ASPECT_TOLERANCE) {
+        // Needs cropping — open modal
+        setShowCropper(true);
+      } else {
+        // Fits criteria automatically — process immediately
+        const fullCrop = { x: 0, y: 0, width: img.naturalWidth, height: img.naturalHeight };
+        await processAndUpload(src, fullCrop);
+      }
+    };
+    
+    img.onerror = () => {
+      setErrorMsg('Could not load the selected image file.');
+      setStatus('error');
+    };
+    
+    img.src = src;
+  };
+
+  const processAndUpload = async (imageSrc: string, pixelCrop: any) => {
+    setStatus('compressing');
+    setShowCropper(false);
+
+    // Step 1: Compress & Crop Client-side
+    const { blob, previewUrl, error } = await getCroppedImg(imageSrc, pixelCrop);
+
+    if (error || !blob) {
+      setErrorMsg(error || 'Image compression failed.');
       setStatus('error');
       if (inputRef.current) inputRef.current.value = '';
       return;
@@ -153,7 +191,7 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
     setCompressedSize(`${sizeMB} MB`);
     setPreview(previewUrl);
 
-    // Step 2: Upload to ImgBB via our backend
+    // Step 2: Upload to Server
     setStatus('uploading');
     setUploading(true);
     const stopProgress = simulateProgress();
@@ -173,9 +211,9 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
       if (res.ok && data.success) {
         setUploadProgress(100);
         setStatus('done');
-        onSuccess(data.key); // ImgBB direct URL
+        onSuccess(data.key);
       } else {
-        setErrorMsg(data.error || 'Upload to ImgBB failed.');
+        setErrorMsg(data.error || 'Upload failed.');
         setStatus('error');
         setPreview('');
       }
@@ -189,15 +227,29 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
     }
   };
 
+  const handleCancelCrop = () => {
+    setShowCropper(false);
+    if (status !== 'done') {
+      setStatus('idle');
+      setOriginalImageSrc('');
+      if (inputRef.current) inputRef.current.value = '';
+    }
+  };
+
   const handleClear = () => {
     setPreview('');
     setStatus('idle');
     setErrorMsg('');
     setUploadProgress(0);
     setCompressedSize('');
+    setOriginalImageSrc('');
     if (inputRef.current) inputRef.current.value = '';
-    onSuccess(''); // Signal clear to parent
+    onSuccess('');
   };
+
+  const onCropComplete = useCallback((_croppedArea: any, croppedAreaPixels: any) => {
+    setCroppedAreaPixels(croppedAreaPixels);
+  }, []);
 
   return (
     <div className="space-y-2.5">
@@ -212,7 +264,7 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
           <span className="text-center text-[11px] leading-relaxed text-[#5f6368]">
             Click to select a JPG or PNG cover image
             <br />
-            <span className="text-[10px] text-[#9aa0a6]">Must be 16:9 ratio — will be resized to 1280×720</span>
+            <span className="text-[10px] text-[#9aa0a6]">Will be locked and resized to 16:9 (1280×720)</span>
           </span>
           <input
             ref={inputRef}
@@ -238,7 +290,7 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
       {status === 'compressing' && (
         <div className="flex items-center gap-2 text-[11px] text-[#5f6368]">
           <Loader2 size={12} className="animate-spin text-[#1a73e8]" />
-          Validating aspect ratio and compressing to 1280×720…
+          Cropping and compressing to 1280×720…
         </div>
       )}
 
@@ -252,7 +304,7 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
                   <CheckCircle2 size={11} /> Uploaded — {compressedSize}
                 </span>
               ) : (
-                `Uploading to ImgBB… ${compressedSize}`
+                `Uploading… ${compressedSize}`
               )}
             </span>
             <span className="tabular-nums font-semibold text-[#3c4043]">{uploadProgress}%</span>
@@ -266,7 +318,7 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
         </div>
       )}
 
-      {/* Preview + result */}
+      {/* Preview + Edit/Remove Controls */}
       {preview && status !== 'error' && (
         <div className="flex items-start gap-3">
           <div className="relative aspect-video w-32 shrink-0 overflow-hidden rounded-lg border border-[#e8eaed] bg-black">
@@ -278,16 +330,80 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
               <p className="font-semibold text-[#137333]">1280 × 720 · JPEG</p>
               <p>{compressedSize}</p>
             </div>
+            
             {status === 'done' && (
-              <button
-                type="button"
-                onClick={handleClear}
-                className="flex items-center gap-1 text-[10px] font-medium text-[#d93025] transition-colors hover:text-[#a50e0e]"
-              >
-                <X size={10} />
-                Remove
-              </button>
+              <div className="flex items-center gap-3">
+                {originalImageSrc && (
+                  <button
+                    type="button"
+                    onClick={() => setShowCropper(true)}
+                    className="flex items-center gap-1 text-[10px] font-medium text-[#1a73e8] transition-colors hover:text-[#1765cc]"
+                  >
+                    <CropIcon size={10} />
+                    Edit Size
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleClear}
+                  className="flex items-center gap-1 text-[10px] font-medium text-[#d93025] transition-colors hover:text-[#a50e0e]"
+                >
+                  <X size={10} />
+                  Remove
+                </button>
+              </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Cropping Modal Overlay */}
+      {showCropper && (
+        <div className="fixed inset-0 z-999 flex items-center justify-center bg-[#202124]/60 p-4 backdrop-blur-sm">
+          <div className="flex h-[85vh] w-full max-w-4xl flex-col overflow-hidden rounded-2xl bg-white shadow-2xl">
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-[#e8eaed] px-5 py-4">
+              <div>
+                <h3 className="text-[15px] font-medium text-[#202124]">Crop Thumbnail</h3>
+                <p className="text-xs text-[#5f6368]">Adjust the frame. It will be mapped directly to 1280×720.</p>
+              </div>
+              <button 
+                onClick={handleCancelCrop} 
+                className="rounded-full p-2 text-[#5f6368] transition-colors hover:bg-[#f1f3f4]"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            
+            {/* Crop Workspace */}
+            <div className="relative flex-1 bg-[#f8f9fa]">
+              <Cropper
+                image={originalImageSrc}
+                crop={crop}
+                zoom={zoom}
+                aspect={ASPECT_RATIO}
+                onCropChange={setCrop}
+                onZoomChange={setZoom}
+                onCropComplete={onCropComplete}
+                objectFit="contain"
+              />
+            </div>
+            
+            {/* Footer Actions */}
+            <div className="flex items-center justify-end gap-3 border-t border-[#e8eaed] px-5 py-4">
+              <button
+                onClick={handleCancelCrop}
+                className="rounded-full px-5 py-2 text-sm font-medium text-[#5f6368] transition-colors hover:bg-[#f1f3f4]"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => croppedAreaPixels && processAndUpload(originalImageSrc, croppedAreaPixels)}
+                className="rounded-full bg-[#1a73e8] px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#1765cc] hover:shadow-md"
+              >
+                Apply & Upload
+              </button>
+            </div>
           </div>
         </div>
       )}
