@@ -24,6 +24,7 @@ import {
   ShieldAlert,
   Calendar,
 } from 'lucide-react';
+import { notoSans } from '@/lib/fonts';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -611,7 +612,9 @@ function CustomVideoPickerModal({ student, onSave, onCancel }: {
                   </div>
                   {/* Info */}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-[13px] font-medium text-[#202124]">{video.title}</p>
+                    <p className={`truncate text-[13px] font-medium text-[#202124] ${notoSans.className}`}>
+                      {video.title}
+                    </p>
                     <div className="mt-0.5 flex items-center gap-1.5">
                       {video.grade && (
                         <span className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${GRADE_COLORS[video.grade]}`}>
