@@ -19,6 +19,7 @@ import {
 import { Grade } from '@/generated/client/enums';
 import ThumbnailUploader from '@/components/ThumbnailUploader';
 import { notoSans } from '@/lib/fonts';
+import VideoThumbnail from '@/components/VideoThumbnail';
 
 interface Video {
   id: string;
@@ -193,7 +194,6 @@ export default function VideosAdminPage() {
     try {
       const res = await fetch('/api/videos');
       const data = await res.json();
-      console.log(data.videos)
       if (res.ok) setVideos(data.videos);
       else showToast(data.error || 'Failed to load catalog', 'err');
     } catch {
@@ -223,13 +223,13 @@ export default function VideosAdminPage() {
           prev.map((v) =>
             v.id === id
               ? {
-                  ...v,
-                  title: data.title,
-                  description: data.description,
-                  grade: data.grade,
-                  cloudflareR2ThumbnailKey: data.cloudflareR2ThumbnailKey,
-                  visibility: data.visibility,
-                }
+                ...v,
+                title: data.title,
+                description: data.description,
+                grade: data.grade,
+                cloudflareR2ThumbnailKey: data.cloudflareR2ThumbnailKey,
+                visibility: data.visibility,
+              }
               : v
           )
         );
@@ -298,11 +298,10 @@ export default function VideosAdminPage() {
         {/* Toast */}
         {toast && (
           <div
-            className={`rounded-lg border px-3.5 py-2.5 text-[13px] leading-5 ${
-              toast.type === 'ok'
+            className={`rounded-lg border px-3.5 py-2.5 text-[13px] leading-5 ${toast.type === 'ok'
                 ? 'border-[#ceead6] bg-[#e6f4ea] text-[#137333]'
                 : 'border-[#fad2cf] bg-[#fce8e6] text-[#c5221f]'
-            }`}
+              }`}
           >
             {toast.msg}
           </div>
@@ -362,17 +361,14 @@ export default function VideosAdminPage() {
                         <td className="max-w-xs px-4 py-3">
                           <div className="flex items-center space-x-3">
                             {/* Small thumbnail in admin panel catalog list */}
-                            <div className="flex h-16 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[#e8eaed] bg-[#202124] text-[#9aa0a6]">
-                              {video.cloudflareR2ThumbnailKey ? (
-                                // eslint-disable-next-line @next/next/no-img-element
-                                <img
-                                  src={`/api/videos/${video.id}/thumbnail`}
-                                  alt={video.title}
-                                  className="h-full w-full object-cover"
-                                />
-                              ) : (
-                                <ImageIcon size={12} className="opacity-50" />
-                              )}
+                            <div className="relative w-30 shrink-0 aspect-video overflow-hidden rounded-md border border-[#e8eaed] bg-[#202124]">
+                              <VideoThumbnail
+                                videoId={video.id}
+                                title={video.title}
+                                grade={video.grade}
+                                hasThumbnail={!!video.cloudflareR2ThumbnailKey}
+                                showGrade={false}
+                              />
                             </div>
                             <div className="min-w-0">
                               <span className={`block truncate text-wrap font-medium text-[#202124] ${notoSans.className}`}>
