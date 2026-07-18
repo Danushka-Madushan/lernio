@@ -39,50 +39,104 @@ export const MAX_PROCESSABLE_BYTES = 2 * 1024 * 1024 * 1024; // 2 GB
  * This is a pure JS operation — zero FFmpeg involved — and runs in < 1 ms.
  */
 export async function needsFastStart(file: File): Promise<boolean> {
-  // Only relevant for MP4 / MOV / M4V containers.
-  const isMP4 = MP4_MIME_PREFIXES.some(p => file.type.startsWith(p));
+  const isMP4 = MP4_MIME_PREFIXES.some((p) => file.type.startsWith(p));
   if (!isMP4) return false;
-
-  // Files too large for in-browser remux — we flag as needing fix but the
-  // caller is responsible for showing the size warning and skipping.
-  // We still check the header here for accurate detection.
-
-  // Read the first 512 bytes — enough to find ftyp + first major box header.
-  const headerBytes = Math.min(512, file.size);
-  const buffer = await file.slice(0, headerBytes).arrayBuffer();
-  const view = new DataView(buffer);
 
   let offset = 0;
 
-  while (offset + 8 <= buffer.byteLength) {
-    const boxSize = view.getUint32(offset, false); // big-endian
+  // ─── TOP-LEVEL BOX SCAN ────────────────────────────────────────────────────
+  while (offset + 8 <= file.size) {
+    const headerBlob = file.slice(offset, offset + 8);
+    const buffer = await headerBlob.arrayBuffer();
+    const view = new DataView(buffer);
+
+    let boxSize = view.getUint32(0, false);
     const boxType = String.fromCharCode(
-      view.getUint8(offset + 4),
-      view.getUint8(offset + 5),
-      view.getUint8(offset + 6),
-      view.getUint8(offset + 7),
+      view.getUint8(4),
+      view.getUint8(5),
+      view.getUint8(6),
+      view.getUint8(7)
     );
 
-    if (boxType === 'moov') {
-      // moov found before mdat → already fast-start.
+    let headerLength = 8;
+
+    // Handle 64-bit extended box sizes
+    if (boxSize === 1) {
+      if (offset + 16 > file.size) break;
+      const extHeaderBlob = file.slice(offset + 8, offset + 16);
+      const extBuffer = await extHeaderBlob.arrayBuffer();
+      const extView = new DataView(extBuffer);
+      boxSize = Number(extView.getBigUint64(0, false));
+      headerLength = 16;
+    } else if (boxSize === 0) {
+      // Size 0 means box extends to EOF
+      boxSize = file.size - offset; 
+    }
+
+    // Infinite loop protection
+    if (boxSize < headerLength) {
+      console.warn(`[MP4 Parser] Invalid box size (${boxSize}) at offset ${offset}.`);
       return false;
     }
 
     if (boxType === 'mdat') {
-      // mdat before moov → moov is at the end → needs fix.
+      // mdat found before a valid moov -> needs optimization
       return true;
     }
 
-    // Skip over this box and continue.
-    if (boxSize === 0) break; // box extends to EOF — can't advance further
-    if (boxSize === 1) {
-      // 64-bit extended size — very rare, treat as needing fix to be safe.
-      return true;
+    if (boxType === 'moov') {
+      // ─── NESTED MOOV SCAN (Checking for fMP4) ─────────────────────────────
+      // We found moov at the front! But we must verify it is a complete 
+      // progressive map, not just a fragmented header.
+      let subOffset = offset + headerLength;
+      const moovEnd = offset + boxSize;
+
+      while (subOffset + 8 <= moovEnd && subOffset + 8 <= file.size) {
+        const subHeaderBlob = file.slice(subOffset, subOffset + 8);
+        const subBuffer = await subHeaderBlob.arrayBuffer();
+        const subView = new DataView(subBuffer);
+
+        let subBoxSize = subView.getUint32(0, false);
+        const subBoxType = String.fromCharCode(
+          subView.getUint8(4),
+          subView.getUint8(5),
+          subView.getUint8(6),
+          subView.getUint8(7)
+        );
+
+        let subHeaderLength = 8;
+
+        if (subBoxSize === 1) {
+          if (subOffset + 16 > file.size) break;
+          const subExtBlob = file.slice(subOffset + 8, subOffset + 16);
+          const subExtView = new DataView(await subExtBlob.arrayBuffer());
+          subBoxSize = Number(subExtView.getBigUint64(0, false));
+          subHeaderLength = 16;
+        } else if (subBoxSize === 0) {
+          subBoxSize = moovEnd - subOffset;
+        }
+
+        if (subBoxSize < subHeaderLength) break;
+
+        if (subBoxType === 'mvex') {
+          // Found the 'Movie Extends' box. This confirms the file is a 
+          // Fragmented MP4 (fMP4) and its index is scattered.
+          // FFmpeg must consolidate this into a single moov+mdat stream.
+          return true;
+        }
+
+        subOffset += subBoxSize;
+      }
+
+      // If we scanned the immediate children of moov and found no 'mvex',
+      // it is a true, fully mapped progressive moov at the front of the file.
+      return false;
     }
+
+    // Jump to the next top-level box
     offset += boxSize;
   }
 
-  // Couldn't determine — safe default: no fix (avoid unnecessary processing).
   return false;
 }
 
