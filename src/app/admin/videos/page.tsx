@@ -287,23 +287,27 @@ export default function VideosAdminPage() {
               </span>
             )}
           </div>
-          {/* Cloudflare Metrics */}
-          <CloudflareR2Widget />
-          <Link
-            href="/admin/videos/upload"
-            className="flex items-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md "
-          >
-            <Plus size={15} />
-            Upload New Video
-          </Link>
+
+          {/* Wrap the Widget and Upload button in a gap-3 container so they float right together */}
+          <div className="flex items-center gap-3">
+            <CloudflareR2Widget />
+
+            <Link
+              href="/admin/videos/upload"
+              className="flex items-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md"
+            >
+              <Plus size={15} />
+              Upload New Video
+            </Link>
+          </div>
         </div>
 
         {/* Toast */}
         {toast && (
           <div
             className={`rounded-lg border px-3.5 py-2.5 text-[13px] leading-5 ${toast.type === 'ok'
-                ? 'border-[#ceead6] bg-[#e6f4ea] text-[#137333]'
-                : 'border-[#fad2cf] bg-[#fce8e6] text-[#c5221f]'
+              ? 'border-[#ceead6] bg-[#e6f4ea] text-[#137333]'
+              : 'border-[#fad2cf] bg-[#fce8e6] text-[#c5221f]'
               }`}
           >
             {toast.msg}
