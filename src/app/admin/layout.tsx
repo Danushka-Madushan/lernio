@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/jwt';
 import { redirect } from 'next/navigation';
 import LogoutButton from '@/components/LogoutButton';
+import RepoVersionBadge from '@/components/RepoVersionBadge';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
@@ -70,6 +71,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
           {/* Identity & Context Switching */}
           <div className="flex items-center space-x-4 text-sm">
+            <RepoVersionBadge owner='Danushka-Madushan' repo='lernio' />
             <div className="flex items-center bg-[#f1f3f4] border border-gray-200 rounded-full pl-2 pr-3 py-1">
               <span className="bg-[#1a73e8] text-white px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase mr-2 shadow-sm">
                 Admin
