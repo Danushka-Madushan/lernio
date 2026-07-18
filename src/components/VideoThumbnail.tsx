@@ -12,9 +12,10 @@ type VideoThumbnailProps = {
   title: string;
   grade: Grade | null;
   hasThumbnail: boolean;
+  showGrade?: boolean;
 };
 
-export default function VideoThumbnail({ videoId, title, grade, hasThumbnail }: VideoThumbnailProps) {
+export default function VideoThumbnail({ videoId, title, grade, hasThumbnail, showGrade }: VideoThumbnailProps) {
   // No thumbnail key at all -> skip straight to the fallback, no need to fake a loading state.
   const [status, setStatus] = useState<ThumbnailStatus>(hasThumbnail ? 'loading' : 'error');
 
@@ -65,7 +66,7 @@ export default function VideoThumbnail({ videoId, title, grade, hasThumbnail }: 
         </>
       )}
 
-      {grade && (
+      {grade && showGrade && (
         <span className="absolute bottom-2 right-2 z-10 rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-medium text-white">
           {grade.replace('GRADE_', 'Grade ')}
         </span>

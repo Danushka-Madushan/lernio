@@ -357,9 +357,15 @@ export default function CustomPlayer({ videoId }: CustomPlayerProps) {
       >
         {/* Seek / buffer bar */}
         <div
-          className="group/seek relative h-3 flex items-center"
+          className="group/seek relative flex h-8 items-center sm:h-3"
           onMouseMove={handleSeekHover}
           onMouseLeave={() => setScrubPct(null)}
+          onTouchMove={(e) => {
+            if (!duration) return;
+            const rect = e.currentTarget.getBoundingClientRect();
+            const x = Math.min(Math.max(e.touches[0].clientX - rect.left, 0), rect.width);
+            setScrubPct((x / rect.width) * 100);
+          }}
         >
           {/* Scrub time tooltip */}
           {duration > 0 && (scrubPct !== null || isSeeking) && (
@@ -377,6 +383,13 @@ export default function CustomPlayer({ videoId }: CustomPlayerProps) {
             className="pointer-events-none absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-white/30"
             style={{ width: `${buffered}%` }}
           />
+          {/* Played track (was previously drawn via the input's own background —
+              moved out here so the input can be made touch-friendly without
+              also inflating the visible line) */}
+          <div
+            className="pointer-events-none absolute top-1/2 h-1 -translate-y-1/2 rounded-full bg-primary"
+            style={{ width: `${progress}%` }}
+          />
           <input
             type="range"
             min="0"
@@ -388,10 +401,8 @@ export default function CustomPlayer({ videoId }: CustomPlayerProps) {
             onMouseUp={() => setIsSeeking(false)}
             onTouchStart={() => setIsSeeking(true)}
             onTouchEnd={() => setIsSeeking(false)}
-            style={{
-              background: `linear-gradient(to right, var(--accent) ${progress}%, transparent ${progress}%)`,
-            }}
-            className="relative h-1 w-full cursor-pointer appearance-none rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary
+            style={{ touchAction: 'none' }}
+            className="relative h-full w-full cursor-pointer appearance-none bg-transparent rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-primary
               [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:h-3.5 [&::-webkit-slider-thumb]:w-3.5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-primary [&::-webkit-slider-thumb]:shadow-[0_0_0_3px_rgba(242,169,78,0.25)] [&::-webkit-slider-thumb]:transition-transform [&::-webkit-slider-thumb]:hover:scale-110
               [&::-moz-range-thumb]:h-3.5 [&::-moz-range-thumb]:w-3.5 [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-primary"
             aria-label="Seek"
