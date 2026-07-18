@@ -13,6 +13,33 @@ import { s3, bucketName } from '@/lib/r2';
  * - Forwards the Range header to Cloudflare R2 (enables seek & progressive play)
  * - Pipes the R2 response body directly back — the real R2 URL is never exposed
  */
+
+// A browser's MP4 demuxer can issue dozens of small sequential Range
+// requests for the *same* video (walking the moov atom) before real
+// playback starts. Without this, every one of those requests pays a fresh
+// DB round-trip just to look up the same R2 key. This only caches within a
+// single warm server instance — that's fine, since that's exactly where the
+// burst of requests for one video lands.
+const r2KeyCache = new Map<string, { key: string; expires: number }>();
+const R2_KEY_CACHE_TTL_MS = 60_000;
+
+async function resolveR2Key(id: string): Promise<string | null> {
+  const cached = r2KeyCache.get(id);
+  if (cached && cached.expires > Date.now()) {
+    return cached.key;
+  }
+
+  const video = await db.video.findUnique({
+    where: { id },
+    select: { cloudflareR2Key: true },
+  });
+
+  if (!video) return null;
+
+  r2KeyCache.set(id, { key: video.cloudflareR2Key, expires: Date.now() + R2_KEY_CACHE_TTL_MS });
+  return video.cloudflareR2Key;
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -28,13 +55,10 @@ export async function GET(
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
-  // ── Resolve the R2 key for this video ───────────────────────────────────────
-  const video = await db.video.findUnique({
-    where: { id },
-    select: { cloudflareR2Key: true },
-  });
+  // ── Resolve the R2 key for this video (cached — see resolveR2Key above) ────
+  const r2Key = await resolveR2Key(id);
 
-  if (!video) {
+  if (!r2Key) {
     return new NextResponse('Not Found', { status: 404 });
   }
 
@@ -43,7 +67,7 @@ export async function GET(
 
   const command = new GetObjectCommand({
     Bucket: bucketName,
-    Key: video.cloudflareR2Key,
+    Key: r2Key,
     // Pass through the Range header so R2 returns a 206 Partial Content response
     ...(rangeHeader ? { Range: rangeHeader } : {}),
   });
