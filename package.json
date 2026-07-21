@@ -20,6 +20,7 @@
     "jose": "^6.2.3",
     "jsonwebtoken": "^9.0.3",
     "lucide-react": "^1.24.0",
+    "media-chrome": "^4.19.2",
     "next": "16.2.10",
     "pg": "^8.22.0",
     "prisma": "^7.8.0",
