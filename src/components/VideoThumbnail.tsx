@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { Play, Loader2 } from 'lucide-react';
 import { Grade } from '@/generated/client/enums';
@@ -21,6 +21,13 @@ export default function VideoThumbnail({ videoId, title, grade, hasThumbnail, sh
 
   const isPending = status === 'loading';
   const showImage = hasThumbnail && status !== 'error';
+  const imgRef = useRef<HTMLImageElement>(null);
+
+  useEffect(() => {
+    if (imgRef.current?.complete && imgRef.current.naturalWidth > 0) {
+      setStatus('loaded');
+    }
+  }, []);
 
   return (
     <Link
@@ -39,6 +46,7 @@ export default function VideoThumbnail({ videoId, title, grade, hasThumbnail, sh
       {showImage && (
         // eslint-disable-next-line @next/next/no-img-element
         <img
+          ref={imgRef}
           src={`/api/videos/${videoId}/thumbnail`}
           alt={title}
           onLoad={() => setStatus('loaded')}
