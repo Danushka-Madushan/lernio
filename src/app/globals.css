@@ -1,2 +1,99 @@
 @import "tailwindcss";
-@import "@heroui/styles"; 
+@import "@heroui/styles";
+
+.player-shell {
+  --accent: #3b82f6;
+  --accent-soft: rgba(59, 130, 246, 0.28);
+
+  --media-primary-color: #fff;
+  --media-secondary-color: transparent;
+  --media-control-background: transparent;
+  --media-control-hover-background: rgba(59, 130, 246, 0.18);
+  --media-icon-color: #fff;
+  --media-text-color: rgba(255, 255, 255, 0.9);
+  --media-font-family: inherit;
+  --media-font-weight: 600;
+  --media-font-size: 12px;
+  --media-control-height: 30px;
+  --media-button-padding: 11px;
+  --media-focus-box-shadow: inset 0 0 0 2px var(--accent);
+
+  --media-range-bar-color: var(--accent);
+  --media-range-track-background: rgba(255, 255, 255, 0.2);
+  --media-range-track-height: 5px;
+  --media-range-thumb-background: #fff;
+  --media-range-thumb-height: 15px;
+  --media-range-thumb-width: 15px;
+  --media-range-thumb-box-shadow: 0 0 0 5px var(--accent-soft);
+  --media-time-range-buffered-color: rgba(255, 255, 255, 0.35);
+  --media-time-range-hover-height: max(100%, 26px);
+}
+
+/* Floating, pill-shaped, blurred control bar */
+.player-shell .control-bar {
+  position: absolute;
+  left: 10px;
+  right: 10px;
+  bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(5, 7, 11, 0.6);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  box-shadow: 0 8px 30px -8px rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  opacity: 0;
+  transform: translateY(6px);
+  pointer-events: none;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+}
+
+.player-shell.controls-visible .control-bar {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.player-shell .ctrl-btn {
+  border-radius: 999px;
+  transition: color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+}
+
+.player-shell .ctrl-btn:hover {
+  color: var(--accent);
+  transform: scale(1.06);
+}
+
+.player-shell .rate-btn {
+  font-variant-numeric: tabular-nums;
+  min-width: 46px;
+}
+
+.player-shell .ctrl-time {
+  font-variant-numeric: tabular-nums;
+  padding: 0 8px;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.player-shell .volume-range {
+  width: 84px;
+}
+
+@media (max-width: 640px) {
+  .player-shell .control-bar {
+    left: 6px;
+    right: 6px;
+    bottom: 6px;
+    padding: 6px 10px;
+    gap: 0;
+    border-radius: 24px;
+  }
+
+  .player-shell {
+    --media-control-height: 34px;
+    --media-button-padding: 9px;
+  }
+}
