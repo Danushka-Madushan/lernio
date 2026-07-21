@@ -1,9 +1,9 @@
 'use client';
 
 import React, { useState, useOptimistic, startTransition } from 'react';
-import CustomPlayer from '@/components/CustomPlayer';
 import { Heart, Send, MessageSquare, Eye } from 'lucide-react';
 import { notoSans } from '@/lib/fonts';
+import { MediaChrome } from './MediaChrome';
 
 interface CommentType {
   id: string;
@@ -135,7 +135,7 @@ export default function VideoDetails({
   return (
     <div className="space-y-4 p-4 sm:space-y-5">
       {/* Secure Video Player */}
-      <CustomPlayer videoId={video.id} />
+      <MediaChrome videoId={video.id} />
 
       {/* Video Info Section */}
       <div className="space-y-4 rounded-2xl bg-white p-4 sm:p-5 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
