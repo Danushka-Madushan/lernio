@@ -1,4 +1,3 @@
-import React from 'react';
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
