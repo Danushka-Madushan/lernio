@@ -40,6 +40,8 @@ jobs:
       
       - name: Install Deps &  Generate Prisma Client
         run: npm i && npx prisma generate
+        env:
+          DIRECT_URL: ${{ secrets.DIRECT_URL }}
 
       - name: Pull Vercel Environment Information
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
