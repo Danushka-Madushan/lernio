@@ -16,6 +16,8 @@
   --media-font-size: 12px;
   --media-control-height: 30px;
   --media-button-padding: 11px;
+  --media-button-icon-width: 20px;
+  --media-button-icon-height: 20px;
   --media-focus-box-shadow: inset 0 0 0 2px var(--accent);
 
   --media-range-bar-color: var(--accent);
@@ -38,7 +40,7 @@
   display: flex;
   align-items: center;
   gap: 4px;
-  padding: 8px 12px;
+  padding: 8px 24px;
   border-radius: 999px;
   background: rgba(5, 7, 11, 0.6);
   backdrop-filter: blur(14px);
@@ -67,6 +69,11 @@
   transform: scale(1.06);
 }
 
+.player-shell .ctrl-btn:active {
+  color: var(--accent);
+  transform: scale(0.94);
+}
+
 .player-shell .rate-btn {
   font-variant-numeric: tabular-nums;
   min-width: 46px;
@@ -86,14 +93,47 @@
   .player-shell .control-bar {
     left: 6px;
     right: 6px;
-    bottom: 6px;
-    padding: 6px 10px;
+    bottom: max(6px, env(safe-area-inset-bottom));
+    padding: 4px 8px;
     gap: 0;
-    border-radius: 24px;
+    border-radius: 22px;
   }
 
   .player-shell {
-    --media-control-height: 34px;
-    --media-button-padding: 9px;
+    /* Visually smaller than desktop, but padding keeps the real tap target
+       close to the ~40px touch-target guideline even though it looks tighter. */
+    --media-control-height: 26px;
+    --media-button-padding: 8px;
+    --media-button-icon-width: 16px;
+    --media-button-icon-height: 16px;
+    --media-font-size: 11px;
+  }
+
+  .player-shell .rate-btn {
+    min-width: 38px;
+  }
+
+  .player-shell .ctrl-time {
+    padding: 0 4px;
+  }
+}
+
+/* Extra-small phones: trim further and drop the least essential control */
+@media (max-width: 380px) {
+  .player-shell .control-bar {
+    padding: 3px 6px;
+    border-radius: 20px;
+  }
+
+  .player-shell {
+    --media-control-height: 24px;
+    --media-button-padding: 6px;
+    --media-button-icon-width: 15px;
+    --media-button-icon-height: 15px;
+    --media-font-size: 10px;
+  }
+
+  .player-shell .rate-btn {
+    min-width: 34px;
   }
 }
