@@ -3,6 +3,7 @@ import { verifyToken } from '@/lib/jwt';
 import Link from 'next/link';
 import Image from 'next/image';
 import LogoutButton from '@/components/LogoutButton';
+import StudentMeetingsNav from '@/components/StudentMeetingsNav';
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
@@ -42,6 +43,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
           <div className="flex items-center space-x-3 sm:space-x-5 text-sm">
             {user && (
               <>
+                {user.role === 'STUDENT' && <StudentMeetingsNav />}
+
                 <div className="hidden sm:flex flex-col text-right">
                   <span className="text-xs text-[#5f6368] font-medium uppercase tracking-wider">
                     Welcome back
