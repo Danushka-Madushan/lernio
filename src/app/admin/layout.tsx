@@ -66,6 +66,12 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               >
                 Students
               </Link>
+              <Link
+                href="/admin/meetings"
+                className="text-gray-600 hover:text-blue-500 hover:bg-[#e8f0fe]/60 font-medium transition-all duration-150 rounded-lg px-3 py-2 focus-visible:outline-none "
+              >
+                Meetings
+              </Link>
             </nav>
           </div>
 
