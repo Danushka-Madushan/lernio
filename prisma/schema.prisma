@@ -67,6 +67,15 @@ model Video {
   customVideos CustomVideoAccess[]
 }
 
+model ZoomLink {
+  id          String   @id @default(uuid())
+  title       String
+  scheduledAt DateTime
+  grade       Grade?
+  link        String
+  createdAt   DateTime @default(now())
+}
+
 model CustomVideoAccess {
   id      String @id @default(uuid())
   userId  String
