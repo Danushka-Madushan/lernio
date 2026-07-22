@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import {
   AlertTriangle,
   Check,
@@ -17,14 +17,15 @@ import {
   Clock,
   Film,
   ChevronDown,
-  RotateCcw,
   BookOpen,
   Lock,
   Globe,
   ShieldAlert,
   Calendar,
+  Trash2,
 } from 'lucide-react';
 import { notoSans } from '@/lib/fonts';
+import { Button } from '@heroui/react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -296,8 +297,6 @@ function ShareCredentialsCard({ info, onDismiss }: { info: ShareInfo; onDismiss:
   return (
     <div className="my-5 overflow-hidden rounded-2xl shadow-lg ring-1 ring-black/5">
       <div className="relative bg-linear-to-br from-[#1a73e8] via-[#1557b0] to-[#0d47a1] px-4 py-4">
-        <div className="pointer-events-none absolute -right-6 -top-6 h-24 w-24 rounded-full bg-white/5" />
-        <div className="pointer-events-none absolute -bottom-4 right-10 h-14 w-14 rounded-full bg-white/5" />
         <div className="relative flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 backdrop-blur-sm">
@@ -350,7 +349,6 @@ function ShareResetModal({ target, password, loading, onPasswordChange, onConfir
       <div ref={cardRef} tabIndex={-1}
         className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl outline-none ring-1 ring-black/10">
         <div className="relative bg-linear-to-br from-[#1a73e8] via-[#1557b0] to-[#0d47a1] px-6 py-4">
-          <div className="pointer-events-none absolute -right-4 -top-4 h-20 w-20 rounded-full bg-white/5" />
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <Share2 size={16} className="text-white" />
@@ -387,15 +385,133 @@ function ShareResetModal({ target, password, loading, onPasswordChange, onConfir
           </div>
         </div>
         <div className="flex items-center justify-end gap-2.5 border-t border-[#e8eaed] bg-[#f8f9fa] px-6 py-4">
-          <button type="button" onClick={onCancel} disabled={loading}
-            className="rounded-full px-4 py-2 text-sm font-medium text-[#5f6368] transition-colors hover:bg-[#e8eaed] disabled:opacity-40">
+          <Button type="button" variant='outline' onPress={onCancel} isDisabled={loading}>
             Cancel
-          </button>
-          <button type="button" onClick={onConfirm} disabled={loading || !password.trim()}
-            className="inline-flex items-center gap-2 rounded-full bg-[#1a73e8] px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#1765cc] hover:shadow-md disabled:cursor-not-allowed">
-            {loading && <Loader2 size={14} className="animate-spin" />}
-            Confirm & Share
-          </button>
+          </Button>
+          <Button isPending={loading} onPress={onConfirm} isDisabled={loading} >
+            {({ isPending }) => (
+              <>
+                {isPending ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                Confirm & Share
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── ResetPasswordModal ───────────────────────────────────────────────────────
+
+function ResetPasswordModal({ target, loading, onConfirm, onCancel }: {
+  target: Student; loading: boolean;
+  onConfirm: (password: string) => void; onCancel: () => void;
+}) {
+  const [password, setPassword] = useState('');
+
+  useEffect(() => {
+    setPassword(generatePassword(6));
+  }, []);
+
+  return (
+    <div role="dialog" aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+      onKeyDown={(e) => e.key === 'Escape' && !loading && onCancel()}>
+      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl outline-none ring-1 ring-black/10">
+        <div className="relative bg-linear-to-br from-[#1a73e8] via-[#1557b0] to-[#0d47a1] px-6 py-4">
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Key size={16} className="text-white" />
+              <span className="text-[15px] font-semibold text-white">Reset Password</span>
+            </div>
+            <button type="button" onClick={onCancel} disabled={loading} aria-label="Close"
+              className="rounded-full p-1.5 text-white/50 transition-colors hover:bg-white/15 hover:text-white disabled:opacity-40">
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+        <div className="space-y-4 px-6 py-5">
+          <p className="text-[13px] text-[#5f6368]">
+            Set a new password for <span className="font-semibold text-[#202124]">{target.username}</span>.
+          </p>
+          <div>
+            <div className="mb-1.5 flex items-center justify-between">
+              <label className="text-xs font-medium text-[#5f6368]">New Password</label>
+              <button type="button" onClick={() => setPassword(generatePassword(6))}
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-[#1a73e8] transition-colors hover:bg-[#e8f0fe]">
+                <RefreshCw size={12} /><span>Regenerate</span>
+              </button>
+            </div>
+            <input type="text" value={password} onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter or generate a password"
+              className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 font-mono text-sm text-[#202124] outline-none transition-all focus:ring-2 focus:ring-[#1a73e8]/20" />
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-2.5 border-t border-[#e8eaed] bg-[#f8f9fa] px-6 py-4">
+          <Button type="button" variant='outline' onPress={onCancel} isDisabled={loading}>
+            Cancel
+          </Button>
+          <Button isPending={loading} onPress={() => onConfirm(password)} isDisabled={loading || !password.trim()} >
+            {({ isPending }) => (
+              <>
+                {isPending ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                Reset Password
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── ConfirmDeleteModal ───────────────────────────────────────────────────────
+
+function ConfirmDeleteModal({ target, loading, onConfirm, onCancel }: {
+  target: Student; loading: boolean;
+  onConfirm: () => void; onCancel: () => void;
+}) {
+  return (
+    <div role="dialog" aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+      onKeyDown={(e) => e.key === 'Escape' && !loading && onCancel()}>
+      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl outline-none ring-1 ring-black/10">
+        <div className="relative bg-linear-to-br from-[#d93025] via-[#c5221f] to-[#b31412] px-6 py-4">
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Trash size={16} className="text-white" />
+              <span className="text-[15px] font-semibold text-white">Delete Student Account</span>
+            </div>
+            <button type="button" onClick={onCancel} disabled={loading} aria-label="Close"
+              className="rounded-full p-1.5 text-white/50 transition-colors hover:bg-white/15 hover:text-white disabled:opacity-40">
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+        <div className="space-y-4 px-6 py-5">
+          <div className="flex gap-3 rounded-xl border border-[#fad2cf] bg-[#fce8e6] px-4 py-3.5">
+            <AlertTriangle size={15} className="mt-0.5 shrink-0 text-[#c5221f]" />
+            <div>
+              <p className="text-[13px] font-semibold text-[#b31412]">This action is irreversible</p>
+              <p className="mt-0.5 text-[12px] leading-[1.55] text-[#c5221f]">
+                Are you sure you want to permanently delete <span className="font-semibold">{target.username}</span>? They will lose all database configurations and login capabilities immediately.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-2.5 border-t border-[#e8eaed] bg-[#f8f9fa] px-6 py-4">
+          <Button type="button" variant='outline' onPress={onCancel} isDisabled={loading}>
+            Cancel
+          </Button>
+          <Button isPending={loading} variant='danger' onPress={onConfirm} isDisabled={loading} >
+            {({ isPending }) => (
+              <>
+                {isPending ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                Delete Account
+              </>
+            )}
+          </Button>
         </div>
       </div>
     </div>
@@ -442,7 +558,7 @@ function EditStudentModal({ student, loading, onConfirm, onCancel }: {
             <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Grade <span className="font-normal text-[#9aa0a6]">(optional)</span></label>
             <div className="relative">
               <select value={grade} onChange={(e) => setGrade(e.target.value as Grade | '')} disabled={loading}
-                className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc]focus:ring-2 focus:ring-[#1a73e8]/20">
+                className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-[#1a73e8]/20">
                 <option value="">— Select grade —</option>
                 {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => (
                   <option key={val} value={val}>{label}</option>
@@ -480,15 +596,17 @@ function EditStudentModal({ student, loading, onConfirm, onCancel }: {
 
         </div>
         <div className="flex items-center justify-end gap-2.5 border-t border-[#e8eaed] bg-[#f8f9fa] px-6 py-4">
-          <button type="button" onClick={onCancel} disabled={loading}
-            className="rounded-full px-4 py-2 text-sm font-medium text-[#5f6368] transition-colors hover:bg-[#e8eaed] disabled:opacity-40">
+          <Button type="button" variant='outline' onPress={onCancel} isDisabled={loading}>
             Cancel
-          </button>
-          <button type="button" onClick={() => onConfirm(activeFrom, activeTo, accessMode, grade)} disabled={loading}
-            className="inline-flex items-center gap-2 rounded-full bg-[#1a73e8] px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#1765cc] hover:shadow-md disabled:cursor-not-allowed">
-            {loading && <Loader2 size={14} className="animate-spin" />}
-            Save Changes
-          </button>
+          </Button>
+          <Button isPending={loading} onPress={() => onConfirm(activeFrom, activeTo, accessMode, grade)} isDisabled={loading} >
+            {({ isPending }) => (
+              <>
+                {isPending ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                Save Changes
+              </>
+            )}
+          </Button>
         </div>
       </div>
     </div>
@@ -575,7 +693,7 @@ function CustomVideoPickerModal({ student, onSave, onCancel }: {
             <Search size={14} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa0a6]" />
             <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search videos…"
-              className="w-full rounded-full border border-[#dadce0] bg-white py-2 pl-9 pr-4 text-sm text-[#202124] outline-none transition-allhover:border-[#c4c7cc] focus:ring-2 focus:ring-[#6d28d9]/20" />
+              className="w-full rounded-full border border-[#dadce0] bg-white py-2 pl-9 pr-4 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-[#6d28d9]/20" />
           </div>
           <p className="mt-2 text-[11px] text-[#9aa0a6]">
             {selectedIds.size} of {allVideos.length} videos selected
@@ -596,12 +714,10 @@ function CustomVideoPickerModal({ student, onSave, onCancel }: {
                     ? 'border-[#6d28d9]/30 bg-purple-50'
                     : 'border-[#e8eaed] bg-white hover:bg-[#f8f9fa]'
                     }`}>
-                  {/* Checkbox */}
                   <div className={`flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-all ${selectedIds.has(video.id) ? 'border-[#6d28d9] bg-[#6d28d9]' : 'border-[#dadce0] bg-white'
                     }`}>
                     {selectedIds.has(video.id) && <Check size={11} className="text-white" />}
                   </div>
-                  {/* Thumbnail */}
                   <div className="flex h-8 w-12 shrink-0 items-center justify-center overflow-hidden rounded-md border border-[#e8eaed] bg-[#202124]">
                     {video.cloudflareR2ThumbnailKey ? (
                       // eslint-disable-next-line @next/next/no-img-element
@@ -610,7 +726,6 @@ function CustomVideoPickerModal({ student, onSave, onCancel }: {
                       <Film size={10} className="text-[#9aa0a6] opacity-50" />
                     )}
                   </div>
-                  {/* Info */}
                   <div className="min-w-0 flex-1">
                     <p className={`truncate text-[13px] font-medium text-[#202124] ${notoSans.className}`}>
                       {video.title}
@@ -638,15 +753,17 @@ function CustomVideoPickerModal({ student, onSave, onCancel }: {
         <div className="flex items-center justify-between border-t border-[#e8eaed] bg-[#f8f9fa] px-6 py-4 shrink-0">
           <span className="text-[12px] text-[#5f6368]">{selectedIds.size} videos selected</span>
           <div className="flex gap-2.5">
-            <button type="button" onClick={onCancel} disabled={saving}
-              className="rounded-full px-4 py-2 text-sm font-medium text-[#5f6368] transition-colors hover:bg-[#e8eaed] disabled:opacity-40">
+            <Button type="button" variant='outline' onPress={onCancel} isDisabled={saving}>
               Cancel
-            </button>
-            <button type="button" onClick={handleSave} disabled={saving}
-              className="inline-flex items-center gap-2 rounded-full bg-[#6d28d9] px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#5b21b6] disabled:cursor-not-allowed ">
-              {saving ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
-              Save Access List
-            </button>
+            </Button>
+            <Button isPending={saving} variant='primary' className="bg-[#6d28d9]" onPress={handleSave} isDisabled={saving} >
+              {({ isPending }) => (
+                <>
+                  {isPending ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                  Save Access List
+                </>
+              )}
+            </Button>
           </div>
         </div>
       </div>
@@ -753,7 +870,6 @@ function AddStudentModal({
       onKeyDown={(e) => e.key === 'Escape' && !creating && onCancel()}>
       <div className="w-full max-w-fit my-auto overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
         <div className="relative bg-linear-to-br from-[#1a73e8] via-[#1557b0] to-[#0d47a1] px-6 py-4">
-          <div className="pointer-events-none absolute -right-4 -top-4 h-20 w-20 rounded-full bg-white/5" />
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <UserPlus size={16} className="text-white" />
@@ -776,7 +892,6 @@ function AddStudentModal({
 
           <form id="add-student-form" onSubmit={onSubmit} className="space-x-4 flex">
             <div className="space-y-4">
-              {/* Username */}
               <div>
                 <div className="mb-1.5 flex items-center justify-between">
                   <label className="text-xs font-medium text-[#5f6368]">Username</label>
@@ -789,7 +904,6 @@ function AddStudentModal({
                 <p className="mt-1 text-[11px] text-[#9aa0a6]">Format: <span className="font-mono">username-XXXX</span></p>
               </div>
 
-              {/* Password */}
               <div>
                 <div className="mb-1.5 flex items-center justify-between">
                   <label className="text-xs font-medium text-[#5f6368]">Password</label>
@@ -807,7 +921,6 @@ function AddStudentModal({
                   required />
               </div>
 
-              {/* Grade */}
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Grade <span className="font-normal text-[#9aa0a6]">(optional)</span></label>
                 <div className="relative">
@@ -822,7 +935,6 @@ function AddStudentModal({
                 </div>
               </div>
 
-              {/* Access Mode */}
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Access Mode</label>
                 <div className="grid grid-cols-2 gap-2">
@@ -845,7 +957,6 @@ function AddStudentModal({
               </div>
             </div>
 
-            {/* Active Period */}
             <div className="space-y-2 h-fit rounded-xl border border-[#e8eaed] bg-[#f8f9fa] p-3">
               <p className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-widest text-[#5f6368]">
                 <Clock size={11} /> Account Validity
@@ -859,15 +970,17 @@ function AddStudentModal({
         </div>
 
         <div className="flex items-center justify-end gap-2.5 border-t border-[#e8eaed] bg-[#f8f9fa] px-6 py-4">
-          <button type="button" onClick={onCancel} disabled={creating}
-            className="rounded-full px-4 py-2 text-sm font-medium text-[#5f6368] transition-colors hover:bg-[#e8eaed] disabled:opacity-40">
+          <Button type="button" variant='outline' onPress={onCancel} isDisabled={creating}>
             Cancel
-          </button>
-          <button type="submit" form="add-student-form" disabled={creating}
-            className="inline-flex items-center gap-2 rounded-full bg-[#1a73e8] px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#1765cc] hover:shadow-md disabled:cursor-not-allowed ">
-            {creating ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
-            Create Student
-          </button>
+          </Button>
+          <Button isPending={creating} type="submit" form="add-student-form" isDisabled={creating} >
+            {({ isPending }) => (
+              <>
+                {isPending ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+                Create Student
+              </>
+            )}
+          </Button>
         </div>
       </div>
     </div>
@@ -943,40 +1056,44 @@ export default function UsersAdminPage() {
   const [newActiveTo, setNewActiveTo] = useState('');
   const [creating, setCreating] = useState(false);
 
-  // Inline reset
-  const [resettingId, setResettingId] = useState<string | null>(null);
-  const [resetPassword, setResetPassword] = useState('');
-
   // Share credentials card
   const [shareInfo, setShareInfo] = useState<ShareInfo | null>(null);
 
-  // Share-reset modal
+  // Share-reset modal[cite: 1]
   const [shareResetTarget, setShareResetTarget] = useState<ShareResetTarget | null>(null);
   const [shareResetPassword, setShareResetPassword] = useState('');
   const [shareResetLoading, setShareResetLoading] = useState(false);
 
-  // Edit modal
+  // Dedicated Reset Password Modal
+  const [resetTarget, setResetTarget] = useState<Student | null>(null);
+  const [resetLoading, setResetLoading] = useState(false);
+
+  // Dedicated Delete Modal
+  const [deleteTarget, setDeleteTarget] = useState<Student | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  // Edit modal[cite: 1]
   const [editTarget, setEditTarget] = useState<Student | null>(null);
   const [editLoading, setEditLoading] = useState(false);
 
-  // Custom video picker modal
+  // Custom video picker modal[cite: 1]
   const [customVideoTarget, setCustomVideoTarget] = useState<Student | null>(null);
 
-  // Add student modal
+  // Add student modal[cite: 1]
   const [showAddModal, setShowAddModal] = useState(false);
 
-  // Table filters
+  // Table filters[cite: 1]
   const [searchQuery, setSearchQuery] = useState('');
   const [gradeFilter, setGradeFilter] = useState<Grade | ''>('');
   const [showExpired, setShowExpired] = useState(false);
 
   // ── Derived ──────────────────────────────────────────────────────────────
 
-  const activeStudents = React.useMemo(
+  const activeStudents = useMemo(
     () => students.filter((s) => !isExpiredOrInactive(s)),
     [students],
   );
-  const expiredStudents = React.useMemo(
+  const expiredStudents = useMemo(
     () => students.filter((s) => isExpiredOrInactive(s)),
     [students],
   );
@@ -993,11 +1110,11 @@ export default function UsersAdminPage() {
     [searchQuery, gradeFilter],
   );
 
-  const filteredActive = React.useMemo(
+  const filteredActive = useMemo(
     () => filterStudents(activeStudents),
     [filterStudents, activeStudents],
   );
-  const filteredExpired = React.useMemo(
+  const filteredExpired = useMemo(
     () => filterStudents(expiredStudents),
     [filterStudents, expiredStudents],
   );
@@ -1069,18 +1186,29 @@ export default function UsersAdminPage() {
     }
   };
 
-  const handleInlineReset = async (studentId: string) => {
-    const password = resetPassword.trim();
-    if (!password) { alert('Please enter a new password'); return; }
+  const handleResetPassword = async (password: string) => {
+    if (!resetTarget) return;
+    setResetLoading(true); setError('');
     try {
-      const res = await fetch(`/api/users/${studentId}`, {
+      const res = await fetch(`/api/users/${resetTarget.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ password }),
       });
-      if (res.ok) { setSuccess('Password updated successfully.'); setResetPassword(''); setResettingId(null); }
-      else { const data = await res.json(); alert(data.error || 'Failed to reset password'); }
-    } catch { alert('Error updating password'); }
+      if (res.ok) {
+        setSuccess(`Password updated successfully for '${resetTarget.username}'.`);
+        setResetTarget(null);
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Failed to reset password');
+        setResetTarget(null);
+      }
+    } catch {
+      setError('Error updating password');
+      setResetTarget(null);
+    } finally {
+      setResetLoading(false);
+    }
   };
 
   const handleOpenShareReset = (student: Student) => {
@@ -1158,13 +1286,26 @@ export default function UsersAdminPage() {
     } catch { setError('Connection error saving custom video list'); setCustomVideoTarget(null); }
   };
 
-  const handleDeleteStudent = async (studentId: string, username: string) => {
-    if (!confirm(`Delete student account: ${username}?`)) return;
+  const handleDeleteStudent = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true); setError('');
     try {
-      const res = await fetch(`/api/users/${studentId}`, { method: 'DELETE' });
-      if (res.ok) { setSuccess(`Student account '${username}' deleted.`); fetchStudents(); }
-      else { const data = await res.json(); alert(data.error || 'Failed to delete student'); }
-    } catch { alert('Connection error deleting student'); }
+      const res = await fetch(`/api/users/${deleteTarget.id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setSuccess(`Student account '${deleteTarget.username}' deleted.`);
+        setDeleteTarget(null);
+        fetchStudents();
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Failed to delete student');
+        setDeleteTarget(null);
+      }
+    } catch {
+      setError('Connection error deleting student');
+      setDeleteTarget(null);
+    } finally {
+      setDeleteLoading(false);
+    }
   };
 
   // ─── Student Row ──────────────────────────────────────────────────────────
@@ -1216,50 +1357,30 @@ export default function UsersAdminPage() {
       </td>
       {/* Actions */}
       <td className="py-3.5 text-right">
-        {resettingId === student.id ? (
-          <div className="inline-flex items-center gap-1.5">
-            <input type="text" placeholder="New password" value={resetPassword}
-              onChange={(e) => setResetPassword(e.target.value)}
-              className="w-28 rounded-md border border-[#dadce0] px-2.5 py-1.5 font-mono text-xs outline-none transition-colors  focus:ring-2 focus:ring-[#1a73e8]/20" />
-            <button type="button" onClick={() => setResetPassword(generatePassword(6))} title="Generate"
-              className="rounded-full p-1.5 text-[#1a73e8] transition-colors hover:bg-[#e8f0fe]">
-              <RefreshCw size={13} />
+        <div className="inline-flex items-center gap-1">
+          <button type="button" onClick={() => setEditTarget(student)} title="Edit Student"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#1a73e8] transition-colors hover:bg-[#e8f0fe]">
+            <span>Edit</span>
+          </button>
+          {student.accessMode === 'CUSTOM' && (
+            <button type="button" onClick={() => setCustomVideoTarget(student)} title="Manage Videos"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-purple-700 transition-colors hover:bg-purple-100">
+              <Film size={13} /><span>Videos</span>
             </button>
-            <button type="button" onClick={() => handleInlineReset(student.id)}
-              className="rounded-full bg-[#1a73e8] px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-[#1765cc]">
-              Save
-            </button>
-            <button type="button" onClick={() => { setResettingId(null); setResetPassword(''); }}
-              className="rounded-full px-2.5 py-1.5 text-xs font-medium text-[#5f6368] transition-colors hover:bg-[#f1f3f4]">
-              Cancel
-            </button>
-          </div>
-        ) : (
-          <div className="inline-flex items-center gap-1">
-            <button type="button" onClick={() => setEditTarget(student)} title="Edit Student"
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#1a73e8] transition-colors hover:bg-[#e8f0fe]">
-              <span>Edit</span>
-            </button>
-            {student.accessMode === 'CUSTOM' && (
-              <button type="button" onClick={() => setCustomVideoTarget(student)} title="Manage Videos"
-                className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-purple-700 transition-colors hover:bg-purple-50">
-                <Film size={13} /><span>Videos</span>
-              </button>
-            )}
-            <button type="button" onClick={() => handleOpenShareReset(student)} title="Share Credentials"
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#137333] transition-colors hover:bg-[#e6f4ea]">
-              <Share2 size={13} /><span>Share</span>
-            </button>
-            <button type="button" onClick={() => { setResettingId(student.id); setResetPassword(''); }} title="Reset Password"
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#1a73e8] transition-colors hover:bg-[#e8f0fe]">
-              <Key size={13} /><span>Reset</span>
-            </button>
-            <button type="button" onClick={() => handleDeleteStudent(student.id, student.username)} title="Delete Student"
-              className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#d93025] transition-colors hover:bg-[#fce8e6]">
-              <Trash size={13} /><span>Delete</span>
-            </button>
-          </div>
-        )}
+          )}
+          <button type="button" onClick={() => handleOpenShareReset(student)} title="Share Credentials"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#137333] transition-colors hover:bg-[#e6f4ea]">
+            <Share2 size={13} /><span>Share</span>
+          </button>
+          <button type="button" onClick={() => setResetTarget(student)} title="Reset Password"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#1a73e8] transition-colors hover:bg-[#e8f0fe]">
+            <Key size={13} /><span>Reset</span>
+          </button>
+          <button type="button" onClick={() => setDeleteTarget(student)} title="Delete Student"
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#d93025] transition-colors hover:bg-[#fce8e6]">
+            <Trash size={13} /><span>Delete</span>
+          </button>
+        </div>
       </td>
     </tr>
   );
@@ -1268,7 +1389,7 @@ export default function UsersAdminPage() {
 
   return (
     <>
-      {/* Modals */}
+      {/* Modals[cite: 1] */}
       {showAddModal && (
         <AddStudentModal
           usernamePrefix={newUsernamePrefix} usernameSuffix={newUsernameSuffix}
@@ -1294,6 +1415,16 @@ export default function UsersAdminPage() {
           onConfirm={handleConfirmShareReset}
           onCancel={() => { setShareResetTarget(null); setShareResetPassword(''); }} />
       )}
+      {resetTarget && (
+        <ResetPasswordModal target={resetTarget} loading={resetLoading}
+          onConfirm={handleResetPassword}
+          onCancel={() => setResetTarget(null)} />
+      )}
+      {deleteTarget && (
+        <ConfirmDeleteModal target={deleteTarget} loading={deleteLoading}
+          onConfirm={handleDeleteStudent}
+          onCancel={() => setDeleteTarget(null)} />
+      )}
       {editTarget && (
         <EditStudentModal student={editTarget} loading={editLoading}
           onConfirm={handleEditStudent}
@@ -1312,10 +1443,10 @@ export default function UsersAdminPage() {
               <h1 className="text-[22px] font-medium tracking-tight text-[#202124]">Student Accounts</h1>
               <p className="mt-1 text-sm text-[#5f6368]">Create, manage, and remove student login accounts</p>
             </div>
-            <button type="button" onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center justify-center gap-2 rounded-full bg-[#1a73e8] px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#1765cc] hover:shadow-md ">
-              <UserPlus size={16} /><span>New Student</span>
-            </button>
+            <Button type="button" onPress={() => setShowAddModal(true)}>
+              <UserPlus size={16} />
+              New Student
+            </Button>
           </div>
 
           {/* Page-level feedback (shown once the modal that triggered it has closed) */}
@@ -1479,7 +1610,7 @@ export default function UsersAdminPage() {
                                       className="inline-flex items-center gap-1.5 rounded-full bg-[#e8f0fe] px-3 py-1.5 text-xs font-medium text-[#1a73e8] transition-colors hover:bg-[#c2d7fa]">
                                       <span>Edit / Reactivate</span>
                                     </button>
-                                    <button type="button" onClick={() => handleDeleteStudent(student.id, student.username)}
+                                    <button type="button" onClick={() => setDeleteTarget(student)}
                                       className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#d93025] transition-colors hover:bg-[#fce8e6]">
                                       <Trash size={13} /><span>Delete</span>
                                     </button>
