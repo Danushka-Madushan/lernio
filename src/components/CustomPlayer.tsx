@@ -128,9 +128,10 @@ export default function CustomPlayer({ videoId }: CustomPlayerProps) {
       {!isPlaying && !isBuffering && !error && (
         <div
           aria-hidden="true"
-          className="pointer-events-none absolute inset-0 z-10 m-auto flex h-16 w-16 sm:h-18 sm:w-18 items-center justify-center rounded-full bg-black/40 text-white shadow-lg backdrop-blur-sm ring-1 ring-white/15"
+          className="pointer-events-none absolute inset-0 z-10 m-auto flex h-12 w-12 sm:h-16 sm:w-16 items-center justify-center rounded-full bg-black/40 text-white shadow-lg backdrop-blur-sm ring-1 ring-white/15"
         >
-          <Play size={30} className="ml-1" />
+          <Play size={22} className="ml-1 sm:hidden" />
+          <Play size={30} className="ml-1 hidden sm:block" />
         </div>
       )}
 
@@ -140,11 +141,12 @@ export default function CustomPlayer({ videoId }: CustomPlayerProps) {
           role="alert"
           className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-3 bg-[#05070B] px-6 text-center"
         >
-          <AlertCircle size={30} className="text-danger" />
+          <AlertCircle size={24} className="text-danger sm:hidden" />
+          <AlertCircle size={30} className="hidden text-danger sm:block" />
           <p className="max-w-xs text-xs font-medium text-white/80">{error}</p>
           <button
             onClick={handleRetry}
-            className="flex items-center gap-1.5 rounded-full bg-white/10 px-4 py-2 text-xs font-semibold text-white transition-colors hover:bg-white/15 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--accent]"
+            className="flex items-center gap-1.5 rounded-full bg-white/10 px-3.5 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-white/15 active:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[--accent] sm:px-4 sm:py-2"
           >
             <RefreshCw size={13} />
             Try again
