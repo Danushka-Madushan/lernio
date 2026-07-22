@@ -109,11 +109,11 @@ export default function CloudflareR2Widget() {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 rounded-full bg-white border border-[#dadce0] px-4 py-2 text-sm font-medium text-[#5f6368] shadow-sm transition-all duration-150 hover:bg-[#f8f9fa] hover:border-[#c4c7cc]"
       >
-        <Cloud size={15} className={loading ? "animate-pulse text-[#1a73e8]" : "text-[#f6821f]"} />
+        <Cloud size={15} className={loading ? "animate-pulse text-blue-500" : "text-[#f6821f]"} />
         {loading ? (
           <span>Syncing...</span>
         ) : error ? (
-          <span className="text-[#d93025]">Error</span>
+          <span className="text-red-500">Error</span>
         ) : (
           <span>{data.storageGB.toFixed(2)}GB • ${totalCost.toFixed(2)}</span>
         )}
@@ -125,12 +125,12 @@ export default function CloudflareR2Widget() {
         <div className="absolute right-0 top-full mt-2 z-50 flex w-96 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(0,0,0,0.15)] ring-1 ring-black/5 origin-top-right">
           {loading ? (
             <div className="flex h-80 flex-col items-center justify-center p-6 text-center">
-              <Loader2 size={24} className="mb-3 animate-spin text-[#1a73e8]" />
+              <Loader2 size={24} className="mb-3 animate-spin text-blue-500" />
               <p className="text-xs text-[#5f6368]">Syncing live metrics...</p>
             </div>
           ) : error ? (
             <div className="flex h-80 flex-col items-center justify-center p-6 text-center">
-              <AlertTriangle size={24} className="mb-3 text-[#d93025]" />
+              <AlertTriangle size={24} className="mb-3 text-red-500" />
               <p className="mb-1 text-sm font-medium text-[#202124]">Failed to load metrics</p>
               <p className="text-xs text-[#5f6368]">{error}</p>
             </div>
@@ -196,7 +196,7 @@ export default function CloudflareR2Widget() {
 
                 <div className="p-4">
                   <div className="mb-1 flex items-center gap-1.5 text-[11px] font-medium text-[#5f6368]">
-                    <ArrowUpRight size={14} className="text-[#1a73e8]" /> Writes (Class A)
+                    <ArrowUpRight size={14} className="text-blue-500" /> Writes (Class A)
                   </div>
                   <div className="mb-0.5 text-lg font-semibold text-[#202124]">{formatOps(data.classAOps)}</div>
                   <div className="text-[10px] text-[#9aa0a6]">

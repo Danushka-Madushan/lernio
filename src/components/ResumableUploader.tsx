@@ -405,7 +405,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
     'checking': <Loader2 size={11} className="animate-spin text-[#9334e9]" />,
     'loading-ffmpeg': <Loader2 size={11} className="animate-spin text-[#9334e9]" />,
     'remuxing': <Zap size={11} className="text-[#9334e9]" />,
-    'uploading': <Loader2 size={11} className="animate-spin text-[#1a73e8]" />,
+    'uploading': <Loader2 size={11} className="animate-spin text-blue-500" />,
   };
 
   return (
@@ -415,7 +415,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
         {(uploadState || phase !== 'idle') && (
           <button
             onClick={resetUploader}
-            className="flex items-center gap-1 text-[10px] font-medium text-[#d93025] hover:underline"
+            className="flex items-center gap-1 text-[10px] font-medium text-red-500 hover:underline"
           >
             <X size={11} />
             Cancel Session
@@ -517,7 +517,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
 
             <div className="h-2 w-full overflow-hidden rounded-full bg-[#e8eaed]">
               <div
-                className="h-full rounded-full bg-[#1a73e8] transition-all duration-200"
+                className="h-full rounded-full bg-blue-500 transition-all duration-200"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -546,7 +546,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
               type="button"
               onClick={() => rawFile && preprocessAndUpload(rawFile)}
               disabled={!rawFile}
-              className="flex items-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-1.5 text-xs font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md disabled:cursor-not-allowed"
+              className="flex items-center gap-1.5 rounded-full bg-blue-500 px-4 py-1.5 text-xs font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md disabled:cursor-not-allowed"
             >
               <Upload size={13} />
               Start Upload

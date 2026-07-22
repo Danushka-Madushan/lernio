@@ -94,7 +94,7 @@ function EditVideoModal({
       <div className="w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
 
         {/* Header */}
-        <div className="relative bg-linear-to-br from-[#1a73e8] via-[#1557b0] to-[#0d47a1] px-6 py-4">
+        <div className="relative bg-linear-to-br from-blue-500 via-[#1557b0] to-[#0d47a1] px-6 py-4">
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <Pencil size={16} className="text-white" />
@@ -115,7 +115,7 @@ function EditVideoModal({
             <div>
               <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Title</label>
               <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} disabled={loading}
-                className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:ring-2 focus:ring-[#1a73e8]/20"
+                className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
                 placeholder="Video title" />
             </div>
 
@@ -123,7 +123,7 @@ function EditVideoModal({
               <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Description <span className="font-normal text-[#9aa0a6]">(optional)</span></label>
               <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={5} disabled={loading}
                 placeholder="Provide a short description..."
-                className="w-full resize-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2 text-sm text-[#5f6368] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:ring-2 focus:ring-[#1a73e8]/20" />
+                className="w-full resize-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2 text-sm text-[#5f6368] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20" />
             </div>
           </div>
 
@@ -134,7 +134,7 @@ function EditVideoModal({
                 <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Grade</label>
                 <div className="relative">
                   <select value={grade} onChange={(e) => setGrade(e.target.value as Grade | '')} disabled={loading}
-                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2 pr-7 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:ring-2 focus:ring-[#1a73e8]/20">
+                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2 pr-7 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
                     <option value="">— No grade —</option>
                     {Object.entries(GRADE_LABELS).map(([val, label]) => (
                       <option key={val} value={val}>{label}</option>
@@ -148,7 +148,7 @@ function EditVideoModal({
                 <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Visibility</label>
                 <div className="relative">
                   <select value={visibility} onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'GRADE')} disabled={loading}
-                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2 pr-7 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:ring-2 focus:ring-[#1a73e8]/20">
+                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2 pr-7 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
                     <option value="PUBLIC">Public</option>
                     <option value="GRADE">Grade Only</option>
                   </select>
@@ -196,7 +196,7 @@ function ConfirmDeleteModal({ target, loading, onConfirm, onCancel }: {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
       onKeyDown={(e) => e.key === 'Escape' && !loading && onCancel()}>
       <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl outline-none ring-1 ring-black/10">
-        <div className="relative bg-linear-to-br from-[#d93025] via-[#c5221f] to-[#b31412] px-6 py-4">
+        <div className="relative bg-linear-to-br from-red-500 via-[#c5221f] to-[#b31412] px-6 py-4">
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <Trash2 size={16} className="text-white" />
@@ -363,7 +363,7 @@ export default function VideosAdminPage() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8f0fe]">
-                <Film size={17} className="text-[#1a73e8]" />
+                <Film size={17} className="text-blue-500" />
               </div>
               <div>
                 <h1 className="text-[15px] font-medium text-[#202124]">Video Catalog</h1>
@@ -381,7 +381,7 @@ export default function VideosAdminPage() {
 
               <Link
                 href="/admin/videos/upload"
-                className="flex items-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md"
+                className="flex items-center gap-1.5 rounded-full bg-blue-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md"
               >
                 <Plus size={15} />
                 Upload New Video
@@ -405,7 +405,7 @@ export default function VideosAdminPage() {
           <div className="overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
             {loading ? (
               <div className="flex items-center justify-center py-16">
-                <Loader2 className="animate-spin text-[#1a73e8]" size={26} />
+                <Loader2 className="animate-spin text-blue-500" size={26} />
               </div>
             ) : videos.length === 0 ? (
               <div className="flex flex-col items-center justify-center gap-3 py-16">
@@ -415,7 +415,7 @@ export default function VideosAdminPage() {
                 <p className="text-sm text-[#5f6368]">No videos published yet.</p>
                 <Link
                   href="/admin/videos/upload"
-                  className="text-sm font-medium text-[#1a73e8] hover:underline"
+                  className="text-sm font-medium text-blue-500 hover:underline"
                 >
                   Upload your first video →
                 </Link>
@@ -470,7 +470,7 @@ export default function VideosAdminPage() {
                         {/* Grade badge */}
                         <td className="px-4 py-3">
                           {video.grade ? (
-                            <span className="rounded-full bg-[#e8f0fe] px-2.5 py-1 text-[11px] font-medium text-[#1a73e8]">
+                            <span className="rounded-full bg-[#e8f0fe] px-2.5 py-1 text-[11px] font-medium text-blue-500">
                               {GRADE_LABELS[video.grade]}
                             </span>
                           ) : (
@@ -522,7 +522,7 @@ export default function VideosAdminPage() {
                           <div className="flex items-center justify-end gap-1">
                             <button
                               onClick={() => setEditTarget(video)}
-                              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-[#1a73e8] transition-colors hover:bg-[#e8f0fe]"
+                              className="flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-blue-500 transition-colors hover:bg-blue-100"
                               title="Edit video metadata"
                             >
                               <Pencil size={11} />
@@ -530,7 +530,7 @@ export default function VideosAdminPage() {
                             </button>
                             <button
                               onClick={() => setDeleteTarget(video)}
-                              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-[#d93025] transition-colors hover:bg-[#fce8e6]"
+                              className="flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-red-500 transition-colors hover:bg-red-100"
                               title="Delete video"
                             >
                               <Trash2 size={11} />
