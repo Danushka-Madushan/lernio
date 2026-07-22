@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import ResumableUploader from '@/components/ResumableUploader';
 import ThumbnailUploader from '@/components/ThumbnailUploader';
 import { Plus, Loader2, CheckCircle2, Film, ArrowLeft } from 'lucide-react';
@@ -8,6 +8,7 @@ import { Grade } from '@/generated/client/enums';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { notoSans } from '@/lib/fonts';
+import { Button } from '@heroui/react';
 
 export default function VideoUploadPage() {
   const router = useRouter();
@@ -230,17 +231,17 @@ export default function VideoUploadPage() {
                 </div>
               </div>
 
-              <button
+              <Button
                 type="submit"
-                disabled={saving || !cloudflareR2Key}
-                className="flex w-full items-center justify-center gap-2 rounded-full bg-[#1a73e8] py-2.5 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md  disabled:cursor-not-allowed "
+                isDisabled={saving || !cloudflareR2Key}
+                fullWidth
               >
                 {saving ? (
                   <><Loader2 className="animate-spin" size={16} /><span>Publishing…</span></>
                 ) : (
                   <><Plus size={16} /><span>Publish Video</span></>
                 )}
-              </button>
+              </Button>
             </form>
           </div>
         </div>
