@@ -1,4 +1,3 @@
-import React from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { cookies } from 'next/headers';
@@ -6,6 +5,7 @@ import { verifyToken } from '@/lib/jwt';
 import { redirect } from 'next/navigation';
 import LogoutButton from '@/components/LogoutButton';
 import RepoVersionBadge from '@/components/RepoVersionBadge';
+import { ArrowLeft } from 'lucide-react';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
@@ -84,9 +84,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             {/* Back to Application View */}
             <Link
               href="/"
-              className="hidden sm:inline-flex items-center text-gray-600 hover:text-[#1a73e8] font-medium transition-colors bg-white hover:bg-gray-50 border border-gray-200 shadow-2xs rounded-lg px-3 py-1.5 text-xs"
+              className="hidden gap-1 sm:inline-flex items-center text-gray-600 hover:text-[#1a73e8] font-medium transition-colors bg-white hover:bg-gray-50 border border-gray-200 shadow-2xs rounded-lg px-3 py-1.5 text-xs"
             >
-              ← Student Feed
+              <ArrowLeft size={16} /> Student Feed
             </Link>
             
             <div className="w-px h-5 bg-gray-200"></div>
