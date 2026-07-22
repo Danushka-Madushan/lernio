@@ -152,9 +152,9 @@ function GradeTabs({ activeGrade }: { activeGrade?: Grade }) {
     <div className="flex flex-wrap gap-2 border-b border-[#e8eaed] pb-5">
       <Link
         href="/"
-        className={`rounded-full px-4 py-2 text-xs font-medium transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/40 ${
+        className={`rounded-full px-4 py-2 text-xs font-medium transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 ${
           !activeGrade
-            ? 'bg-[#1a73e8] text-white shadow-sm'
+            ? 'bg-blue-500 text-white shadow-sm'
             : 'border border-[#dadce0] bg-white text-[#3c4043] hover:bg-[#f1f3f4]'
         }`}
       >
@@ -164,9 +164,9 @@ function GradeTabs({ activeGrade }: { activeGrade?: Grade }) {
         <Link
           key={g.value}
           href={`/?grade=${g.value}`}
-          className={`rounded-full px-4 py-2 text-xs font-medium transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8]/40 ${
+          className={`rounded-full px-4 py-2 text-xs font-medium transition-all duration-150 outline-none focus-visible:ring-2 focus-visible:ring-blue-500/40 ${
             activeGrade === g.value
-              ? 'bg-[#1a73e8] text-white shadow-sm'
+              ? 'bg-blue-500 text-white shadow-sm'
               : 'border border-[#dadce0] bg-white text-[#3c4043] hover:bg-[#f1f3f4]'
           }`}
         >
@@ -213,7 +213,7 @@ function VideoGrid({ videos }: { videos: VideoWithCounts[] }) {
           />
           <div className="flex flex-1 flex-col justify-between p-4">
             <div>
-              <h3 className="mb-1 line-clamp-1 text-[15px] font-medium leading-tight text-[#202124] transition-colors hover:text-[#1a73e8]">
+              <h3 className="mb-1 line-clamp-1 text-[15px] font-medium leading-tight text-[#202124] transition-colors hover:text-blue-500">
                 <Link className={notoSans.className} href={`/video/${vid.id}`}>
                   {vid.title}
                 </Link>
@@ -239,7 +239,7 @@ function VideoGrid({ videos }: { videos: VideoWithCounts[] }) {
               </div>
               <Link
                 href={`/video/${vid.id}`}
-                className="rounded-full bg-[#1a73e8] px-3 py-1.5 text-[11px] font-medium text-white outline-none transition-all duration-150 hover:bg-[#1765cc] hover:shadow-sm focus-visible:ring-2 focus-visible:ring-[#1a73e8]/40"
+                className="rounded-full bg-blue-500 px-3 py-1.5 text-[11px] font-medium text-white outline-none transition-all duration-150 hover:bg-[#1765cc] hover:shadow-sm focus-visible:ring-2 focus-visible:ring-blue-500/40"
               >
                 Watch Now
               </Link>

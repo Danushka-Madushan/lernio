@@ -30,7 +30,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             {/* Unified Brand Logo Component */}
             <Link 
               href="/" 
-              className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8] rounded-lg"
+              className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
             >
               <div className="relative w-8 h-8 shrink-0 transition-transform duration-200 group-hover:scale-105">
                 <Image 
@@ -41,7 +41,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                   priority
                 />
               </div>
-              <span className="text-xl font-semibold tracking-tight text-[#1a73e8]">
+              <span className="text-xl font-semibold tracking-tight text-blue-500">
                 Lernio
               </span>
             </Link>
@@ -50,19 +50,19 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             <nav className="hidden md:flex items-center space-x-1 text-sm border-l border-gray-200 pl-6">
               <Link
                 href="/admin/videos"
-                className="text-gray-600 hover:text-[#1a73e8] hover:bg-[#e8f0fe]/60 font-medium transition-all duration-150 rounded-lg px-3 py-2 focus-visible:outline-none "
+                className="text-gray-600 hover:text-blue-500 hover:bg-[#e8f0fe]/60 font-medium transition-all duration-150 rounded-lg px-3 py-2 focus-visible:outline-none "
               >
                 Videos
               </Link>
               <Link
                 href="/admin/videos/upload"
-                className="text-gray-600 hover:text-[#1a73e8] hover:bg-[#e8f0fe]/60 font-medium transition-all duration-150 rounded-lg px-3 py-2 focus-visible:outline-none"
+                className="text-gray-600 hover:text-blue-500 hover:bg-[#e8f0fe]/60 font-medium transition-all duration-150 rounded-lg px-3 py-2 focus-visible:outline-none"
               >
                 Upload
               </Link>
               <Link
                 href="/admin/users"
-                className="text-gray-600 hover:text-[#1a73e8] hover:bg-[#e8f0fe]/60 font-medium transition-all duration-150 rounded-lg px-3 py-2 focus-visible:outline-none "
+                className="text-gray-600 hover:text-blue-500 hover:bg-[#e8f0fe]/60 font-medium transition-all duration-150 rounded-lg px-3 py-2 focus-visible:outline-none "
               >
                 Students
               </Link>
@@ -73,7 +73,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="flex items-center space-x-4 text-sm">
             <RepoVersionBadge owner='Danushka-Madushan' repo='lernio' />
             <div className="flex items-center bg-[#f1f3f4] border border-gray-200 rounded-full pl-2 pr-3 py-1">
-              <span className="bg-[#1a73e8] text-white px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase mr-2 shadow-sm">
+              <span className="bg-blue-500 text-white px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase mr-2 shadow-sm">
                 Admin
               </span>
               <span className="text-gray-800 font-medium max-w-30 truncate">
@@ -84,7 +84,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
             {/* Back to Application View */}
             <Link
               href="/"
-              className="hidden gap-1 sm:inline-flex items-center text-gray-600 hover:text-[#1a73e8] font-medium transition-colors bg-white hover:bg-gray-50 border border-gray-200 shadow-2xs rounded-lg px-3 py-1.5 text-xs"
+              className="hidden gap-1 sm:inline-flex items-center text-gray-600 hover:text-blue-500 font-medium transition-colors bg-white hover:bg-gray-50 border border-gray-200 shadow-2xs rounded-lg px-3 py-1.5 text-xs"
             >
               <ArrowLeft size={16} /> Student Feed
             </Link>

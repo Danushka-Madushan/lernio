@@ -83,7 +83,7 @@ export default function VideoUploadPage() {
       <div className="mx-auto max-w-2xl space-y-5">
         {/* Breadcrumb */}
         <div className="flex items-center space-x-2 text-xs text-[#5f6368]">
-          <Link href="/admin/videos" className="flex items-center gap-1 transition-colors hover:text-[#1a73e8]">
+          <Link href="/admin/videos" className="flex items-center gap-1 transition-colors hover:text-blue-500">
             <ArrowLeft size={12} />
             Video Catalog
           </Link>
@@ -94,7 +94,7 @@ export default function VideoUploadPage() {
         <div className="space-y-5 rounded-2xl bg-white p-7 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
           <div className="flex items-center space-x-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-[#e8f0fe]">
-              <Film size={18} className="text-[#1a73e8]" />
+              <Film size={18} className="text-blue-500" />
             </div>
             <div>
               <h1 className="text-[15px] font-medium text-[#202124]">Publish Educational Video</h1>
@@ -117,7 +117,7 @@ export default function VideoUploadPage() {
           {/* Step 1 – Video File */}
           <div className="space-y-2.5">
             <div className="flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1a73e8] text-[10px] font-semibold text-white">1</span>
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-semibold text-white">1</span>
               <p className="text-xs font-medium uppercase tracking-wide text-[#5f6368]">
                 Upload Video File
               </p>
@@ -133,7 +133,7 @@ export default function VideoUploadPage() {
                 </div>
                 <button
                   onClick={() => setCloudflareR2Key('')}
-                  className="shrink-0 text-[10px] font-medium text-[#d93025] hover:underline"
+                  className="shrink-0 text-[10px] font-medium text-red-500 hover:underline"
                 >
                   Replace
                 </button>
@@ -144,7 +144,7 @@ export default function VideoUploadPage() {
           {/* Step 2 – Metadata */}
           <div className="space-y-4 border-t border-[#e8eaed] pt-5">
             <div className="flex items-center gap-2">
-              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-[#1a73e8] text-[10px] font-semibold text-white">2</span>
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-blue-500 text-[10px] font-semibold text-white">2</span>
               <p className="text-xs font-medium uppercase tracking-wide text-[#5f6368]">
                 Video Details
               </p>
@@ -153,7 +153,7 @@ export default function VideoUploadPage() {
             <form onSubmit={handleSaveVideo} className="space-y-4">
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-[#5f6368]" htmlFor="upload-title">
-                  Video Title <span className="text-[#d93025]">*</span>
+                  Video Title <span className="text-red-500">*</span>
                 </label>
                 <input
                   id="upload-title"
@@ -162,7 +162,7 @@ export default function VideoUploadPage() {
                   onChange={(e) => setTitle(e.target.value)}
                   disabled={saving}
                   placeholder="e.g. Grade 10 Math – Lesson 1: Algebra Basics"
-                  className={`w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150  hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20 ${notoSans.className}`}
+                  className={`w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150  hover:border-[#c4c7cc]  focus:ring-2 focus:ring-blue-500/20 ${notoSans.className}`}
                   required
                 />
               </div>
@@ -178,7 +178,7 @@ export default function VideoUploadPage() {
                   disabled={saving}
                   placeholder="Brief overview of what this lesson covers…"
                   rows={3}
-                  className={`w-full resize-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150  hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20 ${notoSans.className}`}
+                  className={`w-full resize-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150  hover:border-[#c4c7cc]  focus:ring-2 focus:ring-blue-500/20 ${notoSans.className}`}
                 />
               </div>
 
@@ -194,7 +194,7 @@ export default function VideoUploadPage() {
                   <label className="mb-1.5 block text-xs font-medium text-[#5f6368]" htmlFor="upload-grade">
                     Grade Band{' '}
                     {visibility === 'GRADE' ? (
-                      <span className="text-[#d93025]">*</span>
+                      <span className="text-red-500">*</span>
                     ) : (
                       <span className="font-normal text-[#9aa0a6]">(optional)</span>
                     )}
@@ -204,7 +204,7 @@ export default function VideoUploadPage() {
                     value={grade}
                     onChange={(e) => setGrade(e.target.value as Grade | '')}
                     disabled={saving}
-                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20"
+                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc]  focus:ring-2 focus:ring-blue-500/20"
                   >
                     <option value="">— No grade —</option>
                     {Object.values(Grade).map((g) => (
@@ -216,14 +216,14 @@ export default function VideoUploadPage() {
                 </div>
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-[#5f6368]" htmlFor="upload-visibility">
-                    Visibility <span className="text-[#d93025]">*</span>
+                    Visibility <span className="text-red-500">*</span>
                   </label>
                   <select
                     id="upload-visibility"
                     value={visibility}
                     onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'GRADE')}
                     disabled={saving}
-                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20"
+                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc]  focus:ring-2 focus:ring-blue-500/20"
                   >
                     <option value="PUBLIC">🌐 Public — All students can see</option>
                     <option value="GRADE">🔒 Grade Only — Matching grade required</option>

@@ -258,9 +258,9 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
         <label
           htmlFor="thumbnail-input"
           className={`flex flex-col items-center justify-center gap-2 rounded-xl border-2 border-dashed p-5 cursor-pointer transition-colors duration-150
-            ${status === 'error' ? 'border-[#fad2cf] bg-[#fce8e6]' : 'border-[#dadce0] bg-[#f8f9fa] hover:border-[#1a73e8] hover:bg-[#e8f0fe]/40'}`}
+            ${status === 'error' ? 'border-[#fad2cf] bg-[#fce8e6]' : 'border-[#dadce0] bg-[#f8f9fa] hover:border-blue-500 hover:bg-[#e8f0fe]/40'}`}
         >
-          <ImagePlus size={20} className={status === 'error' ? 'text-[#d93025]' : 'text-[#5f6368]'} />
+          <ImagePlus size={20} className={status === 'error' ? 'text-red-500' : 'text-[#5f6368]'} />
           <span className="text-center text-[11px] leading-relaxed text-[#5f6368]">
             Click to select a JPG or PNG cover image
             <br />
@@ -289,7 +289,7 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
       {/* Compressing indicator */}
       {status === 'compressing' && (
         <div className="flex items-center gap-2 text-[11px] text-[#5f6368]">
-          <Loader2 size={12} className="animate-spin text-[#1a73e8]" />
+          <Loader2 size={12} className="animate-spin text-blue-500" />
           Cropping and compressing to 1280×720…
         </div>
       )}
@@ -311,7 +311,7 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
           </div>
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#e8eaed]">
             <div
-              className={`h-full rounded-full transition-all duration-200 ${status === 'done' ? 'bg-[#34a853]' : 'bg-[#1a73e8]'}`}
+              className={`h-full rounded-full transition-all duration-200 ${status === 'done' ? 'bg-[#34a853]' : 'bg-blue-500'}`}
               style={{ width: `${uploadProgress}%` }}
             />
           </div>
@@ -337,7 +337,7 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
                   <button
                     type="button"
                     onClick={() => setShowCropper(true)}
-                    className="flex items-center gap-1 text-[10px] font-medium text-[#1a73e8] transition-colors hover:text-[#1765cc]"
+                    className="flex items-center gap-1 text-[10px] font-medium text-blue-500 transition-colors hover:text-[#1765cc]"
                   >
                     <CropIcon size={10} />
                     Edit Size
@@ -346,7 +346,7 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
                 <button
                   type="button"
                   onClick={handleClear}
-                  className="flex items-center gap-1 text-[10px] font-medium text-[#d93025] transition-colors hover:text-[#a50e0e]"
+                  className="flex items-center gap-1 text-[10px] font-medium text-red-500 transition-colors hover:text-[#a50e0e]"
                 >
                   <X size={10} />
                   Remove
@@ -399,7 +399,7 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
               </button>
               <button
                 onClick={() => croppedAreaPixels && processAndUpload(originalImageSrc, croppedAreaPixels)}
-                className="rounded-full bg-[#1a73e8] px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#1765cc] hover:shadow-md"
+                className="rounded-full bg-blue-500 px-5 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-[#1765cc] hover:shadow-md"
               >
                 Apply & Upload
               </button>

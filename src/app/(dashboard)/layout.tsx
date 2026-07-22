@@ -22,7 +22,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           {/* Logo Section */}
           <Link 
             href="/" 
-            className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#1a73e8] rounded-lg"
+            className="flex items-center gap-3 group focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 rounded-lg"
           >
             <div className="relative w-8 h-8 shrink-0 transition-transform duration-200 group-hover:scale-105">
               <Image 
@@ -33,7 +33,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
                 priority
               />
             </div>
-            <span className="text-xl font-semibold tracking-tight text-[#1a73e8]">
+            <span className="text-xl font-semibold tracking-tight text-blue-500">
               Lernio
             </span>
           </Link>
@@ -54,7 +54,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
                 {user.role === 'ADMIN' && (
                   <Link
                     href="/admin"
-                    className="flex items-center px-3 py-1.5 bg-[#e8f0fe] text-[#1a73e8] font-medium text-xs rounded-full hover:bg-[#d2e3fc] transition-colors focus-visible:ring-2 focus-visible:ring-[#1a73e8]/40 outline-none"
+                    className="flex items-center px-3 py-1.5 bg-[#e8f0fe] text-blue-500 font-medium text-xs rounded-full hover:bg-[#d2e3fc] transition-colors focus-visible:ring-2 focus-visible:ring-blue-500/40 outline-none"
                   >
                     Admin Panel
                   </Link>

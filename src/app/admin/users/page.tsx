@@ -214,7 +214,7 @@ function DateTimePicker({
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         min={minDate}
-        className="w-full rounded-lg border bg-white px-3 py-2 text-xs text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-[#1a73e8]/20"
+        className="w-full rounded-lg border bg-white px-3 py-2 text-xs text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
       />
     </div>
   );
@@ -240,8 +240,8 @@ function CopyButton({ text, label, variant = 'ghost', tiny = false }: {
         'inline-flex shrink-0 items-center gap-1 rounded-full font-medium transition-all disabled:opacity-40',
         tiny ? 'px-2 py-1 text-[11px]' : 'px-2.5 py-1.5 text-xs',
         variant === 'solid'
-          ? 'bg-[#1a73e8] text-white shadow-sm hover:bg-[#1765cc]'
-          : 'text-[#1a73e8] hover:bg-[#e8f0fe]',
+          ? 'bg-blue-500 text-white shadow-sm hover:bg-[#1765cc]'
+          : 'text-blue-500 hover:bg-blue-100',
       ].join(' ')}>
       {copied ? <Check size={11} /> : <Copy size={11} />}
       {label && <span>{copied ? 'Copied!' : label}</span>}
@@ -296,7 +296,7 @@ function ShareCredentialsCard({ info, onDismiss }: { info: ShareInfo; onDismiss:
   const message = buildShareMessage(info.username, info.password);
   return (
     <div className="my-5 overflow-hidden rounded-2xl shadow-lg ring-1 ring-black/5">
-      <div className="relative bg-linear-to-br from-[#1a73e8] via-[#1557b0] to-[#0d47a1] px-4 py-4">
+      <div className="relative bg-linear-to-br from-blue-500 via-[#1557b0] to-[#0d47a1] px-4 py-4">
         <div className="relative flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="flex h-8 w-8 items-center justify-center rounded-full bg-white/15 backdrop-blur-sm">
@@ -348,7 +348,7 @@ function ShareResetModal({ target, password, loading, onPasswordChange, onConfir
       onKeyDown={(e) => e.key === 'Escape' && !loading && onCancel()}>
       <div ref={cardRef} tabIndex={-1}
         className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl outline-none ring-1 ring-black/10">
-        <div className="relative bg-linear-to-br from-[#1a73e8] via-[#1557b0] to-[#0d47a1] px-6 py-4">
+        <div className="relative bg-linear-to-br from-blue-500 via-[#1557b0] to-[#0d47a1] px-6 py-4">
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <Share2 size={16} className="text-white" />
@@ -375,13 +375,13 @@ function ShareResetModal({ target, password, loading, onPasswordChange, onConfir
             <div className="mb-1.5 flex items-center justify-between">
               <label className="text-xs font-medium text-[#5f6368]">New Password</label>
               <button type="button" onClick={() => onPasswordChange(generatePassword(6))}
-                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-[#1a73e8] transition-colors hover:bg-[#e8f0fe]">
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-blue-500 transition-colors hover:bg-blue-100">
                 <RefreshCw size={12} /><span>Regenerate</span>
               </button>
             </div>
             <input type="text" value={password} onChange={(e) => onPasswordChange(e.target.value)}
               placeholder="Enter or generate a password"
-              className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 font-mono text-sm text-[#202124] outline-none transition-all focus:ring-2 focus:ring-[#1a73e8]/20" />
+              className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 font-mono text-sm text-[#202124] outline-none transition-all focus:ring-2 focus:ring-blue-500/20" />
           </div>
         </div>
         <div className="flex items-center justify-end gap-2.5 border-t border-[#e8eaed] bg-[#f8f9fa] px-6 py-4">
@@ -419,7 +419,7 @@ function ResetPasswordModal({ target, loading, onConfirm, onCancel }: {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
       onKeyDown={(e) => e.key === 'Escape' && !loading && onCancel()}>
       <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl outline-none ring-1 ring-black/10">
-        <div className="relative bg-linear-to-br from-[#1a73e8] via-[#1557b0] to-[#0d47a1] px-6 py-4">
+        <div className="relative bg-linear-to-br from-blue-500 via-[#1557b0] to-[#0d47a1] px-6 py-4">
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <Key size={16} className="text-white" />
@@ -439,13 +439,13 @@ function ResetPasswordModal({ target, loading, onConfirm, onCancel }: {
             <div className="mb-1.5 flex items-center justify-between">
               <label className="text-xs font-medium text-[#5f6368]">New Password</label>
               <button type="button" onClick={() => setPassword(generatePassword(6))}
-                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-[#1a73e8] transition-colors hover:bg-[#e8f0fe]">
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-blue-500 transition-colors hover:bg-blue-100">
                 <RefreshCw size={12} /><span>Regenerate</span>
               </button>
             </div>
             <input type="text" value={password} onChange={(e) => setPassword(e.target.value)}
               placeholder="Enter or generate a password"
-              className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 font-mono text-sm text-[#202124] outline-none transition-all focus:ring-2 focus:ring-[#1a73e8]/20" />
+              className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 font-mono text-sm text-[#202124] outline-none transition-all focus:ring-2 focus:ring-blue-500/20" />
           </div>
         </div>
         <div className="flex items-center justify-end gap-2.5 border-t border-[#e8eaed] bg-[#f8f9fa] px-6 py-4">
@@ -477,7 +477,7 @@ function ConfirmDeleteModal({ target, loading, onConfirm, onCancel }: {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
       onKeyDown={(e) => e.key === 'Escape' && !loading && onCancel()}>
       <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl outline-none ring-1 ring-black/10">
-        <div className="relative bg-linear-to-br from-[#d93025] via-[#c5221f] to-[#b31412] px-6 py-4">
+        <div className="relative bg-linear-to-br from-red-500 via-[#c5221f] to-[#b31412] px-6 py-4">
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <Trash size={16} className="text-white" />
@@ -538,7 +538,7 @@ function EditStudentModal({ student, loading, onConfirm, onCancel }: {
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm overflow-y-auto"
       onKeyDown={(e) => e.key === 'Escape' && !loading && onCancel()}>
       <div className="w-full max-w-md my-auto overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
-        <div className="relative bg-linear-to-br from-[#1a73e8] via-[#1557b0] to-[#0d47a1] px-6 py-4">
+        <div className="relative bg-linear-to-br from-blue-500 via-[#1557b0] to-[#0d47a1] px-6 py-4">
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <span className="text-[15px] font-semibold text-white">Edit Student Account</span>
@@ -558,7 +558,7 @@ function EditStudentModal({ student, loading, onConfirm, onCancel }: {
             <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Grade <span className="font-normal text-[#9aa0a6]">(optional)</span></label>
             <div className="relative">
               <select value={grade} onChange={(e) => setGrade(e.target.value as Grade | '')} disabled={loading}
-                className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-[#1a73e8]/20">
+                className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
                 <option value="">— Select grade —</option>
                 {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => (
                   <option key={val} value={val}>{label}</option>
@@ -576,7 +576,7 @@ function EditStudentModal({ student, loading, onConfirm, onCancel }: {
                   className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-medium transition-all ${accessMode === mode
                     ? mode === 'CUSTOM'
                       ? 'border-purple-300 bg-purple-50 text-purple-700'
-                      : 'border-[#1a73e8]/30 bg-[#e8f0fe] text-[#1a73e8]'
+                      : 'border-blue-500/30 bg-blue-100 text-blue-500'
                     : 'border-[#e8eaed] bg-white text-[#5f6368] hover:bg-[#f8f9fa]'
                     }`}>
                   {mode === 'CUSTOM' ? <Lock size={12} /> : <BookOpen size={12} />}
@@ -783,7 +783,7 @@ function UsernameInput({ prefix, suffix, disabled, onPrefixChange, onSuffixChang
   const fieldBase = [
     'border border-[#dadce0] bg-white text-sm text-[#202124] outline-none transition-all',
     'placeholder:text-[#9aa0a6] hover:border-[#c4c7cc]',
-    ' focus:ring-2 focus:ring-[#1a73e8]/20',
+    ' focus:ring-2 focus:ring-blue-500/20',
     ' ',
   ].join(' ');
 
@@ -869,7 +869,7 @@ function AddStudentModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm overflow-y-auto"
       onKeyDown={(e) => e.key === 'Escape' && !creating && onCancel()}>
       <div className="w-full max-w-fit my-auto overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
-        <div className="relative bg-linear-to-br from-[#1a73e8] via-[#1557b0] to-[#0d47a1] px-6 py-4">
+        <div className="relative bg-linear-to-br from-blue-500 via-[#1557b0] to-[#0d47a1] px-6 py-4">
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <UserPlus size={16} className="text-white" />
@@ -909,7 +909,7 @@ function AddStudentModal({
                   <label className="text-xs font-medium text-[#5f6368]">Password</label>
                   <div className="flex items-center gap-1">
                     <button type="button" onClick={() => onPasswordChange(generatePassword(6))} disabled={creating}
-                      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-[#1a73e8] transition-colors hover:bg-[#e8f0fe] disabled:cursor-not-allowed disabled:opacity-40">
+                      className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium text-blue-500 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed disabled:opacity-40">
                       <RefreshCw size={12} /><span>Generate</span>
                     </button>
                     <CopyButton text={password} label="Copy" />
@@ -917,7 +917,7 @@ function AddStudentModal({
                 </div>
                 <input type="text" value={password} onChange={(e) => onPasswordChange(e.target.value)}
                   disabled={creating} placeholder="Initial password"
-                  className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all  hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20  "
+                  className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all  hover:border-[#c4c7cc]  focus:ring-2 focus:ring-blue-500/20  "
                   required />
               </div>
 
@@ -925,7 +925,7 @@ function AddStudentModal({
                 <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Grade <span className="font-normal text-[#9aa0a6]">(optional)</span></label>
                 <div className="relative">
                   <select value={grade} onChange={(e) => onGradeChange(e.target.value as Grade | '')} disabled={creating}
-                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20 ">
+                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc]  focus:ring-2 focus:ring-blue-500/20 ">
                     <option value="">— Select grade —</option>
                     {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => (
                       <option key={val} value={val}>{label}</option>
@@ -943,7 +943,7 @@ function AddStudentModal({
                       className={`flex items-center gap-2 rounded-lg border px-3 py-2.5 text-xs font-medium transition-all ${accessMode === mode
                         ? mode === 'CUSTOM'
                           ? 'border-purple-300 bg-purple-50 text-purple-700'
-                          : 'border-[#1a73e8]/30 bg-[#e8f0fe] text-[#1a73e8]'
+                          : 'border-blue-500/30 bg-blue-100 text-blue-500'
                         : 'border-[#e8eaed] bg-white text-[#5f6368] hover:bg-[#f8f9fa]'
                         }`}>
                       {mode === 'CUSTOM' ? <Lock size={12} /> : <BookOpen size={12} />}
@@ -997,7 +997,7 @@ function StatCard({ label, value, icon, tone = 'default' }: {
     default: 'bg-[#f1f3f4] text-[#5f6368]',
     success: 'bg-green-50 text-green-700',
     danger: 'bg-red-50 text-red-500',
-    info: 'bg-[#e8f0fe] text-[#1a73e8]',
+    info: 'bg-blue-100 text-blue-500',
   };
   return (
     <div className="flex items-center gap-3.5 rounded-2xl bg-white p-4 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
@@ -1027,7 +1027,7 @@ function AccountStatusBadge({ student }: { student: Student }) {
     </span>
   );
   if (status === 'no_expiry') return (
-    <span className="inline-flex items-center gap-1 rounded-full bg-[#e8f0fe] px-2 py-0.5 text-[10px] font-semibold text-[#1a73e8]">
+    <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-500">
       <Globe size={9} /> No Expiry
     </span>
   );
@@ -1315,7 +1315,7 @@ export default function UsersAdminPage() {
       {/* Username */}
       <td className="py-3.5">
         <div className="flex items-center gap-3">
-          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-[#e8f0fe] text-xs font-medium text-[#1a73e8]">
+          <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-500">
             {student.username.charAt(0).toUpperCase()}
           </div>
           <div className="min-w-0">
@@ -1359,7 +1359,7 @@ export default function UsersAdminPage() {
       <td className="py-3.5 text-right">
         <div className="inline-flex items-center gap-1">
           <button type="button" onClick={() => setEditTarget(student)} title="Edit Student"
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#1a73e8] transition-colors hover:bg-[#e8f0fe]">
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-blue-500 transition-colors hover:bg-blue-100">
             <span>Edit</span>
           </button>
           {student.accessMode === 'CUSTOM' && (
@@ -1369,15 +1369,15 @@ export default function UsersAdminPage() {
             </button>
           )}
           <button type="button" onClick={() => handleOpenShareReset(student)} title="Share Credentials"
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#137333] transition-colors hover:bg-[#e6f4ea]">
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-green-700 transition-colors hover:bg-green-100">
             <Share2 size={13} /><span>Share</span>
           </button>
           <button type="button" onClick={() => setResetTarget(student)} title="Reset Password"
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#1a73e8] transition-colors hover:bg-[#e8f0fe]">
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-blue-500 transition-colors hover:bg-blue-100">
             <Key size={13} /><span>Reset</span>
           </button>
           <button type="button" onClick={() => setDeleteTarget(student)} title="Delete Student"
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#d93025] transition-colors hover:bg-[#fce8e6]">
+            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-red-100">
             <Trash size={13} /><span>Delete</span>
           </button>
         </div>
@@ -1488,7 +1488,7 @@ export default function UsersAdminPage() {
                     {/* Grade filter */}
                     <div className="relative">
                       <select value={gradeFilter} onChange={(e) => setGradeFilter(e.target.value as Grade | '')}
-                        className="appearance-none rounded-full border border-[#dadce0] bg-white py-2 pl-3 pr-7 text-xs text-[#202124] outline-none transition-all hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20">
+                        className="appearance-none rounded-full border border-[#dadce0] bg-white py-2 pl-3 pr-7 text-xs text-[#202124] outline-none transition-all hover:border-[#c4c7cc]  focus:ring-2 focus:ring-blue-500/20">
                         <option value="">All Grades</option>
                         {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => (
                           <option key={val} value={val}>{label}</option>
@@ -1501,7 +1501,7 @@ export default function UsersAdminPage() {
                       <Search size={15} className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#9aa0a6]" />
                       <input type="text" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Search students…"
-                        className="w-48 rounded-full border border-[#dadce0] bg-white py-2 pl-9 pr-8 text-sm text-[#202124] outline-none transition-all  hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20" />
+                        className="w-48 rounded-full border border-[#dadce0] bg-white py-2 pl-9 pr-8 text-sm text-[#202124] outline-none transition-all  hover:border-[#c4c7cc]  focus:ring-2 focus:ring-blue-500/20" />
                       {searchQuery && (
                         <button type="button" onClick={() => setSearchQuery('')} aria-label="Clear search"
                           className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[#9aa0a6] transition-colors hover:text-[#202124]">
@@ -1516,7 +1516,7 @@ export default function UsersAdminPage() {
               {/* Active students table */}
               <div className="rounded-2xl w-full min-w-0 bg-white shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
                 {loading ? (
-                  <div className="flex justify-center py-14"><Loader2 className="animate-spin text-[#1a73e8]" size={26} /></div>
+                  <div className="flex justify-center py-14"><Loader2 className="animate-spin text-blue-500" size={26} /></div>
                 ) : activeStudents.length === 0 ? (
                   <div className="flex flex-col items-center justify-center py-14 text-center">
                     <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-[#f1f3f4]">
@@ -1607,11 +1607,11 @@ export default function UsersAdminPage() {
                                 <td className="py-3.5 text-right">
                                   <div className="inline-flex items-center gap-1">
                                     <button type="button" onClick={() => setEditTarget(student)}
-                                      className="inline-flex items-center gap-1.5 rounded-full bg-[#e8f0fe] px-3 py-1.5 text-xs font-medium text-[#1a73e8] transition-colors hover:bg-[#c2d7fa]">
+                                      className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1.5 text-xs font-medium text-blue-500 transition-colors hover:bg-[#c2d7fa]">
                                       <span>Edit / Reactivate</span>
                                     </button>
                                     <button type="button" onClick={() => setDeleteTarget(student)}
-                                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-[#d93025] transition-colors hover:bg-[#fce8e6]">
+                                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-[#fce8e6]">
                                       <Trash size={13} /><span>Delete</span>
                                     </button>
                                   </div>
