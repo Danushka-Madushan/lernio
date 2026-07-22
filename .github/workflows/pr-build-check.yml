@@ -16,7 +16,7 @@ jobs:
       - name: Install Vercel CLI
         run: npm install --global vercel
 
-      - name: Generate Prisma Client
+      - name: Install Deps & Generate Prisma Client
         run: npm i && npx prisma generate
 
       - name: Pull Vercel Environment Information
