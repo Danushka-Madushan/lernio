@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Upload, Play, Pause, X, CheckCircle, Loader2,
   Zap, AlertTriangle, WifiOff,
@@ -11,6 +11,7 @@ import {
   MAX_PROCESSABLE_BYTES,
   type RemuxProgress,
 } from '@/lib/moovAtom';
+import { Button } from '@heroui/react';
 
 const CHUNK_SIZE = 6 * 1024 * 1024; // 6 MB per part (AWS/R2 minimum is 5 MB)
 
