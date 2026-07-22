@@ -13,7 +13,7 @@
  *  - Compressed to JPEG quality 0.88 (≤ 2 MB).
  */
 
-import React, { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import { ImagePlus, CheckCircle2, Loader2, X, AlertTriangle, Crop as CropIcon } from 'lucide-react';
 import Cropper from 'react-easy-crop';
 import 'react-easy-crop/react-easy-crop.css';
