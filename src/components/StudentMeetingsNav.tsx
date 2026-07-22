@@ -24,26 +24,26 @@ function formatDate(dateStr: string) {
 function parseZoomLink(link: string): { appLink: string; webLink: string } {
   // Typical zoom link: https://us04web.zoom.us/j/123456789?pwd=abc
   // App link: zoommtg://zoom.us/join?action=join&confno=123456789&pwd=abc
-  
+
   try {
     const url = new URL(link);
     const match = url.pathname.match(/\/j\/(\d+)/);
-    
+
     if (match && match[1]) {
       const confno = match[1];
       const pwd = url.searchParams.get('pwd');
-      
+
       let appLink = `zoommtg://zoom.us/join?action=join&confno=${confno}`;
       if (pwd) {
         appLink += `&pwd=${pwd}`;
       }
-      
+
       return { appLink, webLink: link };
     }
   } catch {
     // ignore parsing errors
   }
-  
+
   // If parsing fails or it's not a standard Zoom link, fallback to using the original link for both
   // Usually OS will intercept the https link if Zoom is installed anyway.
   return { appLink: link, webLink: link };
@@ -91,8 +91,8 @@ export default function StudentMeetingsNav() {
       </button>
 
       {isOpen && mounted && createPortal(
-        <div 
-          role="dialog" 
+        <div
+          role="dialog"
           aria-modal="true"
           className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm overflow-y-auto"
           onKeyDown={(e) => e.key === 'Escape' && setIsOpen(false)}
@@ -142,7 +142,7 @@ export default function StudentMeetingsNav() {
                         <div className="mt-4 flex flex-col sm:flex-row gap-2">
                           <Button
                             onPress={() => {
-                              window.open(appLink);
+                              window.location.href = appLink;
                             }}
                             fullWidth
                           >
