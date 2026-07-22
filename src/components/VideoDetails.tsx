@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useOptimistic, startTransition } from 'react';
+import { useState, useOptimistic, startTransition } from 'react';
 import { Heart, Send, MessageSquare, Eye } from 'lucide-react';
 import { notoSans } from '@/lib/fonts';
 import { MediaChrome } from './MediaChrome';
