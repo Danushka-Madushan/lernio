@@ -1,6 +1,5 @@
 'use client';
 
-import React from 'react';
 import { ShieldOff } from 'lucide-react';
 
 export default function AccountInactiveScreen() {

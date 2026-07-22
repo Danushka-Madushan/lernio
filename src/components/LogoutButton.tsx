@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { LogOut, Loader2 } from 'lucide-react';
+import { Button } from '@heroui/react';
 
 export default function LogoutButton() {
   const router = useRouter();
@@ -24,18 +25,20 @@ export default function LogoutButton() {
   };
 
   return (
-    <button
+    <Button
       onClick={handleLogout}
-      disabled={loading}
-      className="flex items-center space-x-1.5 rounded-full border border-[#dadce0] bg-white px-3 py-1.5 text-xs font-medium text-[#3c4043] outline-none transition-all duration-150 hover:bg-[#f1f3f4] focus-visible:ring-2 focus-visible:ring-[#1a73e8]/40 disabled:opacity-50"
+      isDisabled={loading}
+      variant='outline'
       aria-label="Logout"
+      size='sm'
+      className="font-normal"
     >
       {loading ? (
         <Loader2 size={14} className="animate-spin" />
       ) : (
         <LogOut size={14} />
       )}
-      <span>Logout</span>
-    </button>
+      Logout
+    </Button>
   );
 }

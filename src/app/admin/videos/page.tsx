@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Trash2,
@@ -12,15 +12,16 @@ import {
   X,
   Eye,
   ChevronDown,
-  Image as ImageIcon,
   Globe,
   Lock,
+  AlertTriangle,
 } from 'lucide-react';
 import { Grade } from '@/generated/client/enums';
 import ThumbnailUploader from '@/components/ThumbnailUploader';
 import { notoSans } from '@/lib/fonts';
 import VideoThumbnail from '@/components/VideoThumbnail';
 import CloudflareR2Widget from '@/components/CloudflareR2Widget';
+import { Button } from '@heroui/react';
 
 interface Video {
   id: string;
@@ -46,14 +47,23 @@ const GRADE_LABELS: Record<Grade, string> = {
   GRADE_11: 'Grade 11',
 };
 
-// ── Inline Edit Row ────────────────────────────────────────────────────────────
-function EditableRow({
+// ─── EditVideoModal ───────────────────────────────────────────────────────────
+
+function EditVideoModal({
   video,
-  onSave,
+  loading,
+  onConfirm,
   onCancel,
 }: {
   video: Video;
-  onSave: (id: string, data: { title: string; description: string | null; grade: Grade | null; cloudflareR2ThumbnailKey: string | null; visibility: 'PUBLIC' | 'GRADE' }) => Promise<void>;
+  loading: boolean;
+  onConfirm: (data: {
+    title: string;
+    description: string | null;
+    grade: Grade | null;
+    cloudflareR2ThumbnailKey: string | null;
+    visibility: 'PUBLIC' | 'GRADE';
+  }) => void;
   onCancel: () => void;
 }) {
   const [title, setTitle] = useState(video.title);
@@ -61,119 +71,169 @@ function EditableRow({
   const [grade, setGrade] = useState<Grade | ''>(video.grade ?? '');
   const [visibility, setVisibility] = useState<'PUBLIC' | 'GRADE'>(video.visibility);
   const [thumbnailKey, setThumbnailKey] = useState<string | null>(video.cloudflareR2ThumbnailKey);
-  const [saving, setSaving] = useState(false);
 
   const handleThumbnailSuccess = (url: string) => {
     setThumbnailKey(url || null);
   };
 
-  const handleSave = async () => {
+  const handleConfirm = () => {
     if (!title.trim()) return;
-    setSaving(true);
-    await onSave(video.id, {
+    onConfirm({
       title: title.trim(),
       description: description.trim() || null,
       grade: grade ? (grade as Grade) : null,
       cloudflareR2ThumbnailKey: thumbnailKey,
       visibility,
     });
-    setSaving(false);
   };
 
   return (
-    <tr className="bg-[#f8f9fa]">
-      {/* Title & Description & Thumbnail edit */}
-      <td className="py-4 px-4" colSpan={1}>
-        <div className="space-y-2.5">
-          <input
-            autoFocus
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            className="w-full rounded-lg border border-[#dadce0] bg-white px-3 py-2 text-xs text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20"
-            placeholder="Video title"
-          />
-          <textarea
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-            rows={2}
-            placeholder="Description (optional)"
-            className="w-full resize-none rounded-lg border border-[#dadce0] bg-white px-3 py-2 text-xs text-[#5f6368] outline-none transition-all duration-150 hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20"
-          />
-          {/* Thumbnail editor inside row */}
-          <div className="space-y-1.5 pt-1">
-            <p className="text-[10px] font-semibold uppercase tracking-wide text-[#5f6368]">Cover Thumbnail</p>
-            <ThumbnailUploader
-              onSuccess={handleThumbnailSuccess}
-              existingPreview={video.cloudflareR2ThumbnailKey ? `/api/videos/${video.id}/thumbnail` : undefined}
-            />
+    <div role="dialog" aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+      onKeyDown={(e) => e.key === 'Escape' && !loading && onCancel()}>
+      <div className="w-full max-w-3xl overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
+
+        {/* Header */}
+        <div className="relative bg-linear-to-br from-[#1a73e8] via-[#1557b0] to-[#0d47a1] px-6 py-4">
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Pencil size={16} className="text-white" />
+              <span className="text-[15px] font-semibold text-white">Edit Video Metadata</span>
+            </div>
+            <button type="button" onClick={onCancel} disabled={loading} aria-label="Close"
+              className="rounded-full p-1.5 text-white/50 transition-colors hover:bg-white/15 hover:text-white disabled:opacity-40">
+              <X size={14} />
+            </button>
           </div>
         </div>
-      </td>
 
-      {/* Grade */}
-      <td className="vertical-align-top py-4 px-4">
-        <div className="relative mt-0.5">
-          <select
-            value={grade}
-            onChange={(e) => setGrade(e.target.value as Grade | '')}
-            className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3 py-2 pr-7 text-xs text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20"
-          >
-            <option value="">— No grade —</option>
-            {Object.entries(GRADE_LABELS).map(([val, label]) => (
-              <option key={val} value={val}>
-                {label}
-              </option>
-            ))}
-          </select>
-          <ChevronDown size={11} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5f6368]" />
+        {/* Landscape Two-Column Grid Content */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 px-6 py-5 bg-white">
+
+          {/* Left Column: Metadata Inputs */}
+          <div className="space-y-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Title</label>
+              <input autoFocus value={title} onChange={(e) => setTitle(e.target.value)} disabled={loading}
+                className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:ring-2 focus:ring-[#1a73e8]/20"
+                placeholder="Video title" />
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Description <span className="font-normal text-[#9aa0a6]">(optional)</span></label>
+              <textarea value={description} onChange={(e) => setDescription(e.target.value)} rows={5} disabled={loading}
+                placeholder="Provide a short description..."
+                className="w-full resize-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2 text-sm text-[#5f6368] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:ring-2 focus:ring-[#1a73e8]/20" />
+            </div>
+          </div>
+
+          {/* Right Column: Dropdowns & Cover Art */}
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Grade</label>
+                <div className="relative">
+                  <select value={grade} onChange={(e) => setGrade(e.target.value as Grade | '')} disabled={loading}
+                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2 pr-7 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:ring-2 focus:ring-[#1a73e8]/20">
+                    <option value="">— No grade —</option>
+                    {Object.entries(GRADE_LABELS).map(([val, label]) => (
+                      <option key={val} value={val}>{label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
+                </div>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Visibility</label>
+                <div className="relative">
+                  <select value={visibility} onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'GRADE')} disabled={loading}
+                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2 pr-7 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:ring-2 focus:ring-[#1a73e8]/20">
+                    <option value="PUBLIC">Public</option>
+                    <option value="GRADE">Grade Only</option>
+                  </select>
+                  <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
+                </div>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <p className="text-[11px] font-semibold uppercase tracking-wide text-[#5f6368]">Cover Thumbnail</p>
+              <ThumbnailUploader onSuccess={handleThumbnailSuccess} existingPreview={video.cloudflareR2ThumbnailKey ? `/api/videos/${video.id}/thumbnail` : undefined} />
+            </div>
+          </div>
+
         </div>
-      </td>
 
-      {/* Visibility */}
-      <td className="vertical-align-top py-4 px-4">
-        <div className="relative mt-0.5">
-          <select
-            value={visibility}
-            onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'GRADE')}
-            className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3 py-2 pr-7 text-xs text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc]  focus:ring-2 focus:ring-[#1a73e8]/20"
-          >
-            <option value="PUBLIC">Public</option>
-            <option value="GRADE">Grade Only</option>
-          </select>
-          <ChevronDown size={11} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5f6368]" />
-        </div>
-      </td>
-
-      {/* Views */}
-      <td className="py-4 px-4 text-xs text-[#5f6368]">{video.viewsCount.toLocaleString()}</td>
-
-      {/* Date */}
-      <td className="py-4 px-4 text-xs text-[#5f6368]">
-        {new Date(video.createdAt).toLocaleDateString()}
-      </td>
-
-      {/* Actions */}
-      <td className="py-4 px-4">
-        <div className="flex items-center justify-end gap-2">
-          <button
-            onClick={handleSave}
-            disabled={saving || !title.trim()}
-            className="flex items-center gap-1.5 rounded-full bg-[#1a73e8] px-3 py-1.5 text-[11px] font-medium text-white transition-colors hover:bg-[#1765cc] disabled:cursor-not-allowed "
-          >
-            {saving ? <Loader2 size={11} className="animate-spin" /> : <Check size={11} />}
-            Save
-          </button>
-          <button
-            onClick={onCancel}
-            disabled={saving}
-            className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-[#5f6368] transition-colors hover:bg-[#f1f3f4] hover:text-[#202124]"
-          >
-            <X size={11} />
+        {/* Action Footer */}
+        <div className="flex items-center justify-end gap-2.5 border-t border-[#e8eaed] bg-[#f8f9fa] px-6 py-4">
+          <Button type="button" variant='outline' onPress={onCancel} isDisabled={loading}>
             Cancel
-          </button>
+          </Button>
+          <Button isPending={loading} onPress={handleConfirm} isDisabled={loading} >
+            {({ isPending }) => (
+              <>
+                {isPending ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                Save Changes
+              </>
+            )}
+          </Button>
         </div>
-      </td>
-    </tr>
+
+      </div>
+    </div>
+  );
+}
+
+// ─── ConfirmDeleteModal ───────────────────────────────────────────────────────
+
+function ConfirmDeleteModal({ target, loading, onConfirm, onCancel }: {
+  target: Video; loading: boolean;
+  onConfirm: () => void; onCancel: () => void;
+}) {
+  return (
+    <div role="dialog" aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm"
+      onKeyDown={(e) => e.key === 'Escape' && !loading && onCancel()}>
+      <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl outline-none ring-1 ring-black/10">
+        <div className="relative bg-linear-to-br from-[#d93025] via-[#c5221f] to-[#b31412] px-6 py-4">
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Trash2 size={16} className="text-white" />
+              <span className="text-[15px] font-semibold text-white">Delete Video</span>
+            </div>
+            <button type="button" onClick={onCancel} disabled={loading} aria-label="Close"
+              className="rounded-full p-1.5 text-white/50 transition-colors hover:bg-white/15 hover:text-white disabled:opacity-40">
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+        <div className="space-y-4 px-6 py-5">
+          <div className="flex gap-3 rounded-xl border border-[#fad2cf] bg-[#fce8e6] px-4 py-3.5">
+            <AlertTriangle size={15} className="mt-0.5 shrink-0 text-[#c5221f]" />
+            <div>
+              <p className="text-[13px] font-semibold text-[#b31412]">This action is irreversible</p>
+              <p className="mt-0.5 text-[12px] leading-[1.55] text-[#c5221f]">
+                Are you sure you want to permanently delete <span className="font-semibold">{target.title}</span>? This removes the database record AND the Cloudflare R2 file. This cannot be undone.
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-2.5 border-t border-[#e8eaed] bg-[#f8f9fa] px-6 py-4">
+          <Button type="button" variant='outline' onPress={onCancel} isDisabled={loading}>
+            Cancel
+          </Button>
+          <Button isPending={loading} variant='danger' onPress={onConfirm} isDisabled={loading} >
+            {({ isPending }) => (
+              <>
+                {isPending ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
+                Delete Video
+              </>
+            )}
+          </Button>
+        </div>
+      </div>
+    </div>
   );
 }
 
@@ -182,8 +242,14 @@ export default function VideosAdminPage() {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState(true);
   const [toast, setToast] = useState<{ msg: string; type: 'ok' | 'err' } | null>(null);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  // Dedicated Edit Modal State
+  const [editTarget, setEditTarget] = useState<Video | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
+
+  // Dedicated Delete Modal State
+  const [deleteTarget, setDeleteTarget] = useState<Video | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const showToast = (msg: string, type: 'ok' | 'err' = 'ok') => {
     setToast({ msg, type });
@@ -208,12 +274,14 @@ export default function VideosAdminPage() {
     fetchVideos();
   }, [fetchVideos]);
 
-  const handleSave = async (
-    id: string,
+  const handleEditConfirm = async (
     data: { title: string; description: string | null; grade: Grade | null; cloudflareR2ThumbnailKey: string | null; visibility: 'PUBLIC' | 'GRADE' }
   ) => {
+    if (!editTarget) return;
+    setEditLoading(true);
+
     try {
-      const res = await fetch(`/api/videos/${id}`, {
+      const res = await fetch(`/api/videos/${editTarget.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),
@@ -222,7 +290,7 @@ export default function VideosAdminPage() {
       if (res.ok) {
         setVideos((prev) =>
           prev.map((v) =>
-            v.id === id
+            v.id === editTarget.id
               ? {
                 ...v,
                 title: data.title,
@@ -234,30 +302,27 @@ export default function VideosAdminPage() {
               : v
           )
         );
-        setEditingId(null);
         showToast(`"${data.title}" updated.`);
+        setEditTarget(null);
       } else {
         showToast(json.error || 'Failed to update video.', 'err');
       }
     } catch {
       showToast('Connection error while saving.', 'err');
+    } finally {
+      setEditLoading(false);
     }
   };
 
-  const handleDelete = async (video: Video) => {
-    if (
-      !confirm(
-        `Permanently delete "${video.title}"?\n\nThis removes the database record AND the Cloudflare R2 file. This cannot be undone.`
-      )
-    )
-      return;
+  const handleDeleteConfirm = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
 
-    setDeletingId(video.id);
     try {
-      const res = await fetch(`/api/videos/${video.id}`, { method: 'DELETE' });
+      const res = await fetch(`/api/videos/${deleteTarget.id}`, { method: 'DELETE' });
       if (res.ok) {
-        setVideos((prev) => prev.filter((v) => v.id !== video.id));
-        showToast(`"${video.title}" deleted.`);
+        setVideos((prev) => prev.filter((v) => v.id !== deleteTarget.id));
+        showToast(`"${deleteTarget.title}" deleted.`);
       } else {
         const json = await res.json();
         showToast(json.error || 'Failed to delete.', 'err');
@@ -265,109 +330,121 @@ export default function VideosAdminPage() {
     } catch {
       showToast('Connection error while deleting.', 'err');
     } finally {
-      setDeletingId(null);
+      setDeleteLoading(false);
+      setDeleteTarget(null);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-6xl space-y-5">
-        {/* Header row */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8f0fe]">
-              <Film size={17} className="text-[#1a73e8]" />
+    <>
+      {/* Edit Form Modal */}
+      {editTarget && (
+        <EditVideoModal
+          video={editTarget}
+          loading={editLoading}
+          onConfirm={handleEditConfirm}
+          onCancel={() => setEditTarget(null)}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteTarget && (
+        <ConfirmDeleteModal
+          target={deleteTarget}
+          loading={deleteLoading}
+          onConfirm={handleDeleteConfirm}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
+
+      <div className="min-h-screen bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-6xl space-y-5">
+          {/* Header row */}
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-full bg-[#e8f0fe]">
+                <Film size={17} className="text-[#1a73e8]" />
+              </div>
+              <div>
+                <h1 className="text-[15px] font-medium text-[#202124]">Video Catalog</h1>
+              </div>
+              {!loading && (
+                <span className="rounded-full bg-[#f1f3f4] px-2.5 py-1 text-xs font-medium text-[#5f6368]">
+                  {videos.length} {videos.length === 1 ? 'video' : 'videos'}
+                </span>
+              )}
             </div>
-            <div>
-              <h1 className="text-[15px] font-medium text-[#202124]">Video Catalog</h1>
-            </div>
-            {!loading && (
-              <span className="rounded-full bg-[#f1f3f4] px-2.5 py-1 text-xs font-medium text-[#5f6368]">
-                {videos.length} {videos.length === 1 ? 'video' : 'videos'}
-              </span>
-            )}
-          </div>
 
           {/* Wrap the Widget and Upload button in a gap-3 container so they float right together */}
-          <div className="flex items-center gap-3">
-            <CloudflareR2Widget />
+            <div className="flex items-center gap-3">
+              <CloudflareR2Widget />
 
-            <Link
-              href="/admin/videos/upload"
-              className="flex items-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md"
-            >
-              <Plus size={15} />
-              Upload New Video
-            </Link>
-          </div>
-        </div>
-
-        {/* Toast */}
-        {toast && (
-          <div
-            className={`rounded-lg border px-3.5 py-2.5 text-[13px] leading-5 ${toast.type === 'ok'
-              ? 'border-[#ceead6] bg-[#e6f4ea] text-[#137333]'
-              : 'border-[#fad2cf] bg-[#fce8e6] text-[#c5221f]'
-              }`}
-          >
-            {toast.msg}
-          </div>
-        )}
-
-        {/* Table */}
-        <div className="overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
-          {loading ? (
-            <div className="flex items-center justify-center py-16">
-              <Loader2 className="animate-spin text-[#1a73e8]" size={26} />
-            </div>
-          ) : videos.length === 0 ? (
-            <div className="flex flex-col items-center justify-center gap-3 py-16">
-              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f1f3f4]">
-                <Film size={20} className="text-[#9aa0a6]" />
-              </div>
-              <p className="text-sm text-[#5f6368]">No videos published yet.</p>
               <Link
                 href="/admin/videos/upload"
-                className="text-sm font-medium text-[#1a73e8] hover:underline"
+                className="flex items-center gap-1.5 rounded-full bg-[#1a73e8] px-4 py-2 text-sm font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#1765cc] hover:shadow-md"
               >
-                Upload your first video →
+                <Plus size={15} />
+                Upload New Video
               </Link>
             </div>
-          ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full border-collapse text-left text-xs">
-                <thead>
-                  <tr className="border-b border-[#e8eaed] bg-[#f8f9fa]">
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Lesson Title</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Grade</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Visibility</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
-                      <span className="flex items-center gap-1"><Eye size={11} /> Views</span>
-                    </th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Likes</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Comments</th>
-                    <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Published</th>
-                    <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-[#5f6368]">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-[#f1f3f4]">
-                  {videos.map((video) =>
-                    editingId === video.id ? (
-                      <EditableRow
-                        key={video.id}
-                        video={video}
-                        onSave={handleSave}
-                        onCancel={() => setEditingId(null)}
-                      />
-                    ) : (
+          </div>
+
+          {/* Toast */}
+          {toast && (
+            <div
+              className={`rounded-lg border px-3.5 py-2.5 text-[13px] leading-5 ${toast.type === 'ok'
+                ? 'border-[#ceead6] bg-[#e6f4ea] text-[#137333]'
+                : 'border-[#fad2cf] bg-[#fce8e6] text-[#c5221f]'
+                }`}
+            >
+              {toast.msg}
+            </div>
+          )}
+
+          {/* Table */}
+          <div className="overflow-hidden rounded-2xl bg-white shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">
+            {loading ? (
+              <div className="flex items-center justify-center py-16">
+                <Loader2 className="animate-spin text-[#1a73e8]" size={26} />
+              </div>
+            ) : videos.length === 0 ? (
+              <div className="flex flex-col items-center justify-center gap-3 py-16">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#f1f3f4]">
+                  <Film size={20} className="text-[#9aa0a6]" />
+                </div>
+                <p className="text-sm text-[#5f6368]">No videos published yet.</p>
+                <Link
+                  href="/admin/videos/upload"
+                  className="text-sm font-medium text-[#1a73e8] hover:underline"
+                >
+                  Upload your first video →
+                </Link>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <table className="w-full border-collapse text-left text-xs">
+                  <thead>
+                    <tr className="border-b border-[#e8eaed] bg-[#f8f9fa]">
+                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Lesson Title</th>
+                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Grade</th>
+                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Visibility</th>
+                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                        <span className="flex items-center gap-1"><Eye size={11} /> Views</span>
+                      </th>
+                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Likes</th>
+                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Comments</th>
+                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Published</th>
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-[#5f6368]">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-[#f1f3f4]">
+                    {videos.map((video) => (
                       <tr
                         key={video.id}
                         className="group transition-colors duration-100 hover:bg-[#f8f9fa]"
                       >
-                        {/* Title + description + Thumbnail Icon/Image */}
                         <td className="max-w-xs px-4 py-3">
                           <div className="flex items-center space-x-3">
-                            {/* Small thumbnail in admin panel catalog list */}
                             <div className="relative w-30 shrink-0 aspect-video overflow-hidden rounded-md border border-[#e8eaed] bg-[#202124]">
                               <VideoThumbnail
                                 videoId={video.id}
@@ -442,9 +519,9 @@ export default function VideosAdminPage() {
 
                         {/* Actions */}
                         <td className="px-4 py-3">
-                          <div className="flex items-center justify-end gap-1 opacity-0 transition-opacity duration-150 group-hover:opacity-100">
+                          <div className="flex items-center justify-end gap-1">
                             <button
-                              onClick={() => setEditingId(video.id)}
+                              onClick={() => setEditTarget(video)}
                               className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-[#1a73e8] transition-colors hover:bg-[#e8f0fe]"
                               title="Edit video metadata"
                             >
@@ -452,29 +529,24 @@ export default function VideosAdminPage() {
                               Edit
                             </button>
                             <button
-                              onClick={() => handleDelete(video)}
-                              disabled={deletingId === video.id}
-                              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-[#d93025] transition-colors hover:bg-[#fce8e6] disabled:opacity-50"
+                              onClick={() => setDeleteTarget(video)}
+                              className="flex items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-[#d93025] transition-colors hover:bg-[#fce8e6]"
                               title="Delete video"
                             >
-                              {deletingId === video.id ? (
-                                <Loader2 size={11} className="animate-spin" />
-                              ) : (
-                                <Trash2 size={11} />
-                              )}
+                              <Trash2 size={11} />
                               Delete
                             </button>
                           </div>
                         </td>
                       </tr>
-                    )
-                  )}
-                </tbody>
-              </table>
-            </div>
-          )}
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
