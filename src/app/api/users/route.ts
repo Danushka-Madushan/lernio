@@ -23,7 +23,6 @@ export async function GET(request: Request) {
     const now = new Date();
 
     // Build where clause
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = { role: 'STUDENT' };
 
     if (gradeParam && Object.values(Grade).includes(gradeParam as Grade)) {
