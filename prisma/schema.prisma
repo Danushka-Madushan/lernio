@@ -67,13 +67,38 @@ model Video {
   customVideos CustomVideoAccess[]
 }
 
+model ZoomAccount {
+  id           String     @id @default(uuid())
+  name         String
+  email        String
+  accountId    String
+  clientId     String
+  clientSecret String
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  zoomLinks    ZoomLink[]
+}
+
 model ZoomLink {
   id          String   @id @default(uuid())
   title       String
   scheduledAt DateTime
   grade       Grade?
-  link        String
+  link        String   // Student join URL
+  
+  zoomAccountId String?
+  zoomAccount   ZoomAccount? @relation(fields: [zoomAccountId], references: [id], onDelete: SetNull)
+  meetingId     String?
+  startUrl      String?
+  duration      Int?
+  isRecurring   Boolean      @default(false)
+  hostVideo     Boolean      @default(false)
+  participantVideo Boolean   @default(false)
+  waitingRoom   Boolean      @default(true)
+  
   createdAt   DateTime @default(now())
+  updatedAt   DateTime @default(now()) @updatedAt
 }
 
 model CustomVideoAccess {
