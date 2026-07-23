@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db, Grade } from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
+import { updateZoomMeeting, deleteZoomMeeting } from '@/lib/zoom';
 
 export async function PUT(request: Request, context: { params: Promise<{ id: string }> }) {
   const cookieStore = await cookies();
@@ -14,11 +15,22 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 
   try {
     const { id } = await context.params;
-    const { title, scheduledAt, grade, link } = await request.json();
+    const { 
+      title, 
+      scheduledAt, 
+      grade, 
+      zoomAccountId, 
+      durationMinutes, 
+      isRecurring, 
+      hostVideo, 
+      participantVideo, 
+      waitingRoom,
+      link 
+    } = await request.json();
 
-    if (!title || !scheduledAt || !link) {
+    if (!title || !scheduledAt) {
       return NextResponse.json(
-        { error: 'Title, scheduled date, and link are required.' },
+        { error: 'Title and scheduled date are required.' },
         { status: 400 }
       );
     }
@@ -27,14 +39,48 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
       return NextResponse.json({ error: 'Invalid grade value' }, { status: 400 });
     }
 
-    const updatedMeeting = await db.zoomLink.update({
-      where: { id },
-      data: {
+    const existingMeeting = await db.zoomLink.findUnique({ where: { id }, include: { zoomAccount: true } });
+    if (!existingMeeting) {
+        return NextResponse.json({ error: 'Meeting not found' }, { status: 404 });
+    }
+
+    const dataToUpdate: any = {
         title: title.trim(),
         scheduledAt: new Date(scheduledAt),
         grade: grade ? (grade as Grade) : null,
-        link: link.trim(),
-      },
+        duration: durationMinutes || 60,
+        isRecurring: isRecurring || false,
+        hostVideo: hostVideo || false,
+        participantVideo: participantVideo || false,
+        waitingRoom: waitingRoom ?? true,
+    };
+
+    if (link) {
+      dataToUpdate.link = link.trim();
+    }
+
+    // Update Zoom API if it's a zoom meeting
+    if (existingMeeting.meetingId && existingMeeting.zoomAccount) {
+      await updateZoomMeeting(
+        existingMeeting.meetingId,
+        existingMeeting.zoomAccount.accountId,
+        existingMeeting.zoomAccount.clientId,
+        existingMeeting.zoomAccount.clientSecret,
+        {
+          topic: title.trim(),
+          startTime: new Date(scheduledAt).toISOString(),
+          durationMinutes: durationMinutes || 60,
+          isRecurring,
+          hostVideo,
+          participantVideo,
+          waitingRoom,
+        }
+      );
+    }
+
+    const updatedMeeting = await db.zoomLink.update({
+      where: { id },
+      data: dataToUpdate,
     });
 
     return NextResponse.json({ success: true, meeting: updatedMeeting });
@@ -55,6 +101,26 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
 
   try {
     const { id } = await context.params;
+    
+    const existingMeeting = await db.zoomLink.findUnique({ where: { id }, include: { zoomAccount: true } });
+    if (!existingMeeting) {
+        return NextResponse.json({ error: 'Meeting not found' }, { status: 404 });
+    }
+
+    // Delete from Zoom API if applicable
+    if (existingMeeting.meetingId && existingMeeting.zoomAccount) {
+      try {
+        await deleteZoomMeeting(
+          existingMeeting.meetingId,
+          existingMeeting.zoomAccount.accountId,
+          existingMeeting.zoomAccount.clientId,
+          existingMeeting.zoomAccount.clientSecret
+        );
+      } catch (zoomErr) {
+        console.error('Failed to delete on Zoom, proceeding to delete locally:', zoomErr);
+      }
+    }
+
     await db.zoomLink.delete({
       where: { id },
     });

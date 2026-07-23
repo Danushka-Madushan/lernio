@@ -17,12 +17,22 @@ import {
   Calendar,
   Trash2,
   Video,
+  Settings,
+  Link as LinkIcon
 } from 'lucide-react';
-import { Button } from '@heroui/react';
+import { Button, Switch } from '@heroui/react';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 type Grade = 'GRADE_6' | 'GRADE_7' | 'GRADE_8' | 'GRADE_9' | 'GRADE_10' | 'GRADE_11';
+
+interface ZoomAccount {
+  id: string;
+  name: string;
+  email: string;
+  accountId: string;
+  clientId: string;
+}
 
 interface Meeting {
   id: string;
@@ -30,6 +40,15 @@ interface Meeting {
   scheduledAt: string;
   grade: Grade | null;
   link: string;
+  zoomAccountId?: string | null;
+  meetingId?: string | null;
+  startUrl?: string | null;
+  duration?: number | null;
+  isRecurring?: boolean;
+  hostVideo?: boolean;
+  participantVideo?: boolean;
+  waitingRoom?: boolean;
+  zoomAccount?: { name: string; email: string } | null;
   createdAt: string;
 }
 
@@ -58,9 +77,8 @@ const GRADE_COLORS: Record<Grade, string> = {
 function isExpired(meeting: Meeting): boolean {
   const scheduled = new Date(meeting.scheduledAt);
   const now = new Date();
-  // Expired if more than 2 hours past scheduled time
-  const twoHoursMs = 2 * 60 * 60 * 1000;
-  return now.getTime() - scheduled.getTime() > twoHoursMs;
+  const durationMs = (meeting.duration || 40) * 60 * 1000;
+  return now.getTime() - scheduled.getTime() > (durationMs + 60 * 60 * 1000);
 }
 
 function formatDate(dateStr: string | null) {
@@ -88,14 +106,14 @@ function DateTimePicker({
 }) {
   return (
     <div>
-      <label className="mb-1 block text-[11px] font-medium text-[#5f6368]">{label}</label>
+      <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">{label}</label>
       <input
         type="datetime-local"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         min={minDate}
-        className="w-full rounded-lg border bg-white px-3 py-2 text-xs text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
+        className="w-full rounded-lg border bg-white px-3 py-2 text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
       />
     </div>
   );
@@ -104,17 +122,23 @@ function DateTimePicker({
 // ─── AddMeetingModal ───────────────────────────────────────────────────────────
 
 function AddMeetingModal({
-  title, link, scheduledAt, grade,
+  title, link, scheduledAt, grade, zoomAccountId, durationMinutes, isRecurring, hostVideo, participantVideo, waitingRoom, zoomAccounts,
   creating, error, success,
-  onTitleChange, onLinkChange, onScheduledAtChange, onGradeChange,
+  onTitleChange, onLinkChange, onScheduledAtChange, onGradeChange, onZoomAccountIdChange, onDurationMinutesChange, onIsRecurringChange, onHostVideoChange, onParticipantVideoChange, onWaitingRoomChange,
   onSubmit, onCancel,
 }: {
-  title: string; link: string; scheduledAt: string; grade: Grade | '';
+  title: string; link: string; scheduledAt: string; grade: Grade | ''; zoomAccountId: string; durationMinutes: number; isRecurring: boolean; hostVideo: boolean; participantVideo: boolean; waitingRoom: boolean; zoomAccounts: ZoomAccount[];
   creating: boolean; error: string; success: string;
   onTitleChange: (v: string) => void;
   onLinkChange: (v: string) => void;
   onScheduledAtChange: (v: string) => void;
   onGradeChange: (v: Grade | '') => void;
+  onZoomAccountIdChange: (v: string) => void;
+  onDurationMinutesChange: (v: number) => void;
+  onIsRecurringChange: (v: boolean) => void;
+  onHostVideoChange: (v: boolean) => void;
+  onParticipantVideoChange: (v: boolean) => void;
+  onWaitingRoomChange: (v: boolean) => void;
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
 }) {
@@ -122,7 +146,7 @@ function AddMeetingModal({
     <div role="dialog" aria-modal="true"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm overflow-y-auto"
       onKeyDown={(e) => e.key === 'Escape' && !creating && onCancel()}>
-      <div className="w-full max-w-md my-auto overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
+      <div className="w-full max-w-lg my-auto overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
         <div className="relative bg-linear-to-br from-blue-500 via-[#1557b0] to-[#0d47a1] px-6 py-4">
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-2.5">
@@ -146,6 +170,20 @@ function AddMeetingModal({
 
           <form id="add-meeting-form" onSubmit={onSubmit} className="space-y-4">
             <div>
+              <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Account <span className="font-normal text-[#9aa0a6]">(Host)</span></label>
+              <div className="relative">
+                <select value={zoomAccountId} onChange={(e) => onZoomAccountIdChange(e.target.value)} disabled={creating}
+                  className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
+                  <option value="">— Manual Link (No API) —</option>
+                  {zoomAccounts.map((account) => (
+                    <option key={account.id} value={account.id}>{account.name} ({account.email})</option>
+                  ))}
+                </select>
+                <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
+              </div>
+            </div>
+
+            <div>
               <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Meeting Title</label>
               <input type="text" value={title} onChange={(e) => onTitleChange(e.target.value)}
                 disabled={creating} placeholder="e.g. Science Class Chapter 4"
@@ -153,29 +191,84 @@ function AddMeetingModal({
                 required />
             </div>
 
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Zoom Link</label>
-              <input type="text" value={link} onChange={(e) => onLinkChange(e.target.value)}
-                disabled={creating} placeholder="https://zoom.us/j/..."
-                className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
-                required />
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Grade <span className="font-normal text-[#9aa0a6]">(optional)</span></label>
-              <div className="relative">
-                <select value={grade} onChange={(e) => onGradeChange(e.target.value as Grade | '')} disabled={creating}
-                  className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
-                  <option value="">— All Grades —</option>
-                  {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => (
-                    <option key={val} value={val}>{label}</option>
-                  ))}
-                </select>
-                <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
+            {!zoomAccountId && (
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Zoom Link</label>
+                <input type="text" value={link} onChange={(e) => onLinkChange(e.target.value)}
+                  disabled={creating} placeholder="https://zoom.us/j/..."
+                  className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
+                  required={!zoomAccountId} />
               </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Grade <span className="font-normal text-[#9aa0a6]">(optional)</span></label>
+                <div className="relative">
+                  <select value={grade} onChange={(e) => onGradeChange(e.target.value as Grade | '')} disabled={creating}
+                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
+                    <option value="">— All Grades —</option>
+                    {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => (
+                      <option key={val} value={val}>{label}</option>
+                    ))}
+                  </select>
+                  <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
+                </div>
+              </div>
+
+              <DateTimePicker label="Scheduled Date & Time" value={scheduledAt} onChange={onScheduledAtChange} disabled={creating} />
             </div>
 
-            <DateTimePicker label="Scheduled Date & Time" value={scheduledAt} onChange={onScheduledAtChange} disabled={creating} />
+            {zoomAccountId && (
+              <div className="flex flex-col gap-3 mt-4 rounded-xl border border-gray-200 bg-gray-50/80 p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wider">Meeting Settings</h4>
+                  <div className="flex items-center gap-2">
+                    <label className="text-[11px] font-medium text-gray-500">Duration (mins):</label>
+                    <input type="number" value={durationMinutes} onChange={(e) => onDurationMinutesChange(parseInt(e.target.value) || 40)}
+                      disabled={creating} min={15} max={40} step={5}
+                      className="w-16 rounded-md border border-gray-300 bg-white px-2 py-1 outline-none focus:ring-2 focus:ring-blue-500/20"
+                      required />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-y-3 gap-x-4">
+                  <Switch isSelected={hostVideo} onChange={onHostVideoChange} isDisabled={creating}>
+                    <Switch.Content>
+                      <Switch.Control>
+                        <Switch.Thumb />
+                      </Switch.Control>
+                      Host Video On
+                    </Switch.Content>
+                  </Switch>
+                  <Switch isSelected={participantVideo} onChange={onParticipantVideoChange} isDisabled={creating}>
+                    <Switch.Content>
+                      <Switch.Control>
+                        <Switch.Thumb />
+                      </Switch.Control>
+                      Participant Video On
+                    </Switch.Content>
+                  </Switch>
+                  <Switch isSelected={waitingRoom} onChange={onWaitingRoomChange} isDisabled={creating}>
+                    <Switch.Content>
+                      <Switch.Control>
+                        <Switch.Thumb />
+                      </Switch.Control>
+                      Waiting Room
+                    </Switch.Content>
+                  </Switch>
+                  <Switch isSelected={isRecurring} onChange={onIsRecurringChange} isDisabled={true}>
+                    <Switch.Content>
+                      <Switch.Control>
+                        <Switch.Thumb />
+                      </Switch.Control>
+                      Recurring
+                    </Switch.Content>
+                  </Switch>
+                </div>
+              </div>
+            )}
+
           </form>
         </div>
 
@@ -183,7 +276,7 @@ function AddMeetingModal({
           <Button type="button" variant='outline' onPress={onCancel} isDisabled={creating}>
             Cancel
           </Button>
-          <Button isPending={creating} type="submit" form="add-meeting-form" isDisabled={creating || !title || !link || !scheduledAt} >
+          <Button isPending={creating} type="submit" form="add-meeting-form" variant="primary" isDisabled={creating || !title || (!zoomAccountId && !link) || !scheduledAt} >
             {({ isPending }) => (
               <>
                 {isPending ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
@@ -199,9 +292,9 @@ function AddMeetingModal({
 
 // ─── EditMeetingModal ──────────────────────────────────────────────────────────
 
-function EditMeetingModal({ meeting, loading, onConfirm, onCancel }: {
-  meeting: Meeting; loading: boolean;
-  onConfirm: (title: string, link: string, scheduledAt: string, grade: Grade | '') => void; onCancel: () => void;
+function EditMeetingModal({ meeting, zoomAccounts, loading, onConfirm, onCancel }: {
+  meeting: Meeting; zoomAccounts: ZoomAccount[]; loading: boolean;
+  onConfirm: (title: string, link: string, scheduledAt: string, grade: Grade | '', durationMinutes: number, isRecurring: boolean, hostVideo: boolean, participantVideo: boolean, waitingRoom: boolean) => void; onCancel: () => void;
 }) {
   const pad = (n: number) => String(n).padStart(2, '0');
   const toLocalDatetime = (d: Date | null) =>
@@ -212,11 +305,19 @@ function EditMeetingModal({ meeting, loading, onConfirm, onCancel }: {
   const [scheduledAt, setScheduledAt] = useState(meeting.scheduledAt ? toLocalDatetime(new Date(meeting.scheduledAt)) : '');
   const [grade, setGrade] = useState<Grade | ''>(meeting.grade || '');
 
+  const [durationMinutes, setDurationMinutes] = useState(meeting.duration || 40);
+  const [isRecurring, setIsRecurring] = useState(meeting.isRecurring || false);
+  const [hostVideo, setHostVideo] = useState(meeting.hostVideo || false);
+  const [participantVideo, setParticipantVideo] = useState(meeting.participantVideo || false);
+  const [waitingRoom, setWaitingRoom] = useState(meeting.waitingRoom !== false);
+
+  const isZoomApi = !!meeting.zoomAccountId;
+
   return (
     <div role="dialog" aria-modal="true"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm overflow-y-auto"
       onKeyDown={(e) => e.key === 'Escape' && !loading && onCancel()}>
-      <div className="w-full max-w-md my-auto overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
+      <div className="w-full max-w-lg my-auto overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
         <div className="relative bg-linear-to-br from-blue-500 via-[#1557b0] to-[#0d47a1] px-6 py-4">
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-2.5">
@@ -229,6 +330,13 @@ function EditMeetingModal({ meeting, loading, onConfirm, onCancel }: {
           </div>
         </div>
         <div className="space-y-4 px-6 py-5 max-h-[70vh] overflow-y-auto">
+
+          {isZoomApi && meeting.zoomAccount && (
+            <div className="mb-2 text-xs font-medium text-blue-600 bg-blue-50 p-2 rounded-lg border border-blue-100 flex items-center gap-2">
+              <Video size={14} /> Controlled by Zoom API ({meeting.zoomAccount.name})
+            </div>
+          )}
+
           <div>
             <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Meeting Title</label>
             <input type="text" value={title} onChange={(e) => setTitle(e.target.value)}
@@ -237,35 +345,90 @@ function EditMeetingModal({ meeting, loading, onConfirm, onCancel }: {
               required />
           </div>
 
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Zoom Link</label>
-            <input type="text" value={link} onChange={(e) => setLink(e.target.value)}
-              disabled={loading}
-              className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
-              required />
-          </div>
-
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Grade <span className="font-normal text-[#9aa0a6]">(optional)</span></label>
-            <div className="relative">
-              <select value={grade} onChange={(e) => setGrade(e.target.value as Grade | '')} disabled={loading}
-                className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
-                <option value="">— All Grades —</option>
-                {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => (
-                  <option key={val} value={val}>{label}</option>
-                ))}
-              </select>
-              <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
+          {!isZoomApi && (
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Zoom Link</label>
+              <input type="text" value={link} onChange={(e) => setLink(e.target.value)}
+                disabled={loading}
+                className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
+                required />
             </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Grade <span className="font-normal text-[#9aa0a6]">(optional)</span></label>
+              <div className="relative">
+                <select value={grade} onChange={(e) => setGrade(e.target.value as Grade | '')} disabled={loading}
+                  className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
+                  <option value="">— All Grades —</option>
+                  {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => (
+                    <option key={val} value={val}>{label}</option>
+                  ))}
+                </select>
+                <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
+              </div>
+            </div>
+
+            <DateTimePicker label="Scheduled Date & Time" value={scheduledAt} onChange={setScheduledAt} disabled={loading} />
           </div>
 
-          <DateTimePicker label="Scheduled Date & Time" value={scheduledAt} onChange={setScheduledAt} disabled={loading} />
+          {isZoomApi && (
+            <div className="flex flex-col gap-3 mt-4 rounded-xl border border-gray-200 bg-gray-50/80 p-4">
+              <div className="flex items-center justify-between mb-1">
+                <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wider">Meeting Settings</h4>
+                <div className="flex items-center gap-2">
+                  <label className="text-[11px] font-medium text-gray-500">Duration (mins):</label>
+                  <input type="number" value={durationMinutes} onChange={(e) => setDurationMinutes(parseInt(e.target.value) || 40)}
+                    disabled={loading} min={15} max={40} step={5}
+                    className="w-16 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-blue-500/20"
+                    required />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-y-3 gap-x-4">
+                <Switch isSelected={hostVideo} onChange={setHostVideo} isDisabled={loading}>
+                  <Switch.Content>
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
+                    Host Video On
+                  </Switch.Content>
+                </Switch>
+                <Switch isSelected={participantVideo} onChange={setParticipantVideo} isDisabled={loading}>
+                  <Switch.Content>
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
+                    Participant Video On
+                  </Switch.Content>
+                </Switch>
+                <Switch isSelected={waitingRoom} onChange={setWaitingRoom} isDisabled={loading}>
+                  <Switch.Content>
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
+                    Waiting Room
+                  </Switch.Content>
+                </Switch>
+                <Switch isSelected={isRecurring} onChange={setIsRecurring} isDisabled={true}>
+                  <Switch.Content>
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
+                    Recurring
+                  </Switch.Content>
+                </Switch>
+              </div>
+            </div>
+          )}
+
         </div>
         <div className="flex items-center justify-end gap-2.5 border-t border-[#e8eaed] bg-[#f8f9fa] px-6 py-4">
           <Button type="button" variant='outline' onPress={onCancel} isDisabled={loading}>
             Cancel
           </Button>
-          <Button isPending={loading} onPress={() => onConfirm(title, link, scheduledAt, grade)} isDisabled={loading || !title || !link || !scheduledAt} >
+          <Button isPending={loading} variant="primary" onPress={() => onConfirm(title, link, scheduledAt, grade, durationMinutes, isRecurring, hostVideo, participantVideo, waitingRoom)} isDisabled={loading || !title || (!isZoomApi && !link) || !scheduledAt} >
             {({ isPending }) => (
               <>
                 {isPending ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
@@ -281,8 +444,8 @@ function EditMeetingModal({ meeting, loading, onConfirm, onCancel }: {
 
 // ─── ConfirmDeleteModal ───────────────────────────────────────────────────────
 
-function ConfirmDeleteModal({ meeting, loading, onConfirm, onCancel }: {
-  meeting: Meeting; loading: boolean;
+function ConfirmDeleteModal({ targetName, zoomAccountLinked, loading, onConfirm, onCancel }: {
+  targetName: string; zoomAccountLinked?: boolean; loading: boolean;
   onConfirm: () => void; onCancel: () => void;
 }) {
   return (
@@ -294,7 +457,7 @@ function ConfirmDeleteModal({ meeting, loading, onConfirm, onCancel }: {
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <Trash size={16} className="text-white" />
-              <span className="text-[15px] font-semibold text-white">Delete Meeting</span>
+              <span className="text-[15px] font-semibold text-white">Confirm Delete</span>
             </div>
             <button type="button" onClick={onCancel} disabled={loading} aria-label="Close"
               className="rounded-full p-1.5 text-white/50 transition-colors hover:bg-white/15 hover:text-white disabled:opacity-40">
@@ -308,7 +471,8 @@ function ConfirmDeleteModal({ meeting, loading, onConfirm, onCancel }: {
             <div>
               <p className="text-[13px] font-semibold text-[#b31412]">This action is irreversible</p>
               <p className="mt-0.5 text-[12px] leading-[1.55] text-[#c5221f]">
-                Are you sure you want to permanently delete <span className="font-semibold">{meeting.title}</span>?
+                Are you sure you want to permanently delete <span className="font-semibold">{targetName}</span>?
+                {zoomAccountLinked && " This will also delete the meeting on Zoom."}
               </p>
             </div>
           </div>
@@ -317,14 +481,160 @@ function ConfirmDeleteModal({ meeting, loading, onConfirm, onCancel }: {
           <Button type="button" variant='outline' onPress={onCancel} isDisabled={loading}>
             Cancel
           </Button>
-          <Button isPending={loading} variant='danger' onPress={onConfirm} isDisabled={loading} >
+          <Button isPending={loading} variant="danger" onPress={onConfirm} isDisabled={loading} >
             {({ isPending }) => (
               <>
                 {isPending ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                Delete Meeting
+                Delete
               </>
             )}
           </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// ─── ManageZoomAccountsModal ───────────────────────────────────────────────────────
+
+function ManageZoomAccountsModal({ zoomAccounts, loading, onAdd, onDelete, onCancel }: {
+  zoomAccounts: ZoomAccount[]; loading: boolean;
+  onAdd: (name: string, email: string, accountId: string, clientId: string, clientSecret: string) => Promise<boolean>;
+  onDelete: (id: string) => Promise<boolean>;
+  onCancel: () => void;
+}) {
+  const [adding, setAdding] = useState(false);
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [accountId, setAccountId] = useState('');
+  const [clientId, setClientId] = useState('');
+  const [clientSecret, setClientSecret] = useState('');
+
+  // For deleting zoom account
+  const [deleteTarget, setDeleteTarget] = useState<ZoomAccount | null>(null);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const success = await onAdd(name, email, accountId, clientId, clientSecret);
+    if (success) {
+      setAdding(false);
+      setName(''); setEmail(''); setAccountId(''); setClientId(''); setClientSecret('');
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    const success = await onDelete(deleteTarget.id);
+    if (success) {
+      setDeleteTarget(null);
+    }
+  };
+
+  return (
+    <div role="dialog" aria-modal="true"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm overflow-y-auto"
+      onKeyDown={(e) => e.key === 'Escape' && !loading && !deleteTarget && onCancel()}>
+      <div className="w-full max-w-2xl my-auto overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
+        <div className="relative bg-linear-to-br from-indigo-500 via-[#3949ab] to-[#283593] px-6 py-4">
+          <div className="relative flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Settings size={16} className="text-white" />
+              <span className="text-[15px] font-semibold text-white">Manage Zoom Accounts</span>
+            </div>
+            <button type="button" onClick={onCancel} disabled={loading} aria-label="Close"
+              className="rounded-full p-1.5 text-white/50 transition-colors hover:bg-white/15 hover:text-white disabled:opacity-40">
+              <X size={14} />
+            </button>
+          </div>
+        </div>
+
+        <div className="px-6 py-5 min-h-75 relative">
+          {deleteTarget && (
+            <ConfirmDeleteModal
+              targetName={deleteTarget.name}
+              loading={loading}
+              onConfirm={confirmDelete}
+              onCancel={() => setDeleteTarget(null)}
+            />
+          )}
+
+          {adding ? (
+            <form onSubmit={handleAdd} className="space-y-4 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
+              <h3 className="text-sm font-semibold text-indigo-900 mb-2">Add New Server-to-Server OAuth Account</h3>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Identifier Name</label>
+                  <input type="text" value={name} onChange={(e) => setName(e.target.value)} required disabled={loading}
+                    className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Host Email Address</label>
+                  <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required disabled={loading}
+                    className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                </div>
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Account ID</label>
+                <input type="text" value={accountId} onChange={(e) => setAccountId(e.target.value)} required disabled={loading}
+                  className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Client ID</label>
+                  <input type="text" value={clientId} onChange={(e) => setClientId(e.target.value)} required disabled={loading}
+                    className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                </div>
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Client Secret</label>
+                  <input type="password" value={clientSecret} onChange={(e) => setClientSecret(e.target.value)} required disabled={loading}
+                    className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500/20" />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-end gap-2 pt-2">
+                <Button type="button" variant="outline" size="sm" onPress={() => setAdding(false)} isDisabled={loading}>Cancel</Button>
+                <Button type="submit" size="sm" variant="primary" isDisabled={loading} isPending={loading}>
+                  {({ isPending }) => (
+                    <>
+                      {isPending ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                      Save Account
+                    </>
+                  )}
+                </Button>
+              </div>
+            </form>
+          ) : (
+            <div className="space-y-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-sm font-semibold text-[#202124]">Configured Accounts</h3>
+                <Button size="sm" variant="primary" onPress={() => setAdding(true)}>
+                  <Plus size={14} /> Add Account
+                </Button>
+              </div>
+
+              {zoomAccounts.length === 0 ? (
+                <div className="text-center py-8 text-sm text-[#9aa0a6] bg-gray-50 rounded-xl border border-dashed border-gray-200">
+                  No Zoom accounts configured. Add one to use API-based meetings.
+                </div>
+              ) : (
+                <div className="space-y-2 max-h-[50vh] overflow-y-auto">
+                  {zoomAccounts.map(account => (
+                    <div key={account.id} className="flex items-center justify-between p-3 rounded-xl border border-gray-100 bg-gray-50 hover:bg-gray-100 transition-colors">
+                      <div>
+                        <div className="text-sm font-medium text-[#202124]">{account.name}</div>
+                        <div className="text-xs text-[#5f6368]">{account.email}</div>
+                      </div>
+                      <Button isIconOnly size="sm" variant="danger" onPress={() => setDeleteTarget(account)} isDisabled={loading}>
+                        <Trash2 size={14} />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -375,15 +685,28 @@ function MeetingStatusBadge({ meeting }: { meeting: Meeting }) {
 
 export default function MeetingsAdminPage() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [zoomAccounts, setZoomAccounts] = useState<ZoomAccount[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+
+  // Zoom Accounts Modals
+  const [showManageAccountsModal, setShowManageAccountsModal] = useState(false);
+  const [manageAccountsLoading, setManageAccountsLoading] = useState(false);
 
   // Create form
   const [newTitle, setNewTitle] = useState('');
   const [newLink, setNewLink] = useState('');
   const [newScheduledAt, setNewScheduledAt] = useState('');
   const [newGrade, setNewGrade] = useState<Grade | ''>('');
+
+  const [newZoomAccountId, setNewZoomAccountId] = useState('');
+  const [newDurationMinutes, setNewDurationMinutes] = useState(40);
+  const [newIsRecurring, setNewIsRecurring] = useState(false);
+  const [newHostVideo, setNewHostVideo] = useState(false);
+  const [newParticipantVideo, setNewParticipantVideo] = useState(false);
+  const [newWaitingRoom, setNewWaitingRoom] = useState(true);
+
   const [creating, setCreating] = useState(false);
   const [showAddModal, setShowAddModal] = useState(false);
 
@@ -413,7 +736,7 @@ export default function MeetingsAdminPage() {
     (list: Meeting[]) => {
       const q = searchQuery.trim().toLowerCase();
       return list.filter((m) => {
-        const matchSearch = m.title.toLowerCase().includes(q) || m.link.toLowerCase().includes(q);
+        const matchSearch = m.title.toLowerCase().includes(q) || m.link?.toLowerCase().includes(q);
         const matchGrade = gradeFilter ? m.grade === gradeFilter : true;
         return matchSearch && matchGrade;
       });
@@ -435,16 +758,29 @@ export default function MeetingsAdminPage() {
   const fetchMeetings = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/meetings');
-      const data = await res.json();
-      if (res.ok) setMeetings(data.meetings);
+      const [meetingsRes, accountsRes] = await Promise.all([
+        fetch('/api/meetings'),
+        fetch('/api/zoom-accounts')
+      ]);
+      const data = await meetingsRes.json();
+      const accountsData = await accountsRes.json();
+
+      if (meetingsRes.ok) setMeetings(data.meetings);
       else setError(data.error || 'Failed to fetch meetings');
+
+      if (accountsRes.ok) {
+        setZoomAccounts(accountsData.accounts);
+        if (accountsData.accounts.length > 0 && !newZoomAccountId) {
+          setNewZoomAccountId(accountsData.accounts[0].id);
+        }
+      }
+      else setError(accountsData.error || 'Failed to fetch accounts');
     } catch {
-      setError('Connection error fetching meetings');
+      setError('Connection error fetching data');
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [newZoomAccountId]);
 
   useEffect(() => { fetchMeetings(); }, [fetchMeetings]);
 
@@ -454,6 +790,55 @@ export default function MeetingsAdminPage() {
   useEffect(() => {
     if (error) { const t = setTimeout(() => setError(''), 5000); return () => clearTimeout(t); }
   }, [error]);
+
+
+  const handleAddZoomAccount = async (name: string, email: string, accountId: string, clientId: string, clientSecret: string) => {
+    setManageAccountsLoading(true);
+    setError(''); setSuccess('');
+    try {
+      const res = await fetch('/api/zoom-accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, accountId, clientId, clientSecret })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setSuccess('Zoom account added successfully.');
+        fetchMeetings();
+        return true;
+      } else {
+        setError(data.error || 'Failed to add Zoom account');
+        return false;
+      }
+    } catch {
+      setError('Connection error adding zoom account');
+      return false;
+    } finally {
+      setManageAccountsLoading(false);
+    }
+  };
+
+  const handleDeleteZoomAccount = async (id: string) => {
+    setManageAccountsLoading(true);
+    setError(''); setSuccess('');
+    try {
+      const res = await fetch(`/api/zoom-accounts/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setSuccess('Zoom account deleted.');
+        fetchMeetings();
+        return true;
+      } else {
+        setError('Failed to delete Zoom account');
+        return false;
+      }
+    } catch {
+      setError('Connection error deleting zoom account');
+      return false;
+    } finally {
+      setManageAccountsLoading(false);
+    }
+  }
+
 
   const handleCreateMeeting = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -465,9 +850,15 @@ export default function MeetingsAdminPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           title: newTitle,
-          link: newLink,
-          scheduledAt: newScheduledAt,
+          link: newZoomAccountId ? undefined : newLink,
+          scheduledAt: new Date(newScheduledAt).toISOString(),
           grade: newGrade || null,
+          zoomAccountId: newZoomAccountId || null,
+          durationMinutes: newDurationMinutes,
+          isRecurring: newIsRecurring,
+          hostVideo: newHostVideo,
+          participantVideo: newParticipantVideo,
+          waitingRoom: newWaitingRoom
         }),
       });
       const data = await res.json();
@@ -486,7 +877,7 @@ export default function MeetingsAdminPage() {
     }
   };
 
-  const handleEditMeeting = async (title: string, link: string, scheduledAt: string, grade: Grade | '') => {
+  const handleEditMeeting = async (title: string, link: string, scheduledAt: string, grade: Grade | '', durationMinutes: number, isRecurring: boolean, hostVideo: boolean, participantVideo: boolean, waitingRoom: boolean) => {
     if (!editTarget) return;
     setEditLoading(true);
     try {
@@ -494,8 +885,9 @@ export default function MeetingsAdminPage() {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          title, link, scheduledAt,
+          title, link, scheduledAt: new Date(scheduledAt).toISOString(),
           grade: grade || null,
+          durationMinutes, isRecurring, hostVideo, participantVideo, waitingRoom
         }),
       });
       if (res.ok) {
@@ -537,14 +929,34 @@ export default function MeetingsAdminPage() {
 
   const renderMeetingRow = (meeting: Meeting) => (
     <tr key={meeting.id} className="transition-colors duration-100 hover:bg-[#f8f9fa]">
-      <td className="py-3.5">
+      <td className="py-3.5 pl-4">
         <div className="flex items-center gap-3">
           <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-medium text-blue-500">
             <Video size={14} />
           </div>
-          <div className="min-w-0">
+          <div className="min-w-0 flex flex-col gap-1">
             <span className="block text-[13px] font-medium text-[#202124] truncate">{meeting.title}</span>
-            <span className="block text-[11px] text-[#9aa0a6] truncate max-w-xs">{meeting.link}</span>
+            <div className="flex flex-wrap items-center gap-2">
+              {meeting.zoomAccount ? (
+                <span className="inline-flex items-center text-[10px] text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100">
+                  API: {meeting.zoomAccount.name}
+                </span>
+              ) : (
+                <span className="inline-flex items-center text-[10px] text-gray-500 bg-gray-100 px-1.5 py-0.5 rounded border border-gray-200">
+                  Manual Link
+                </span>
+              )}
+              {meeting.link && (
+                <a href={meeting.link} target="_blank" rel="noreferrer" className="text-[11px] text-blue-500 hover:underline flex items-center gap-1">
+                  <LinkIcon size={10} /> Join Link
+                </a>
+              )}
+              {meeting.startUrl && (
+                <a href={meeting.startUrl} target="_blank" rel="noreferrer" className="text-[11px] text-green-600 hover:underline flex items-center gap-1">
+                  <Video size={10} /> Start (Host)
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </td>
@@ -564,11 +976,19 @@ export default function MeetingsAdminPage() {
           <MeetingStatusBadge meeting={meeting} />
           <p className="text-[10px] text-[#9aa0a6] flex items-center gap-0.5">
             <Calendar size={8} /> {formatDate(meeting.scheduledAt)}
+            {meeting.duration && ` (${meeting.duration}m)`}
+            {meeting.isRecurring && ` 🔁`}
           </p>
         </div>
       </td>
-      <td className="py-3.5 text-right">
+      <td className="py-3.5 pr-4 text-right">
         <div className="inline-flex items-center gap-1">
+          {isExpired(meeting) && meeting.meetingId && (
+            <button type="button" onClick={() => setEditTarget(meeting)} title="Reactivate Meeting"
+              className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-green-600 transition-colors hover:bg-green-100">
+              <RefreshCw size={12} /><span>Reactivate</span>
+            </button>
+          )}
           <button type="button" onClick={() => setEditTarget(meeting)} title="Edit Meeting"
             className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-blue-500 transition-colors hover:bg-blue-100">
             <span>Edit</span>
@@ -586,25 +1006,42 @@ export default function MeetingsAdminPage() {
 
   return (
     <>
+      {showManageAccountsModal && (
+        <ManageZoomAccountsModal
+          zoomAccounts={zoomAccounts}
+          loading={manageAccountsLoading}
+          onAdd={handleAddZoomAccount}
+          onDelete={handleDeleteZoomAccount}
+          onCancel={() => setShowManageAccountsModal(false)}
+        />
+      )}
+
       {showAddModal && (
         <AddMeetingModal
           title={newTitle} link={newLink} scheduledAt={newScheduledAt} grade={newGrade}
+          zoomAccountId={newZoomAccountId} durationMinutes={newDurationMinutes} isRecurring={newIsRecurring} hostVideo={newHostVideo} participantVideo={newParticipantVideo} waitingRoom={newWaitingRoom} zoomAccounts={zoomAccounts}
           creating={creating} error={error} success={success}
           onTitleChange={setNewTitle}
           onLinkChange={setNewLink}
           onScheduledAtChange={setNewScheduledAt}
           onGradeChange={setNewGrade}
+          onZoomAccountIdChange={setNewZoomAccountId}
+          onDurationMinutesChange={setNewDurationMinutes}
+          onIsRecurringChange={setNewIsRecurring}
+          onHostVideoChange={setNewHostVideo}
+          onParticipantVideoChange={setNewParticipantVideo}
+          onWaitingRoomChange={setNewWaitingRoom}
           onSubmit={handleCreateMeeting}
           onCancel={() => setShowAddModal(false)}
         />
       )}
       {deleteTarget && (
-        <ConfirmDeleteModal meeting={deleteTarget} loading={deleteLoading}
+        <ConfirmDeleteModal targetName={deleteTarget.title} zoomAccountLinked={!!deleteTarget.zoomAccountId} loading={deleteLoading}
           onConfirm={handleDeleteMeeting}
           onCancel={() => setDeleteTarget(null)} />
       )}
       {editTarget && (
-        <EditMeetingModal meeting={editTarget} loading={editLoading}
+        <EditMeetingModal meeting={editTarget} zoomAccounts={zoomAccounts} loading={editLoading}
           onConfirm={handleEditMeeting}
           onCancel={() => setEditTarget(null)} />
       )}
@@ -616,16 +1053,22 @@ export default function MeetingsAdminPage() {
               <h1 className="text-[22px] font-medium tracking-tight text-[#202124]">Zoom Meetings</h1>
               <p className="mt-1 text-sm text-[#5f6368]">Create and manage scheduled Zoom meetings</p>
             </div>
-            <Button type="button" onPress={() => setShowAddModal(true)}>
-              <Plus size={16} />
-              New Meeting
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button type="button" variant="primary" onPress={() => setShowManageAccountsModal(true)}>
+                <Settings size={16} />
+                Accounts
+              </Button>
+              <Button type="button" variant="primary" onPress={() => setShowAddModal(true)}>
+                <Plus size={16} />
+                New Meeting
+              </Button>
+            </div>
           </div>
 
-          {error && !showAddModal && (
+          {error && !showAddModal && !showManageAccountsModal && (
             <div className="mb-4 rounded-lg border border-[#fad2cf] bg-[#fce8e6] px-3.5 py-2.5 text-[13px] leading-5 text-[#c5221f]">{error}</div>
           )}
-          {success && !showAddModal && (
+          {success && !showAddModal && !showManageAccountsModal && (
             <div className="mb-4 rounded-lg border border-[#ceead6] bg-[#e6f4ea] px-3.5 py-2.5 text-[13px] leading-5 text-[#137333]">{success}</div>
           )}
 
@@ -695,14 +1138,14 @@ export default function MeetingsAdminPage() {
                     <p className="text-sm text-[#5f6368]">No meetings match your filters.</p>
                   </div>
                 ) : (
-                  <div className="overflow-x-auto p-4">
+                  <div className="overflow-x-auto p-0">
                     <table className="w-full border-collapse text-left text-sm">
                       <thead>
                         <tr className="border-b border-[#e8eaed]">
-                          <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Meeting</th>
+                          <th className="py-2.5 pl-4 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Meeting</th>
                           <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Grade Access</th>
                           <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Schedule</th>
-                          <th className="py-2.5 text-right text-xs font-medium uppercase tracking-wide text-[#5f6368]">Actions</th>
+                          <th className="py-2.5 pr-4 text-right text-xs font-medium uppercase tracking-wide text-[#5f6368]">Actions</th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-[#f1f3f4]">
@@ -724,7 +1167,7 @@ export default function MeetingsAdminPage() {
                       </div>
                       <div>
                         <p className="text-[14px] font-medium text-[#202124]">Expired Meetings</p>
-                        <p className="text-[11px] text-[#9aa0a6]">{expiredMeetings.length} meeting{expiredMeetings.length !== 1 ? 's' : ''} ended over 2 hours ago</p>
+                        <p className="text-[11px] text-[#9aa0a6]">{expiredMeetings.length} meeting{expiredMeetings.length !== 1 ? 's' : ''} ended recently</p>
                       </div>
                     </div>
                     <ChevronDown size={16} className={`text-[#5f6368] transition-transform duration-200 ${showExpired ? 'rotate-180' : ''}`} />
@@ -734,14 +1177,14 @@ export default function MeetingsAdminPage() {
                     filteredExpired.length === 0 ? (
                       <div className="px-6 pb-6 text-sm text-[#9aa0a6]">No expired meetings match your filters.</div>
                     ) : (
-                      <div className="overflow-x-auto px-4 pb-4">
+                      <div className="overflow-x-auto pb-0">
                         <table className="w-full border-collapse text-left text-sm">
                           <thead>
-                            <tr className="border-b border-[#e8eaed]">
-                              <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Meeting</th>
+                            <tr className="border-b border-[#e8eaed] bg-gray-50">
+                              <th className="py-2.5 pl-4 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Meeting</th>
                               <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Grade Access</th>
                               <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Schedule</th>
-                              <th className="py-2.5 text-right text-xs font-medium uppercase tracking-wide text-[#5f6368]">Actions</th>
+                              <th className="py-2.5 pr-4 text-right text-xs font-medium uppercase tracking-wide text-[#5f6368]">Actions</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-[#f1f3f4]">
