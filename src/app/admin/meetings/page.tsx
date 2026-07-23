@@ -77,9 +77,7 @@ const GRADE_COLORS: Record<Grade, string> = {
 function isExpired(meeting: Meeting): boolean {
   const scheduled = new Date(meeting.scheduledAt);
   const now = new Date();
-  // Expired if more than 2 hours past scheduled time (or duration)
-  const durationMs = (meeting.duration || 60) * 60 * 1000;
-  // Give 1 hour buffer after duration ends before calling it expired
+  const durationMs = (meeting.duration || 40) * 60 * 1000;
   return now.getTime() - scheduled.getTime() > (durationMs + 60 * 60 * 1000);
 }
 
@@ -108,14 +106,14 @@ function DateTimePicker({
 }) {
   return (
     <div>
-      <label className="mb-1 block text-[11px] font-medium text-[#5f6368]">{label}</label>
+      <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">{label}</label>
       <input
         type="datetime-local"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         min={minDate}
-        className="w-full rounded-lg border bg-white px-3 py-2 text-xs text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
+        className="w-full rounded-lg border bg-white px-3 py-2 text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
       />
     </div>
   );
@@ -222,28 +220,19 @@ function AddMeetingModal({
             </div>
 
             {zoomAccountId && (
-              <>
-                <div className="grid grid-cols-2 gap-4 border-t border-[#e8eaed] pt-4 mt-2">
-                  <div>
-                    <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Duration (Minutes)</label>
-                    <input type="number" value={durationMinutes} onChange={(e) => onDurationMinutesChange(parseInt(e.target.value) || 60)}
-                      disabled={creating} min={15} max={300} step={15}
-                      className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
+              <div className="flex flex-col gap-3 mt-4 rounded-xl border border-gray-200 bg-gray-50/80 p-4">
+                <div className="flex items-center justify-between mb-1">
+                  <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wider">Meeting Settings</h4>
+                  <div className="flex items-center gap-2">
+                    <label className="text-[11px] font-medium text-gray-500">Duration (mins):</label>
+                    <input type="number" value={durationMinutes} onChange={(e) => onDurationMinutesChange(parseInt(e.target.value) || 40)}
+                      disabled={creating} min={15} max={40} step={5}
+                      className="w-16 rounded-md border border-gray-300 bg-white px-2 py-1 outline-none focus:ring-2 focus:ring-blue-500/20"
                       required />
                   </div>
-
-                  <div className="flex flex-col justify-center">
-                    <Switch isSelected={isRecurring} onChange={onIsRecurringChange} isDisabled={creating}>
-                      <Switch.Content>
-                        <Switch.Control>
-                          <Switch.Thumb />
-                        </Switch.Control>
-                        Recurring Meeting
-                      </Switch.Content>
-                    </Switch>
-                  </div>
                 </div>
-                <div className="grid grid-cols-2 gap-4 mt-2">
+
+                <div className="grid grid-cols-2 gap-y-3 gap-x-4">
                   <Switch isSelected={hostVideo} onChange={onHostVideoChange} isDisabled={creating}>
                     <Switch.Content>
                       <Switch.Control>
@@ -265,11 +254,19 @@ function AddMeetingModal({
                       <Switch.Control>
                         <Switch.Thumb />
                       </Switch.Control>
-                      Enable Waiting Room
+                      Waiting Room
+                    </Switch.Content>
+                  </Switch>
+                  <Switch isSelected={isRecurring} onChange={onIsRecurringChange} isDisabled={true}>
+                    <Switch.Content>
+                      <Switch.Control>
+                        <Switch.Thumb />
+                      </Switch.Control>
+                      Recurring
                     </Switch.Content>
                   </Switch>
                 </div>
-              </>
+              </div>
             )}
 
           </form>
@@ -279,7 +276,7 @@ function AddMeetingModal({
           <Button type="button" variant='outline' onPress={onCancel} isDisabled={creating}>
             Cancel
           </Button>
-          <Button isPending={creating} type="submit" form="add-meeting-form" isDisabled={creating || !title || (!zoomAccountId && !link) || !scheduledAt} >
+          <Button isPending={creating} type="submit" form="add-meeting-form" variant="primary" isDisabled={creating || !title || (!zoomAccountId && !link) || !scheduledAt} >
             {({ isPending }) => (
               <>
                 {isPending ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
@@ -308,7 +305,7 @@ function EditMeetingModal({ meeting, zoomAccounts, loading, onConfirm, onCancel 
   const [scheduledAt, setScheduledAt] = useState(meeting.scheduledAt ? toLocalDatetime(new Date(meeting.scheduledAt)) : '');
   const [grade, setGrade] = useState<Grade | ''>(meeting.grade || '');
 
-  const [durationMinutes, setDurationMinutes] = useState(meeting.duration || 60);
+  const [durationMinutes, setDurationMinutes] = useState(meeting.duration || 40);
   const [isRecurring, setIsRecurring] = useState(meeting.isRecurring || false);
   const [hostVideo, setHostVideo] = useState(meeting.hostVideo || false);
   const [participantVideo, setParticipantVideo] = useState(meeting.participantVideo || false);
@@ -377,28 +374,19 @@ function EditMeetingModal({ meeting, zoomAccounts, loading, onConfirm, onCancel 
           </div>
 
           {isZoomApi && (
-            <>
-              <div className="grid grid-cols-2 gap-4 border-t border-[#e8eaed] pt-4 mt-2">
-                <div>
-                  <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Duration (Minutes)</label>
-                  <input type="number" value={durationMinutes} onChange={(e) => setDurationMinutes(parseInt(e.target.value) || 60)}
-                    disabled={loading} min={15} max={300} step={15}
-                    className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
+            <div className="flex flex-col gap-3 mt-4 rounded-xl border border-gray-200 bg-gray-50/80 p-4">
+              <div className="flex items-center justify-between mb-1">
+                <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wider">Meeting Settings</h4>
+                <div className="flex items-center gap-2">
+                  <label className="text-[11px] font-medium text-gray-500">Duration (mins):</label>
+                  <input type="number" value={durationMinutes} onChange={(e) => setDurationMinutes(parseInt(e.target.value) || 40)}
+                    disabled={loading} min={15} max={40} step={5}
+                    className="w-16 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs outline-none focus:ring-2 focus:ring-blue-500/20"
                     required />
                 </div>
-
-                <div className="flex flex-col justify-center">
-                  <Switch isSelected={isRecurring} onChange={setIsRecurring} isDisabled={loading}>
-                    <Switch.Content>
-                      <Switch.Control>
-                        <Switch.Thumb />
-                      </Switch.Control>
-                      Recurring Meeting
-                    </Switch.Content>
-                  </Switch>
-                </div>
               </div>
-              <div className="grid grid-cols-2 gap-4 mt-2">
+
+              <div className="grid grid-cols-2 gap-y-3 gap-x-4">
                 <Switch isSelected={hostVideo} onChange={setHostVideo} isDisabled={loading}>
                   <Switch.Content>
                     <Switch.Control>
@@ -420,11 +408,19 @@ function EditMeetingModal({ meeting, zoomAccounts, loading, onConfirm, onCancel 
                     <Switch.Control>
                       <Switch.Thumb />
                     </Switch.Control>
-                    Enable Waiting Room
+                    Waiting Room
+                  </Switch.Content>
+                </Switch>
+                <Switch isSelected={isRecurring} onChange={setIsRecurring} isDisabled={true}>
+                  <Switch.Content>
+                    <Switch.Control>
+                      <Switch.Thumb />
+                    </Switch.Control>
+                    Recurring
                   </Switch.Content>
                 </Switch>
               </div>
-            </>
+            </div>
           )}
 
         </div>
@@ -432,7 +428,7 @@ function EditMeetingModal({ meeting, zoomAccounts, loading, onConfirm, onCancel 
           <Button type="button" variant='outline' onPress={onCancel} isDisabled={loading}>
             Cancel
           </Button>
-          <Button isPending={loading} onPress={() => onConfirm(title, link, scheduledAt, grade, durationMinutes, isRecurring, hostVideo, participantVideo, waitingRoom)} isDisabled={loading || !title || (!isZoomApi && !link) || !scheduledAt} >
+          <Button isPending={loading} variant="primary" onPress={() => onConfirm(title, link, scheduledAt, grade, durationMinutes, isRecurring, hostVideo, participantVideo, waitingRoom)} isDisabled={loading || !title || (!isZoomApi && !link) || !scheduledAt} >
             {({ isPending }) => (
               <>
                 {isPending ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
@@ -448,8 +444,8 @@ function EditMeetingModal({ meeting, zoomAccounts, loading, onConfirm, onCancel 
 
 // ─── ConfirmDeleteModal ───────────────────────────────────────────────────────
 
-function ConfirmDeleteModal({ meeting, loading, onConfirm, onCancel }: {
-  meeting: Meeting; loading: boolean;
+function ConfirmDeleteModal({ targetName, zoomAccountLinked, loading, onConfirm, onCancel }: {
+  targetName: string; zoomAccountLinked?: boolean; loading: boolean;
   onConfirm: () => void; onCancel: () => void;
 }) {
   return (
@@ -461,7 +457,7 @@ function ConfirmDeleteModal({ meeting, loading, onConfirm, onCancel }: {
           <div className="relative flex items-center justify-between">
             <div className="flex items-center gap-2.5">
               <Trash size={16} className="text-white" />
-              <span className="text-[15px] font-semibold text-white">Delete Meeting</span>
+              <span className="text-[15px] font-semibold text-white">Confirm Delete</span>
             </div>
             <button type="button" onClick={onCancel} disabled={loading} aria-label="Close"
               className="rounded-full p-1.5 text-white/50 transition-colors hover:bg-white/15 hover:text-white disabled:opacity-40">
@@ -475,8 +471,8 @@ function ConfirmDeleteModal({ meeting, loading, onConfirm, onCancel }: {
             <div>
               <p className="text-[13px] font-semibold text-[#b31412]">This action is irreversible</p>
               <p className="mt-0.5 text-[12px] leading-[1.55] text-[#c5221f]">
-                Are you sure you want to permanently delete <span className="font-semibold">{meeting.title}</span>?
-                {meeting.zoomAccountId && " This will also delete the meeting on Zoom."}
+                Are you sure you want to permanently delete <span className="font-semibold">{targetName}</span>?
+                {zoomAccountLinked && " This will also delete the meeting on Zoom."}
               </p>
             </div>
           </div>
@@ -485,11 +481,11 @@ function ConfirmDeleteModal({ meeting, loading, onConfirm, onCancel }: {
           <Button type="button" variant='outline' onPress={onCancel} isDisabled={loading}>
             Cancel
           </Button>
-          <Button isPending={loading} variant='danger' onPress={onConfirm} isDisabled={loading} >
+          <Button isPending={loading} variant="danger" onPress={onConfirm} isDisabled={loading} >
             {({ isPending }) => (
               <>
                 {isPending ? <Loader2 size={14} className="animate-spin" /> : <Trash2 size={14} />}
-                Delete Meeting
+                Delete
               </>
             )}
           </Button>
@@ -515,6 +511,9 @@ function ManageZoomAccountsModal({ zoomAccounts, loading, onAdd, onDelete, onCan
   const [clientId, setClientId] = useState('');
   const [clientSecret, setClientSecret] = useState('');
 
+  // For deleting zoom account
+  const [deleteTarget, setDeleteTarget] = useState<ZoomAccount | null>(null);
+
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
     const success = await onAdd(name, email, accountId, clientId, clientSecret);
@@ -524,10 +523,18 @@ function ManageZoomAccountsModal({ zoomAccounts, loading, onAdd, onDelete, onCan
     }
   };
 
+  const confirmDelete = async () => {
+    if (!deleteTarget) return;
+    const success = await onDelete(deleteTarget.id);
+    if (success) {
+      setDeleteTarget(null);
+    }
+  };
+
   return (
     <div role="dialog" aria-modal="true"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm overflow-y-auto"
-      onKeyDown={(e) => e.key === 'Escape' && !loading && onCancel()}>
+      onKeyDown={(e) => e.key === 'Escape' && !loading && !deleteTarget && onCancel()}>
       <div className="w-full max-w-2xl my-auto overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
         <div className="relative bg-linear-to-br from-indigo-500 via-[#3949ab] to-[#283593] px-6 py-4">
           <div className="relative flex items-center justify-between">
@@ -542,7 +549,16 @@ function ManageZoomAccountsModal({ zoomAccounts, loading, onAdd, onDelete, onCan
           </div>
         </div>
 
-        <div className="px-6 py-5 min-h-75">
+        <div className="px-6 py-5 min-h-75 relative">
+          {deleteTarget && (
+            <ConfirmDeleteModal
+              targetName={deleteTarget.name}
+              loading={loading}
+              onConfirm={confirmDelete}
+              onCancel={() => setDeleteTarget(null)}
+            />
+          )}
+
           {adding ? (
             <form onSubmit={handleAdd} className="space-y-4 bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
               <h3 className="text-sm font-semibold text-indigo-900 mb-2">Add New Server-to-Server OAuth Account</h3>
@@ -579,7 +595,14 @@ function ManageZoomAccountsModal({ zoomAccounts, loading, onAdd, onDelete, onCan
 
               <div className="flex items-center justify-end gap-2 pt-2">
                 <Button type="button" variant="outline" size="sm" onPress={() => setAdding(false)} isDisabled={loading}>Cancel</Button>
-                <Button type="submit" size="sm" variant="primary" isDisabled={loading} isPending={loading}>Save Account</Button>
+                <Button type="submit" size="sm" variant="primary" isDisabled={loading} isPending={loading}>
+                  {({ isPending }) => (
+                    <>
+                      {isPending ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />}
+                      Save Account
+                    </>
+                  )}
+                </Button>
               </div>
             </form>
           ) : (
@@ -603,7 +626,7 @@ function ManageZoomAccountsModal({ zoomAccounts, loading, onAdd, onDelete, onCan
                         <div className="text-sm font-medium text-[#202124]">{account.name}</div>
                         <div className="text-xs text-[#5f6368]">{account.email}</div>
                       </div>
-                      <Button isIconOnly size="sm" variant="danger" onPress={() => onDelete(account.id)} isDisabled={loading}>
+                      <Button isIconOnly size="sm" variant="danger" onPress={() => setDeleteTarget(account)} isDisabled={loading}>
                         <Trash2 size={14} />
                       </Button>
                     </div>
@@ -678,7 +701,7 @@ export default function MeetingsAdminPage() {
   const [newGrade, setNewGrade] = useState<Grade | ''>('');
 
   const [newZoomAccountId, setNewZoomAccountId] = useState('');
-  const [newDurationMinutes, setNewDurationMinutes] = useState(60);
+  const [newDurationMinutes, setNewDurationMinutes] = useState(40);
   const [newIsRecurring, setNewIsRecurring] = useState(false);
   const [newHostVideo, setNewHostVideo] = useState(false);
   const [newParticipantVideo, setNewParticipantVideo] = useState(false);
@@ -1013,7 +1036,7 @@ export default function MeetingsAdminPage() {
         />
       )}
       {deleteTarget && (
-        <ConfirmDeleteModal meeting={deleteTarget} loading={deleteLoading}
+        <ConfirmDeleteModal targetName={deleteTarget.title} zoomAccountLinked={!!deleteTarget.zoomAccountId} loading={deleteLoading}
           onConfirm={handleDeleteMeeting}
           onCancel={() => setDeleteTarget(null)} />
       )}
