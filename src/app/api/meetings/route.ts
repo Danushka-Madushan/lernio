@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db, Grade } from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
+import { createZoomMeeting } from '@/lib/zoom';
 
 export async function GET(request: Request) {
   const cookieStore = await cookies();
@@ -15,6 +16,7 @@ export async function GET(request: Request) {
   try {
     const meetings = await db.zoomLink.findMany({
       orderBy: { scheduledAt: 'desc' },
+      include: { zoomAccount: { select: { name: true, email: true } } }
     });
 
     return NextResponse.json({ meetings });
@@ -34,18 +36,67 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { title, scheduledAt, grade, link } = await request.json();
+    const { 
+      title, 
+      scheduledAt, 
+      grade, 
+      zoomAccountId, 
+      durationMinutes, 
+      isRecurring, 
+      hostVideo, 
+      participantVideo, 
+      waitingRoom,
+      link // Keep fallback link if no zoomAccountId is provided (for backward compatibility if needed)
+    } = await request.json();
 
-    if (!title || !scheduledAt || !link) {
+    if (!title || !scheduledAt) {
       return NextResponse.json(
-        { error: 'Title, scheduled date, and link are required.' },
+        { error: 'Title and scheduled date are required.' },
         { status: 400 }
       );
     }
 
-    // Validate grade if provided
+    if (!zoomAccountId && !link) {
+      return NextResponse.json(
+        { error: 'Either Zoom Account ID or manual link must be provided.' },
+        { status: 400 }
+      );
+    }
+
     if (grade && !Object.values(Grade).includes(grade as Grade)) {
       return NextResponse.json({ error: 'Invalid grade value' }, { status: 400 });
+    }
+
+    let meetingLink = link?.trim();
+    let meetingId = null;
+    let startUrl = null;
+
+    if (zoomAccountId) {
+      const zoomAccount = await db.zoomAccount.findUnique({ where: { id: zoomAccountId } });
+      if (!zoomAccount) {
+        return NextResponse.json({ error: 'Zoom account not found' }, { status: 404 });
+      }
+
+      const zoomRes = await createZoomMeeting(
+        zoomAccount.email,
+        zoomAccount.accountId,
+        zoomAccount.clientId,
+        zoomAccount.clientSecret,
+        {
+          topic: title.trim(),
+          startTime: new Date(scheduledAt).toISOString(),
+          durationMinutes: durationMinutes || 60,
+          timezone: 'Asia/Colombo', // default timezone or could be passed from client
+          isRecurring,
+          hostVideo,
+          participantVideo,
+          waitingRoom
+        }
+      );
+
+      meetingLink = zoomRes.joinUrl;
+      meetingId = zoomRes.meetingId;
+      startUrl = zoomRes.startUrl;
     }
 
     const newMeeting = await db.zoomLink.create({
@@ -53,7 +104,15 @@ export async function POST(request: Request) {
         title: title.trim(),
         scheduledAt: new Date(scheduledAt),
         grade: grade ? (grade as Grade) : null,
-        link: link.trim(),
+        link: meetingLink,
+        zoomAccountId: zoomAccountId || null,
+        meetingId,
+        startUrl,
+        duration: durationMinutes || 60,
+        isRecurring: isRecurring || false,
+        hostVideo: hostVideo || false,
+        participantVideo: participantVideo || false,
+        waitingRoom: waitingRoom ?? true,
       },
     });
 
