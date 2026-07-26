@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
+import { getZoomUserProfile } from '@/lib/zoom';
 
 export async function GET(req: NextRequest) {
   const cookieStore = await cookies();
@@ -21,6 +22,7 @@ export async function GET(req: NextRequest) {
         email: true,
         accountId: true,
         clientId: true,
+        picUrl: true,
         // Don't send client secret back to the client
         createdAt: true,
       }
@@ -48,6 +50,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    let picUrl = null;
+    try {
+      const profile = await getZoomUserProfile(accountId, clientId, clientSecret);
+      picUrl = profile.picUrl || null;
+    } catch (err) {
+      console.error('Failed to fetch Zoom profile:', err);
+      return NextResponse.json({ error: 'Failed to validate Zoom credentials. Please check your API keys.' }, { status: 400 });
+    }
+
     const newAccount = await db.zoomAccount.create({
       data: {
         name,
@@ -55,6 +66,7 @@ export async function POST(req: NextRequest) {
         accountId,
         clientId,
         clientSecret,
+        picUrl,
       },
     });
 
@@ -66,6 +78,7 @@ export async function POST(req: NextRequest) {
         email: newAccount.email,
         accountId: newAccount.accountId,
         clientId: newAccount.clientId,
+        picUrl: newAccount.picUrl,
       }
     });
   } catch (error) {
