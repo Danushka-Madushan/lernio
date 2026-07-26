@@ -141,7 +141,7 @@ function buildShareMessage(username: string, password: string): string {
  * Attempts to open the WhatsApp desktop app (e.g. on Windows, via its registered
  * `whatsapp://` URI scheme) with the given text pre-filled. If the app isn't
  * installed/registered, the page won't lose focus in time, so we fall back to
- * opening web.whatsapp.com in a new tab — the user can still copy the message
+ * opening web.whatsapp.com in a new tab - the user can still copy the message
  * manually (via the Copy button) and paste it into whatever app they prefer.
  */
 function openWhatsApp(text: string): void {
@@ -183,7 +183,7 @@ function isExpiredOrInactive(student: Student): boolean {
 }
 
 function formatDate(dateStr: string | null) {
-  if (!dateStr) return '—';
+  if (!dateStr) return '-';
   return new Date(dateStr).toLocaleString('en-GB', {
     day: '2-digit', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
@@ -559,7 +559,7 @@ function EditStudentModal({ student, loading, onConfirm, onCancel }: {
             <div className="relative">
               <select value={grade} onChange={(e) => setGrade(e.target.value as Grade | '')} disabled={loading}
                 className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
-                <option value="">— Select grade —</option>
+                <option value="">- Select grade -</option>
                 {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => (
                   <option key={val} value={val}>{label}</option>
                 ))}
@@ -818,7 +818,7 @@ function UsernameInput({ prefix, suffix, disabled, onPrefixChange, onSuffixChang
       <input type="text" value={prefix} onChange={(e) => onPrefixChange(e.target.value.replace(/[\s-]/g, ''))}
         disabled={disabled} placeholder="e.g. kamal"
         className={`min-w-0 flex-1 rounded-lg px-3.5 py-2.5 ${fieldBase}`} required />
-      <span className="shrink-0 select-none text-sm font-semibold text-[#9aa0a6]">—</span>
+      <span className="shrink-0 select-none text-sm font-semibold text-[#9aa0a6]">-</span>
       <div className="flex gap-1">
         {[0, 1, 2, 3].map((i) => (
           <input key={i} ref={(el) => { digitRefs.current[i] = el; }} type="text" inputMode="numeric"
@@ -926,7 +926,7 @@ function AddStudentModal({
                 <div className="relative">
                   <select value={grade} onChange={(e) => onGradeChange(e.target.value as Grade | '')} disabled={creating}
                     className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc]  focus:ring-2 focus:ring-blue-500/20 ">
-                    <option value="">— Select grade —</option>
+                    <option value="">- Select grade -</option>
                     {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => (
                       <option key={val} value={val}>{label}</option>
                     ))}
@@ -1337,7 +1337,7 @@ export default function UsersAdminPage() {
             {GRADE_LABELS[student.grade]}
           </span>
         ) : (
-          <span className="text-[11px] text-[#9aa0a6]">—</span>
+          <span className="text-[11px] text-[#9aa0a6]">-</span>
         )}
       </td>
       {/* Status */}
@@ -1600,7 +1600,7 @@ export default function UsersAdminPage() {
                                     <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${GRADE_COLORS[student.grade]}`}>
                                       {GRADE_LABELS[student.grade]}
                                     </span>
-                                  ) : <span className="text-[11px] text-[#9aa0a6]">—</span>}
+                                  ) : <span className="text-[11px] text-[#9aa0a6]">-</span>}
                                 </td>
                                 <td className="py-3.5"><AccountStatusBadge student={student} /></td>
                                 <td className="py-3.5 text-[12px] text-[#9aa0a6]">{formatDate(student.activeTo)}</td>

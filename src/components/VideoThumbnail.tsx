@@ -34,7 +34,7 @@ export default function VideoThumbnail({ videoId, title, grade, hasThumbnail, sh
       href={`/video/${videoId}`}
       className="group/thumb relative aspect-video select-none overflow-hidden bg-[#202124] flex items-center justify-center text-[#9aa0a6]"
     >
-      {/* Fallback gradient — shown while the thumbnail is loading (pulsing) and permanently if there is none/it failed */}
+      {/* Fallback gradient - shown while the thumbnail is loading (pulsing) and permanently if there is none/it failed */}
       {(!showImage || isPending) && (
         <div
           className={`absolute inset-0 bg-linear-to-br from-[#3c4043] to-[#202124] ${
@@ -62,7 +62,7 @@ export default function VideoThumbnail({ videoId, title, grade, hasThumbnail, sh
         <Loader2 size={28} className="absolute animate-spin text-white/70" aria-label="Loading thumbnail" />
       )}
 
-      {/* Play icon overlays — only once we have a final visual (loaded image or fallback), so they don't flash over the spinner */}
+      {/* Play icon overlays - only once we have a final visual (loaded image or fallback), so they don't flash over the spinner */}
       {!isPending && (
         <>
           <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition-opacity duration-200 group-hover/thumb:opacity-100">

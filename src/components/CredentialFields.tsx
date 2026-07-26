@@ -36,7 +36,7 @@ export const CredentialFields = ({
         // Username input and the 4 ID digits share one visual row with a hyphen between
         // them, so it reads as a single "username-XXXX" field instead of two separate
         // inputs. The digit boxes are still plain <input>s outside the TextField's
-        // field/name context — that separation is what keeps browser autofill from
+        // field/name context - that separation is what keeps browser autofill from
         // grouping and duplicating values across all 5 boxes; only the layout is merged.
         <div className="flex items-center gap-1 sm:gap-1.5">
           <Input

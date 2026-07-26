@@ -8,17 +8,17 @@ import { s3, bucketName } from '@/lib/r2';
 /**
  * GET /api/videos/[id]/stream
  *
- * Secure streaming proxy — the browser's <video> src points here.
+ * Secure streaming proxy - the browser's <video> src points here.
  * - Validates session cookie (auth guard)
  * - Forwards the Range header to Cloudflare R2 (enables seek & progressive play)
- * - Pipes the R2 response body directly back — the real R2 URL is never exposed
+ * - Pipes the R2 response body directly back - the real R2 URL is never exposed
  */
 
 // A browser's MP4 demuxer can issue dozens of small sequential Range
 // requests for the *same* video (walking the moov atom) before real
 // playback starts. Without this, every one of those requests pays a fresh
 // DB round-trip just to look up the same R2 key. This only caches within a
-// single warm server instance — that's fine, since that's exactly where the
+// single warm server instance - that's fine, since that's exactly where the
 // burst of requests for one video lands.
 const r2KeyCache = new Map<string, { key: string; expires: number }>();
 const R2_KEY_CACHE_TTL_MS = 60_000;
@@ -55,7 +55,7 @@ export async function GET(
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
-  // ── Resolve the R2 key for this video (cached — see resolveR2Key above) ────
+  // ── Resolve the R2 key for this video (cached - see resolveR2Key above) ────
   const r2Key = await resolveR2Key(id);
 
   if (!r2Key) {

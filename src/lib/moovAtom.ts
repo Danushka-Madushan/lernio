@@ -7,7 +7,7 @@
  * ----------------
  * MP4 containers store metadata in a "moov" atom.  Many encoders place this
  * atom at the END of the file.  When streamed over HTTP, the browser cannot
- * begin playback until the moov is received — i.e., the entire file must be
+ * begin playback until the moov is received - i.e., the entire file must be
  * downloaded first.  Running `ffmpeg -movflags +faststart` remuxes the file
  * (no re-encoding) so the moov atom is moved to the BEGINNING, enabling true
  * progressive/streaming playback.
@@ -33,10 +33,10 @@ export const MAX_PROCESSABLE_BYTES = 2 * 1024 * 1024 * 1024; // 2 GB
  * (media data) atom.
  *
  * Returns:
- *  - `false`  — moov is first (or file is not an MP4) — no fix needed.
- *  - `true`   — moov is absent from the start, likely at end — fix needed.
+ *  - `false`  - moov is first (or file is not an MP4) - no fix needed.
+ *  - `true`   - moov is absent from the start, likely at end - fix needed.
  *
- * This is a pure JS operation — zero FFmpeg involved — and runs in < 1 ms.
+ * This is a pure JS operation - zero FFmpeg involved - and runs in < 1 ms.
  */
 export async function needsFastStart(file: File): Promise<boolean> {
   const isMP4 = MP4_MIME_PREFIXES.some((p) => file.type.startsWith(p));
@@ -197,7 +197,7 @@ export async function applyFastStart(
 
   await ffmpeg.exec([
     '-i', inputName,
-    '-c', 'copy',          // stream copy — no re-encode
+    '-c', 'copy',          // stream copy - no re-encode
     '-movflags', '+faststart',
     outputName,
   ]);
@@ -205,7 +205,7 @@ export async function applyFastStart(
   // ── Step 4: Read output from virtual FS ──────────────────────────────────
   onProgress?.({ phase: 'remuxing', percent: 99, label: 'Reading optimized file…' });
   const rawData = await ffmpeg.readFile(outputName);
-  // readFile returns Uint8Array<ArrayBufferLike> — copy into a plain ArrayBuffer
+  // readFile returns Uint8Array<ArrayBufferLike> - copy into a plain ArrayBuffer
   // to satisfy the BlobPart type constraint.
   const data = new Uint8Array(rawData as Uint8Array);
 

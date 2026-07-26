@@ -38,7 +38,7 @@ export default async function VideoPage({
     notFound();
   }
 
-  // 2. Increment view count (best-effort — don't fail the page on duplicate)
+  // 2. Increment view count (best-effort - don't fail the page on duplicate)
   try {
     await db.$transaction([
       db.view.create({

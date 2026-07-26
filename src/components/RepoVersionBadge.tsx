@@ -23,7 +23,7 @@ interface TagInfo {
   htmlUrl: string;
 }
 
-const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes — public API, no need to hammer it
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes - public API, no need to hammer it
 
 // Best-effort semver compare. Tags that don't parse fall back to string
 // comparison so the badge still shows *something* sensible.
@@ -62,7 +62,7 @@ async function fetchLatestTag(owner: string, repo: string): Promise<TagInfo> {
       if (Date.now() - cachedAt < CACHE_TTL_MS) return data;
     }
   } catch {
-    // sessionStorage unavailable or corrupted entry — just refetch
+    // sessionStorage unavailable or corrupted entry - just refetch
   }
 
   const tagsRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/tags?per_page=100`, {
@@ -147,7 +147,7 @@ export default function RepoVersionBadge({ owner, repo, prefix = 'v', className 
       setCopied(true);
       setTimeout(() => setCopied(false), 1500);
     } catch {
-      // clipboard unavailable — silently ignore
+      // clipboard unavailable - silently ignore
     }
   };
 

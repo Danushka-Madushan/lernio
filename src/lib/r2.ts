@@ -8,7 +8,7 @@ const secretAccessKey = process.env.CLOUDFLARE_R2_SECRET_ACCESS_KEY || '';
 
 // A video's <video> element can fire off dozens of small sequential Range
 // requests to the streaming proxy in quick succession (see route.ts). Each
-// one calls s3.send() — without a keep-alive agent, every single call pays
+// one calls s3.send() - without a keep-alive agent, every single call pays
 // a fresh TCP + TLS handshake to R2 on top of the actual transfer, which is
 // often the single biggest chunk of per-request latency. Reusing sockets
 // here lets that whole burst ride the same warm connection(s).

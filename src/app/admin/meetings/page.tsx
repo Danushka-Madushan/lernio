@@ -100,7 +100,7 @@ function isExpired(meeting: Meeting): boolean {
 }
 
 function formatDate(dateStr: string | null) {
-  if (!dateStr) return '—';
+  if (!dateStr) return '-';
   return new Date(dateStr).toLocaleString('en-GB', {
     day: '2-digit', month: 'short', year: 'numeric',
     hour: '2-digit', minute: '2-digit',
@@ -528,7 +528,7 @@ function AddMeetingModal({
                 <div className="relative">
                   <select value={zoomAccountId} onChange={(e) => onZoomAccountIdChange(e.target.value)} disabled={creating}
                     className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
-                    <option value="">— Manual Link (No API) —</option>
+                    <option value="">- Manual Link (No API) -</option>
                     {zoomAccounts.map((a) => <option key={a.id} value={a.id}>{a.name} ({a.email})</option>)}
                   </select>
                   <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
@@ -538,7 +538,7 @@ function AddMeetingModal({
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Meeting Title</label>
                 <input type="text" value={title} onChange={(e) => onTitleChange(e.target.value)}
-                  disabled={creating} placeholder="e.g. Science Class — Chapter 4"
+                  disabled={creating} placeholder="e.g. Science Class - Chapter 4"
                   className={`w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20 ${notoSans.className}`}
                   required />
               </div>
@@ -559,7 +559,7 @@ function AddMeetingModal({
                   <div className="relative">
                     <select value={grade} onChange={(e) => onGradeChange(e.target.value as Grade | '')} disabled={creating}
                       className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
-                      <option value="">— All Grades —</option>
+                      <option value="">- All Grades -</option>
                       {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
                     </select>
                     <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
@@ -667,7 +667,7 @@ function EditMeetingModal({ meeting, loading, onConfirm, onCancel }: {
                   <div className="relative">
                     <select value={grade} onChange={(e) => setGrade(e.target.value as Grade | '')} disabled={loading}
                       className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
-                      <option value="">— All Grades —</option>
+                      <option value="">- All Grades -</option>
                       {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
                     </select>
                     <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />

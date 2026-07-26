@@ -184,7 +184,7 @@ export default function VideoUploadPage() {
 
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">
-                  Cover Thumbnail <span className="font-normal text-[#9aa0a6]">(optional — JPG/PNG, 16:9)</span>
+                  Cover Thumbnail <span className="font-normal text-[#9aa0a6]">(optional - JPG/PNG, 16:9)</span>
                 </label>
                 <ThumbnailUploader onSuccess={handleThumbnailSuccess} />
               </div>
@@ -206,7 +206,7 @@ export default function VideoUploadPage() {
                     disabled={saving}
                     className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc]  focus:ring-2 focus:ring-blue-500/20"
                   >
-                    <option value="">— No grade —</option>
+                    <option value="">- No grade -</option>
                     {Object.values(Grade).map((g) => (
                       <option key={g} value={g}>
                         {g.replace('GRADE_', 'Grade ')}
@@ -225,8 +225,8 @@ export default function VideoUploadPage() {
                     disabled={saving}
                     className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc]  focus:ring-2 focus:ring-blue-500/20"
                   >
-                    <option value="PUBLIC">🌐 Public — All students can see</option>
-                    <option value="GRADE">🔒 Grade Only — Matching grade required</option>
+                    <option value="PUBLIC">🌐 Public - All students can see</option>
+                    <option value="GRADE">🔒 Grade Only - Matching grade required</option>
                   </select>
                 </div>
               </div>
