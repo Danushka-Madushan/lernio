@@ -169,3 +169,24 @@ export async function deleteZoomMeeting(
 
   return { success: true, message: "Meeting deleted successfully" };
 }
+
+export async function getZoomUserProfile(
+  accountId: string,
+  clientId: string,
+  clientSecret: string
+) {
+  const token = await getZoomAccessToken(accountId, clientId, clientSecret);
+
+  const response = await axios.get('https://api.zoom.us/v2/users/me', {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return {
+    picUrl: response.data.pic_url,
+    email: response.data.email,
+    firstName: response.data.first_name,
+    lastName: response.data.last_name,
+  };
+}
