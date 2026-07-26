@@ -23,6 +23,8 @@ import {
   UserCircle2,
 } from 'lucide-react';
 import { Button, Switch } from '@heroui/react';
+import Image from 'next/image';
+import { notoSans } from '@/lib/fonts';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -44,6 +46,7 @@ interface ZoomAccount {
   email: string;
   accountId: string;
   clientId: string;
+  picUrl?: string | null;
 }
 
 interface Meeting {
@@ -209,9 +212,9 @@ function WhatsAppButton({ text, label, tiny = false }: { text: string; label?: s
   );
 }
 
-// ─── ShareMeetingPopover ───────────────────────────────────────────────────────
+// ─── ShareMeetingModal ──────────────────────────────────────────────────────────
 
-function ShareMeetingPopover({ meeting, onClose }: { meeting: Meeting; onClose: () => void }) {
+function ShareMeetingModal({ meeting, onClose }: { meeting: Meeting; onClose: () => void }) {
   const message = buildMeetingShareMessage(meeting.title, meeting.scheduledAt, meeting.link);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -224,34 +227,41 @@ function ShareMeetingPopover({ meeting, onClose }: { meeting: Meeting; onClose: 
   }, [onClose]);
 
   return (
-    <div ref={ref} className="absolute right-0 top-8 z-30 w-72 overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
-      <div className="bg-linear-to-br from-blue-500 via-[#1557b0] to-[#0d47a1] px-4 py-3">
-        <p className="text-[13px] font-semibold text-white">Share Meeting</p>
-        <p className="text-[11px] text-blue-200 mt-0.5 truncate">{meeting.title}</p>
-      </div>
-      <div className="px-3 py-3 space-y-2 bg-white">
-        <div className="relative overflow-hidden rounded-xl border border-[#c7d2fe] bg-[#eef2ff]">
-          <div className="absolute left-2.5 top-2.5 z-10 flex items-center gap-1.5">
-            <CopyButton text={message} label="Copy" variant="solid" tiny />
-            <WhatsAppButton text={message} label="WhatsApp" tiny />
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 animate-in fade-in duration-200">
+      <div ref={ref} className="w-full max-w-sm overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 animate-in zoom-in-95 duration-200">
+        <div className="bg-linear-to-br from-blue-500 via-[#1557b0] to-[#0d47a1] px-5 py-4 flex items-start justify-between">
+          <div>
+            <h2 className="text-[15px] font-semibold text-white">Share Meeting</h2>
+            <p className={`text-[12px] text-blue-200 mt-0.5 ${notoSans.className}`}>{meeting.title}</p>
           </div>
-          <div className="pointer-events-none absolute inset-0 opacity-[0.04]"
-            style={{ backgroundImage: 'radial-gradient(circle, #3730a3 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
-          <textarea readOnly value={message} rows={6}
-            className="relative w-full resize-none bg-transparent px-3 pb-3 pt-10 text-[11.5px] leading-[1.75] text-[#3730a3] outline-none" />
+          <button type="button" onClick={onClose} className="text-white/70 hover:text-white transition-colors">
+            <X size={18} />
+          </button>
         </div>
-        {meeting.startUrl && (
-          <div className="pt-1">
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-widest text-[#9aa0a6]">Host Start Link</p>
-            <div className="flex items-center gap-1.5">
-              <CopyButton text={meeting.startUrl} label="Copy Host Link" variant="solid" tiny />
-              <a href={meeting.startUrl} target="_blank" rel="noreferrer"
-                className="inline-flex items-center gap-1 rounded-full bg-green-500 px-2 py-1 text-[11px] font-medium text-white shadow-sm hover:bg-green-600 transition-colors">
-                <Video size={11} /> Open
-              </a>
+        <div className="px-5 py-5 space-y-3 bg-white">
+          <div className="relative overflow-hidden rounded-xl border border-[#c7d2fe] bg-[#eef2ff]">
+            <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
+              <CopyButton text={message} label="Copy" variant="solid" tiny />
+              <WhatsAppButton text={message} label="WhatsApp" tiny />
             </div>
+            <div className="pointer-events-none absolute inset-0 opacity-[0.04]"
+              style={{ backgroundImage: 'radial-gradient(circle, #3730a3 1px, transparent 1px)', backgroundSize: '16px 16px' }} />
+            <textarea readOnly value={message} rows={6}
+              className="relative w-full resize-none bg-transparent px-4 pb-4 pt-12 text-[12px] leading-[1.75] text-[#3730a3] outline-none" />
           </div>
-        )}
+          {meeting.startUrl && (
+            <div className="pt-2">
+              <p className="mb-2 text-[11px] font-semibold uppercase tracking-widest text-[#9aa0a6]">Host Start Link</p>
+              <div className="flex items-center gap-2">
+                <CopyButton text={meeting.startUrl} label="Copy Host Link" variant="solid" />
+                <a href={meeting.startUrl} target="_blank" rel="noreferrer"
+                  className="inline-flex items-center gap-1.5 rounded-full bg-green-500 px-3 py-1.5 text-[12px] font-medium text-white shadow-sm hover:bg-green-600 transition-colors">
+                  <Video size={13} /> Open
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
@@ -528,7 +538,7 @@ function AddMeetingModal({
               <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Meeting Title</label>
               <input type="text" value={title} onChange={(e) => onTitleChange(e.target.value)}
                 disabled={creating} placeholder="e.g. Science Class — Chapter 4"
-                className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
+                className={`w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20 ${notoSans.className}`}
                 required />
             </div>
 
@@ -633,7 +643,7 @@ function EditMeetingModal({ meeting, loading, onConfirm, onCancel }: {
           <div>
             <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Meeting Title</label>
             <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} disabled={loading}
-              className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20" required />
+              className={`w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20 ${notoSans.className}`} required />
           </div>
 
           {!isZoomApi && (
@@ -734,7 +744,12 @@ function ConfirmDeleteModal({ targetName, zoomAccountLinked, loading, onConfirm,
 
 // ─── ManageZoomAccountsModal ──────────────────────────────────────────────────
 
-function AccountAvatar({ name }: { name: string }) {
+function AccountAvatar({ name, picUrl }: { name: string, picUrl?: string | null }) {
+  if (picUrl) {
+    return (
+      <Image width={40} height={40} src={picUrl} alt={name} className="h-9 w-9 shrink-0 rounded-full object-cover shadow-sm ring-1 ring-black/5" />
+    );
+  }
   const initials = name.split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
   const colors = ['from-blue-400 to-blue-500', 'from-blue-400 to-pink-500', 'from-green-400 to-teal-500', 'from-orange-400 to-red-500'];
   const colorIdx = name.charCodeAt(0) % colors.length;
@@ -860,7 +875,7 @@ function ManageZoomAccountsModal({ zoomAccounts, loading, onAdd, onDelete, onCan
                 <div className="space-y-2 max-h-[50vh] overflow-y-auto">
                   {zoomAccounts.map(account => (
                     <div key={account.id} className="flex items-center gap-3 rounded-xl border border-gray-100 bg-gray-50 p-3 hover:bg-gray-100 transition-colors">
-                      <AccountAvatar name={account.name} />
+                      <AccountAvatar name={account.name} picUrl={account.picUrl} />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-semibold text-[#202124] truncate">{account.name}</p>
                         <p className="text-xs text-[#5f6368] truncate">{account.email}</p>
@@ -1086,7 +1101,7 @@ export default function MeetingsAdminPage() {
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-[13px] font-medium text-[#202124] truncate">{meeting.title}</span>
+              <span className={`text-[13px] font-medium text-[#202124] truncate ${notoSans.className}`}>{meeting.title}</span>
               {meeting.isRecurring && <span className="inline-flex items-center gap-0.5 rounded-full bg-blue-50 px-1.5 py-0.5 text-[10px] font-medium text-blue-600"><Repeat size={8} /> Recurring</span>}
             </div>
             <div className="flex flex-wrap items-center gap-2 mt-0.5">
@@ -1126,7 +1141,7 @@ export default function MeetingsAdminPage() {
                 <LinkIcon size={11} /> Share
               </button>
               {shareTarget?.id === meeting.id && (
-                <ShareMeetingPopover meeting={meeting} onClose={() => setShareTarget(null)} />
+                <ShareMeetingModal meeting={meeting} onClose={() => setShareTarget(null)} />
               )}
             </div>
           )}
