@@ -28,6 +28,14 @@ export async function getZoomAccessToken(accountId: string, clientId: string, cl
   return response.data.access_token;
 }
 
+export interface ZoomRecurrence {
+  type: 1 | 2 | 3; // 1=Daily, 2=Weekly, 3=Monthly
+  repeat_interval: number;
+  weekly_days?: string; // comma-separated: "1"=Sun, "2"=Mon,... "7"=Sat
+  end_times?: number;
+  end_date_time?: string; // ISO 8601
+}
+
 export interface ZoomMeetingDetails {
   topic: string;
   startTime: string; // ISO 8601 format
@@ -37,6 +45,7 @@ export interface ZoomMeetingDetails {
   participantVideo?: boolean;
   waitingRoom?: boolean;
   isRecurring?: boolean;
+  recurrence?: ZoomRecurrence;
 }
 
 export async function createZoomMeeting(
@@ -67,12 +76,18 @@ export async function createZoomMeeting(
   };
 
   if (details.isRecurring) {
-    payload.recurrence = {
-      type: 2, // Weekly
-      repeat_interval: 1,
-      weekly_days: "1,2,3,4,5,6,7",
-      end_times: 50 // Max occurrences
-    };
+    if (details.recurrence) {
+      payload.recurrence = details.recurrence;
+    } else {
+      // Default to weekly recurrence
+      const dayOfWeek = new Date(details.startTime).getDay() + 1; // 1=Sun..7=Sat
+      payload.recurrence = {
+        type: 2,
+        repeat_interval: 1,
+        weekly_days: String(dayOfWeek),
+        end_times: 50
+      };
+    }
   }
 
   const response = await axios.post(
@@ -110,6 +125,10 @@ export async function updateZoomMeeting(
   if (updatedDetails.timezone) payload.timezone = updatedDetails.timezone;
   if (updatedDetails.isRecurring !== undefined) payload.type = updatedDetails.isRecurring ? 8 : 2;
   
+  if (updatedDetails.isRecurring && updatedDetails.recurrence) {
+    payload.recurrence = updatedDetails.recurrence;
+  }
+
   if (Object.keys(updatedDetails).some(k => ['hostVideo', 'participantVideo', 'waitingRoom'].includes(k))) {
       payload.settings = {};
       if (updatedDetails.hostVideo !== undefined) payload.settings.host_video = updatedDetails.hostVideo;
