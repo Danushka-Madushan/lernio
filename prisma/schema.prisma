@@ -74,6 +74,7 @@ model ZoomAccount {
   accountId    String
   clientId     String
   clientSecret String
+  picUrl       String?
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
