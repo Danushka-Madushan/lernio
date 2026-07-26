@@ -402,17 +402,17 @@ function MeetingSettingsPanel({
       <div className="flex items-center justify-between">
         <h4 className="text-xs font-bold text-gray-600 uppercase tracking-wider">Meeting Settings</h4>
         <div className="flex items-center gap-2">
-          <label className="text-[11px] font-medium text-gray-500">Duration:</label>
+          <label className="text-xs font-medium text-gray-500">Duration:</label>
           <input type="number" value={durationMinutes}
             onChange={(e) => onDurationChange(parseInt(e.target.value) || 40)}
             disabled={disabled} min={15} max={40} step={5}
             className="w-14 rounded-md border border-gray-300 bg-white px-2 py-1 text-xs text-center outline-none focus:ring-2 focus:ring-blue-500/20" />
-          <span className="text-[11px] text-gray-500">min</span>
+          <span className="text-xs text-gray-500">min</span>
         </div>
       </div>
 
       {/* Switches in 2-col grid */}
-      <div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
+      <div className="grid grid-cols-2 items-center gap-x-4 gap-y-2.5">
         <Switch isSelected={hostVideo} onChange={onHostVideoChange} isDisabled={disabled}>
           <Switch.Content>
             <Switch.Control>
@@ -426,7 +426,7 @@ function MeetingSettingsPanel({
             <Switch.Control>
               <Switch.Thumb />
             </Switch.Control>
-            Participant Video
+            Student Video
           </Switch.Content>
         </Switch>
         <Switch isSelected={waitingRoom} onChange={onWaitingRoomChange} isDisabled={disabled}>
@@ -442,7 +442,7 @@ function MeetingSettingsPanel({
             <Switch.Control>
               <Switch.Thumb />
             </Switch.Control>
-            Recurring
+            Repeat
           </Switch.Content>
         </Switch>
       </div>
@@ -503,7 +503,7 @@ function AddMeetingModal({
     <div role="dialog" aria-modal="true"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm overflow-y-auto"
       onKeyDown={(e) => e.key === 'Escape' && !creating && onCancel()}>
-      <div className="w-full max-w-lg my-auto overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
+      <div className={`w-full ${zoomAccountId ? 'max-w-4xl' : 'max-w-lg'} my-auto overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 transition-all duration-300`}>
         <div className="bg-linear-to-br from-blue-500 via-[#1557b0] to-[#0d47a1] px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2.5">
@@ -521,63 +521,67 @@ function AddMeetingModal({
           {error && <div className="mb-4 rounded-lg border border-[#fad2cf] bg-[#fce8e6] px-3.5 py-2.5 text-[13px] leading-5 text-[#c5221f]">{error}</div>}
           {success && <div className="mb-4 rounded-lg border border-[#ceead6] bg-[#e6f4ea] px-3.5 py-2.5 text-[13px] leading-5 text-[#137333]">{success}</div>}
 
-          <form id="add-meeting-form" onSubmit={onSubmit} className="space-y-4">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Account <span className="font-normal text-[#9aa0a6]">(Host)</span></label>
-              <div className="relative">
-                <select value={zoomAccountId} onChange={(e) => onZoomAccountIdChange(e.target.value)} disabled={creating}
-                  className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
-                  <option value="">— Manual Link (No API) —</option>
-                  {zoomAccounts.map((a) => <option key={a.id} value={a.id}>{a.name} ({a.email})</option>)}
-                </select>
-                <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
-              </div>
-            </div>
-
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Meeting Title</label>
-              <input type="text" value={title} onChange={(e) => onTitleChange(e.target.value)}
-                disabled={creating} placeholder="e.g. Science Class — Chapter 4"
-                className={`w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20 ${notoSans.className}`}
-                required />
-            </div>
-
-            {!zoomAccountId && (
+          <form id="add-meeting-form" onSubmit={onSubmit} className={`grid gap-6 ${zoomAccountId ? 'md:grid-cols-[1fr_360px]' : 'grid-cols-1'}`}>
+            <div className="space-y-4">
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Zoom Link</label>
-                <input type="text" value={link} onChange={(e) => onLinkChange(e.target.value)}
-                  disabled={creating} placeholder="https://zoom.us/j/..."
-                  className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
-                  required={!zoomAccountId} />
-              </div>
-            )}
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Grade <span className="font-normal text-[#9aa0a6]">(optional)</span></label>
+                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Account <span className="font-normal text-[#9aa0a6]">(Host)</span></label>
                 <div className="relative">
-                  <select value={grade} onChange={(e) => onGradeChange(e.target.value as Grade | '')} disabled={creating}
+                  <select value={zoomAccountId} onChange={(e) => onZoomAccountIdChange(e.target.value)} disabled={creating}
                     className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
-                    <option value="">— All Grades —</option>
-                    {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+                    <option value="">— Manual Link (No API) —</option>
+                    {zoomAccounts.map((a) => <option key={a.id} value={a.id}>{a.name} ({a.email})</option>)}
                   </select>
                   <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
                 </div>
               </div>
-              <DateTimePicker label="Scheduled Date & Time" value={scheduledAt} onChange={onScheduledAtChange} disabled={creating} />
+
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Meeting Title</label>
+                <input type="text" value={title} onChange={(e) => onTitleChange(e.target.value)}
+                  disabled={creating} placeholder="e.g. Science Class — Chapter 4"
+                  className={`w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20 ${notoSans.className}`}
+                  required />
+              </div>
+
+              {!zoomAccountId && (
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Zoom Link</label>
+                  <input type="text" value={link} onChange={(e) => onLinkChange(e.target.value)}
+                    disabled={creating} placeholder="https://zoom.us/j/..."
+                    className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
+                    required={!zoomAccountId} />
+                </div>
+              )}
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Grade <span className="font-normal text-[#9aa0a6]">(optional)</span></label>
+                  <div className="relative">
+                    <select value={grade} onChange={(e) => onGradeChange(e.target.value as Grade | '')} disabled={creating}
+                      className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
+                      <option value="">— All Grades —</option>
+                      {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+                    </select>
+                    <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
+                  </div>
+                </div>
+                <DateTimePicker label="Scheduled Date & Time" value={scheduledAt} onChange={onScheduledAtChange} disabled={creating} />
+              </div>
             </div>
 
             {zoomAccountId && (
-              <MeetingSettingsPanel
-                scheduledAt={scheduledAt}
-                durationMinutes={durationMinutes} onDurationChange={onDurationMinutesChange}
-                hostVideo={hostVideo} onHostVideoChange={onHostVideoChange}
-                participantVideo={participantVideo} onParticipantVideoChange={onParticipantVideoChange}
-                waitingRoom={waitingRoom} onWaitingRoomChange={onWaitingRoomChange}
-                isRecurring={isRecurring} onIsRecurringChange={onIsRecurringChange}
-                recurrenceConfig={recurrenceConfig} onRecurrenceConfigChange={onRecurrenceConfigChange}
-                disabled={creating}
-              />
+              <div className="space-y-4 border-t md:border-t-0 md:border-l border-gray-100 md:pl-6 pt-4 md:pt-0">
+                <MeetingSettingsPanel
+                  scheduledAt={scheduledAt}
+                  durationMinutes={durationMinutes} onDurationChange={onDurationMinutesChange}
+                  hostVideo={hostVideo} onHostVideoChange={onHostVideoChange}
+                  participantVideo={participantVideo} onParticipantVideoChange={onParticipantVideoChange}
+                  waitingRoom={waitingRoom} onWaitingRoomChange={onWaitingRoomChange}
+                  isRecurring={isRecurring} onIsRecurringChange={onIsRecurringChange}
+                  recurrenceConfig={recurrenceConfig} onRecurrenceConfigChange={onRecurrenceConfigChange}
+                  disabled={creating}
+                />
+              </div>
             )}
           </form>
         </div>
@@ -622,7 +626,7 @@ function EditMeetingModal({ meeting, loading, onConfirm, onCancel }: {
     <div role="dialog" aria-modal="true"
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4 backdrop-blur-sm overflow-y-auto"
       onKeyDown={(e) => e.key === 'Escape' && !loading && onCancel()}>
-      <div className="w-full max-w-lg my-auto overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10">
+      <div className={`w-full ${isZoomApi ? 'max-w-4xl' : 'max-w-lg'} my-auto overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 transition-all duration-300`}>
         <div className="bg-linear-to-br from-blue-500 via-[#1557b0] to-[#0d47a1] px-6 py-4">
           <div className="flex items-center justify-between">
             <span className="text-[15px] font-semibold text-white">Edit Meeting</span>
@@ -632,55 +636,62 @@ function EditMeetingModal({ meeting, loading, onConfirm, onCancel }: {
             </button>
           </div>
         </div>
+        <div className="max-h-[75vh] overflow-y-auto px-6 py-5">
+          <div className={`grid gap-6 ${isZoomApi ? 'md:grid-cols-[1fr_360px]' : 'grid-cols-1'}`}>
+            <div className="space-y-4">
+              {isZoomApi && meeting.zoomAccount && (
+                <div className="text-xs font-medium text-blue-600 bg-blue-50 px-3 py-2 rounded-lg border border-blue-100 flex items-center gap-2">
+                  <Video size={14} /> API-controlled via {meeting.zoomAccount.name}
+                </div>
+              )}
 
-        <div className="space-y-4 px-6 py-5 max-h-[70vh] overflow-y-auto">
-          {isZoomApi && meeting.zoomAccount && (
-            <div className="text-xs font-medium text-blue-600 bg-blue-50 px-3 py-2 rounded-lg border border-blue-100 flex items-center gap-2">
-              <Video size={14} /> API-controlled via {meeting.zoomAccount.name}
-            </div>
-          )}
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Meeting Title</label>
+                <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} disabled={loading}
+                  className={`w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20 ${notoSans.className}`}
+                  required />
+              </div>
 
-          <div>
-            <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Meeting Title</label>
-            <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} disabled={loading}
-              className={`w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20 ${notoSans.className}`} required />
-          </div>
+              {!isZoomApi && (
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Zoom Link</label>
+                  <input type="text" value={link} onChange={(e) => setLink(e.target.value)} disabled={loading}
+                    className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
+                    required />
+                </div>
+              )}
 
-          {!isZoomApi && (
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Zoom Link</label>
-              <input type="text" value={link} onChange={(e) => setLink(e.target.value)} disabled={loading}
-                className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20" required />
-            </div>
-          )}
-
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Grade <span className="font-normal text-[#9aa0a6]">(optional)</span></label>
-              <div className="relative">
-                <select value={grade} onChange={(e) => setGrade(e.target.value as Grade | '')} disabled={loading}
-                  className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
-                  <option value="">— All Grades —</option>
-                  {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, l]) => <option key={val} value={val}>{l}</option>)}
-                </select>
-                <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Grade <span className="font-normal text-[#9aa0a6]">(optional)</span></label>
+                  <div className="relative">
+                    <select value={grade} onChange={(e) => setGrade(e.target.value as Grade | '')} disabled={loading}
+                      className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
+                      <option value="">— All Grades —</option>
+                      {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+                    </select>
+                    <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
+                  </div>
+                </div>
+                <DateTimePicker label="Scheduled Date & Time" value={scheduledAt} onChange={setScheduledAt} disabled={loading} />
               </div>
             </div>
-            <DateTimePicker label="Scheduled Date & Time" value={scheduledAt} onChange={setScheduledAt} disabled={loading} />
-          </div>
 
-          {isZoomApi && (
-            <MeetingSettingsPanel
-              scheduledAt={scheduledAt}
-              durationMinutes={durationMinutes} onDurationChange={setDurationMinutes}
-              hostVideo={hostVideo} onHostVideoChange={setHostVideo}
-              participantVideo={participantVideo} onParticipantVideoChange={setParticipantVideo}
-              waitingRoom={waitingRoom} onWaitingRoomChange={setWaitingRoom}
-              isRecurring={isRecurring} onIsRecurringChange={setIsRecurring}
-              recurrenceConfig={recurrenceConfig} onRecurrenceConfigChange={setRecurrenceConfig}
-              disabled={loading}
-            />
-          )}
+            {isZoomApi && (
+              <div className="space-y-4 border-t md:border-t-0 md:border-l border-gray-100 md:pl-6 pt-4 md:pt-0">
+                <MeetingSettingsPanel
+                  scheduledAt={scheduledAt}
+                  durationMinutes={durationMinutes} onDurationChange={setDurationMinutes}
+                  hostVideo={hostVideo} onHostVideoChange={setHostVideo}
+                  participantVideo={participantVideo} onParticipantVideoChange={setParticipantVideo}
+                  waitingRoom={waitingRoom} onWaitingRoomChange={setWaitingRoom}
+                  isRecurring={isRecurring} onIsRecurringChange={setIsRecurring}
+                  recurrenceConfig={recurrenceConfig} onRecurrenceConfigChange={setRecurrenceConfig}
+                  disabled={loading}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="flex items-center justify-end gap-2.5 border-t border-[#e8eaed] bg-[#f8f9fa] px-6 py-4">
