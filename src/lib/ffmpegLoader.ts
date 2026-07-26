@@ -2,14 +2,14 @@
  * ffmpegLoader.ts
  *
  * Singleton that loads the single-threaded FFmpeg WASM engine once per
- * browser session. All three artifacts — ffmpeg.js itself, ffmpeg-core.js,
- * and ffmpeg-core.wasm — are fetched from a CDN and cached in IndexedDB.
+ * browser session. All three artifacts - ffmpeg.js itself, ffmpeg-core.js,
+ * and ffmpeg-core.wasm - are fetched from a CDN and cached in IndexedDB.
  *
  * IMPORTANT: @ffmpeg/ffmpeg's ESM source contains `new Worker(new URL(
  * classWorkerURL, import.meta.url))`, where classWorkerURL is a runtime
  * variable. Turbopack (and Webpack) statically parse that pattern and fail
  * with "Cannot find module as expression is too dynamic" as soon as the
- * package is anywhere in the bundle graph — even via dynamic import, even
+ * package is anywhere in the bundle graph - even via dynamic import, even
  * with serverExternalPackages. The only reliable fix is to make sure
  * Turbopack never bundles the package at all: we load it as a real ESM
  * module straight from a CDN using the browser's native import(), with a
@@ -18,9 +18,9 @@
  * completely normal JS and not a bundler problem.
  */
 
-import type { FFmpeg as FFmpegType } from '@ffmpeg/ffmpeg'; // type-only, erased at build time — no runtime import
+import type { FFmpeg as FFmpegType } from '@ffmpeg/ffmpeg'; // type-only, erased at build time - no runtime import
 
-// Pinned versions — bump both together to invalidate the IndexedDB cache.
+// Pinned versions - bump both together to invalidate the IndexedDB cache.
 const FFMPEG_PKG_VERSION = '0.12.10';
 const FFMPEG_CORE_VERSION = '0.12.10';
 
@@ -104,7 +104,7 @@ async function getCachedBlobURL(
   try {
     await idbPut(db, cacheKey, buffer.buffer);
   } catch {
-    // Storage quota exceeded or private browsing — not fatal.
+    // Storage quota exceeded or private browsing - not fatal.
   }
 
   return URL.createObjectURL(new Blob([buffer], { type: mimeType }));
@@ -117,7 +117,7 @@ let ffmpegModulePromise: Promise<typeof import('@ffmpeg/ffmpeg')> | null = null;
 function loadFFmpegModule(): Promise<typeof import('@ffmpeg/ffmpeg')> {
   if (!ffmpegModulePromise) {
     // The webpackIgnore/turbopackIgnore comments stop the bundler from
-    // trying to statically resolve this import — it becomes a genuine
+    // trying to statically resolve this import - it becomes a genuine
     // browser-native `import()` of a remote URL at runtime.
     ffmpegModulePromise = import(
       /* webpackIgnore: true */

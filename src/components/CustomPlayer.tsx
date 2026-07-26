@@ -111,7 +111,7 @@ export default function CustomPlayer({ videoId }: CustomPlayerProps) {
         aria-label="Video Player"
       />
 
-      {/* ── Full-surface tap/click target — fixes "can't pause on mobile" ── */}
+      {/* ── Full-surface tap/click target - fixes "can't pause on mobile" ── */}
       {!error && (
         <button
           type="button"
@@ -124,7 +124,7 @@ export default function CustomPlayer({ videoId }: CustomPlayerProps) {
       {/* ── Buffering indicator ── */}
       <MediaLoadingIndicator slot="centered-chrome" noAutohide className="pointer-events-none z-5" />
 
-      {/* ── Center play glyph (decorative — the button above handles the tap) ── */}
+      {/* ── Center play glyph (decorative - the button above handles the tap) ── */}
       {!isPlaying && !isBuffering && !error && (
         <div
           aria-hidden="true"

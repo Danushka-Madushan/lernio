@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-// Billing data must always be fresh — never let this route be
+// Billing data must always be fresh - never let this route be
 // statically cached or served from the Next.js data cache.
 export const dynamic = 'force-dynamic';
 

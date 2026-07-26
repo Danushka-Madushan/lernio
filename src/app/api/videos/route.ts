@@ -12,7 +12,7 @@ function isAccountActive(activeFrom: Date | null, activeTo: Date | null): boolea
   return true;
 }
 
-// GET: List videos — filtered by student's access rules or admin
+// GET: List videos - filtered by student's access rules or admin
 export async function GET(request: Request) {
   const cookieStore = await cookies();
   const token = cookieStore.get('session_token')?.value;

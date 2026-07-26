@@ -135,7 +135,7 @@ function EditVideoModal({
                 <div className="relative">
                   <select value={grade} onChange={(e) => setGrade(e.target.value as Grade | '')} disabled={loading}
                     className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2 pr-7 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
-                    <option value="">— No grade —</option>
+                    <option value="">- No grade -</option>
                     {Object.entries(GRADE_LABELS).map(([val, label]) => (
                       <option key={val} value={val}>{label}</option>
                     ))}
@@ -474,7 +474,7 @@ export default function VideosAdminPage() {
                               {GRADE_LABELS[video.grade]}
                             </span>
                           ) : (
-                            <span className="text-[11px] text-[#9aa0a6]">—</span>
+                            <span className="text-[11px] text-[#9aa0a6]">-</span>
                           )}
                         </td>
 

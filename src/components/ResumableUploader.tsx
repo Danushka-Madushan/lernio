@@ -65,7 +65,7 @@ function formatMB(bytes: number) {
  * sent, so any progress UI driven by it can only update once per chunk.
  * XHR's `upload.onprogress` event fires continuously as bytes actually go
  * out over the wire, so we use it here purely to get smooth, byte-level
- * progress — everything else about the request is unchanged.
+ * progress - everything else about the request is unchanged.
  */
 function putChunkWithProgress(
   url: string,
@@ -188,7 +188,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
 
       const doneLabel = formatMB(Math.min(bytesDone, currentFile.size));
       const totalLabel = formatMB(currentFile.size);
-      setStatusText(`Part ${currentPart}/${totalChunks} — ${doneLabel} MB / ${totalLabel} MB`);
+      setStatusText(`Part ${currentPart}/${totalChunks} - ${doneLabel} MB / ${totalLabel} MB`);
 
       try {
         // 1. Sign this part
@@ -212,7 +212,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
             const livePct = Math.min(99, Math.round((overallBytes / currentFile.size) * 100));
             setProgress(livePct);
             setUploadedBytes(overallBytes);
-            setStatusText(`Part ${currentPart}/${totalChunks} — ${formatMB(overallBytes)} MB / ${totalLabel} MB`);
+            setStatusText(`Part ${currentPart}/${totalChunks} - ${formatMB(overallBytes)} MB / ${totalLabel} MB`);
           },
         );
 
@@ -225,7 +225,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
         setUploadedBytes(bytesDone);
 
         const doneLabelPost = formatMB(bytesDone);
-        setStatusText(`Part ${currentPart - 1}/${totalChunks} done — ${doneLabelPost} MB / ${totalLabel} MB`);
+        setStatusText(`Part ${currentPart - 1}/${totalChunks} done - ${doneLabelPost} MB / ${totalLabel} MB`);
       } catch (err: unknown) {
         const message = err instanceof Error ? err.message : String(err);
         setError(`Error on part ${currentPart}: ${message}`);
@@ -238,7 +238,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
     }
 
     // 3. Finalize
-    setStatusText('Finalizing — stitching parts…');
+    setStatusText('Finalizing - stitching parts…');
     try {
       const completeRes = await fetch('/api/upload/complete', {
         method: 'POST',
@@ -338,13 +338,13 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
     if (shouldFix && file.size > MAX_PROCESSABLE_BYTES) {
       shouldFix = false;
       setError(
-        `⚠️ Video is larger than 2 GB — skipping streaming optimization. ` +
+        `⚠️ Video is larger than 2 GB - skipping streaming optimization. ` +
         `Progressive playback may be limited for this video.`,
       );
     }
 
     if (!shouldFix) {
-      // No fix needed — go straight to upload.
+      // No fix needed - go straight to upload.
       setUploadFile(file);
       setPreStatusText('');
       setPhase('uploading');
@@ -435,7 +435,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
         {rawFile && (
           <div className="text-[10px] text-[#5f6368]">
             <span className="font-medium text-[#3c4043]">{rawFile.name}</span>
-            {' '}— {formatMB(rawFile.size)} MB
+            {' '}- {formatMB(rawFile.size)} MB
           </div>
         )}
 
@@ -469,7 +469,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
             )}
             {phase === 'loading-ffmpeg' && preProgress === 0 && (
               <p className="text-[9px] text-[#80868b]">
-                Downloading FFmpeg engine once — cached for future uploads.
+                Downloading FFmpeg engine once - cached for future uploads.
               </p>
             )}
           </div>
@@ -540,7 +540,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
 
         {/* ── Action buttons ────────────────────────────────────────────── */}
         <div className="flex items-center gap-2.5">
-          {/* Start upload — shown when no active session */}
+          {/* Start upload - shown when no active session */}
           {!uploadState && phase === 'idle' && (
             <button
               type="button"
@@ -553,7 +553,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
             </button>
           )}
 
-          {/* Resume — shown when paused with existing session */}
+          {/* Resume - shown when paused with existing session */}
           {uploadState && phase === 'paused' && (
             <button
               type="button"
@@ -566,7 +566,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
             </button>
           )}
 
-          {/* Pause — shown while uploading */}
+          {/* Pause - shown while uploading */}
           {isUploading && (
             <button
               type="button"

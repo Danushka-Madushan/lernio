@@ -76,7 +76,7 @@ async function getCroppedImg(
             resolve({
               blob,
               previewUrl: '',
-              error: `Compressed file is ${(blob.size / 1024 / 1024).toFixed(1)} MB — still exceeds 2 MB. Use a less complex image.`,
+              error: `Compressed file is ${(blob.size / 1024 / 1024).toFixed(1)} MB - still exceeds 2 MB. Use a less complex image.`,
             });
             return;
           }
@@ -156,10 +156,10 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
       const deviation = Math.abs(ratio - ASPECT_RATIO) / ASPECT_RATIO;
 
       if (deviation > ASPECT_TOLERANCE) {
-        // Needs cropping — open modal
+        // Needs cropping - open modal
         setShowCropper(true);
       } else {
-        // Fits criteria automatically — process immediately
+        // Fits criteria automatically - process immediately
         const fullCrop = { x: 0, y: 0, width: img.naturalWidth, height: img.naturalHeight };
         await processAndUpload(src, fullCrop);
       }
@@ -301,7 +301,7 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
             <span>
               {status === 'done' ? (
                 <span className="flex items-center gap-1 font-semibold text-[#137333]">
-                  <CheckCircle2 size={11} /> Uploaded — {compressedSize}
+                  <CheckCircle2 size={11} /> Uploaded - {compressedSize}
                 </span>
               ) : (
                 `Uploading… ${compressedSize}`
