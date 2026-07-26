@@ -43,6 +43,7 @@ export async function POST(request: Request) {
       zoomAccountId, 
       durationMinutes, 
       isRecurring, 
+      recurrenceConfig,
       hostVideo, 
       participantVideo, 
       waitingRoom,
@@ -85,9 +86,10 @@ export async function POST(request: Request) {
         {
           topic: title.trim(),
           startTime: new Date(scheduledAt).toISOString(),
-          durationMinutes: durationMinutes || 60,
-          timezone: 'Asia/Colombo', // default timezone or could be passed from client
+          durationMinutes: durationMinutes || 40,
+          timezone: 'Asia/Colombo',
           isRecurring,
+          recurrence: recurrenceConfig || undefined,
           hostVideo,
           participantVideo,
           waitingRoom
