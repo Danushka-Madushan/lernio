@@ -5,6 +5,7 @@ import {
   AlertTriangle,
   Check,
   Copy,
+  Info,
   Loader2,
   Plus,
   RefreshCw,
@@ -831,7 +832,10 @@ function ManageZoomAccountsModal({ zoomAccounts, loading, onAdd, onDelete, onCan
         <div className="px-6 py-5 min-h-70">
           {adding ? (
             <form onSubmit={handleAdd} className="space-y-4 rounded-xl border border-blue-100 bg-blue-50/50 p-4">
-              <h3 className="text-sm font-semibold text-blue-900">Add Server-to-Server OAuth Account</h3>
+              <div className="flex items-center gap-2">
+                <h3 className="text-sm font-semibold text-blue-900">Add Server-to-Server OAuth Account</h3>
+                <ZoomScopesInfoButton />
+              </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">Identifier Name</label>
@@ -947,6 +951,114 @@ function MeetingStatusBadge({ meeting }: { meeting: Meeting }) {
 
 const DEFAULT_RECURRENCE: RecurrenceConfig = { type: 2, repeat_interval: 1, weekly_days: String(new Date().getDay() + 1), end_times: 50 };
 
+// ─── ZoomScopesInfoButton ─────────────────────────────────────────────────────
+
+const REQUIRED_ZOOM_SCOPES = [
+  { scope: 'meeting:write:admin', desc: 'Create & update meetings' },
+  { scope: 'meeting:read:admin',  desc: 'Read meeting details' },
+  { scope: 'meeting:delete:admin', desc: 'Delete meetings' },
+  { scope: 'user:read:admin',     desc: 'Read user profile' },
+];
+
+function ZoomScopesInfoButton() {
+  const [open, setOpen] = useState(false);
+  const [popupStyle, setPopupStyle] = useState<React.CSSProperties>({});
+  const btnRef = useRef<HTMLButtonElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+
+  const calcPosition = () => {
+    if (!btnRef.current) return;
+    const rect = btnRef.current.getBoundingClientRect();
+    const popupWidth = 288; // w-72
+    const spaceBelow = window.innerHeight - rect.bottom - 8;
+    const spaceAbove = rect.top - 8;
+
+    // Prefer below; flip above if not enough room
+    const openBelow = spaceBelow >= 260 || spaceBelow >= spaceAbove;
+    const top = openBelow ? rect.bottom + 6 : rect.top - 6;
+    const translateY = openBelow ? '0' : '-100%';
+
+    // Keep within viewport horizontally
+    let left = rect.left;
+    if (left + popupWidth > window.innerWidth - 8) left = window.innerWidth - popupWidth - 8;
+
+    setPopupStyle({ position: 'fixed', top, left, transform: `translateY(${translateY})`, zIndex: 9999 });
+  };
+
+  const handleOpen = () => {
+    setOpen((v) => {
+      if (!v) calcPosition();
+      return !v;
+    });
+  };
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (
+        popupRef.current && !popupRef.current.contains(e.target as Node) &&
+        btnRef.current && !btnRef.current.contains(e.target as Node)
+      ) setOpen(false);
+    };
+    document.addEventListener('mousedown', handler);
+    window.addEventListener('resize', calcPosition);
+    window.addEventListener('scroll', calcPosition, true);
+    return () => {
+      document.removeEventListener('mousedown', handler);
+      window.removeEventListener('resize', calcPosition);
+      window.removeEventListener('scroll', calcPosition, true);
+    };
+  }, [open]);
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        type="button"
+        onClick={handleOpen}
+        title="Required Zoom OAuth scopes"
+        className="inline-flex items-center justify-center h-5 w-5 rounded-full text-blue-500 hover:bg-blue-100 transition-colors"
+      >
+        <Info size={14} />
+      </button>
+
+      {open && (
+        <div
+          ref={popupRef}
+          style={popupStyle}
+          className="w-72 rounded-xl border border-blue-200 bg-white shadow-xl ring-1 ring-black/5 p-4 animate-in fade-in zoom-in-95 duration-150"
+        >
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-xs font-bold uppercase tracking-wider text-blue-700">Required OAuth Scopes</p>
+            <button type="button" onClick={() => setOpen(false)} className="text-gray-400 hover:text-gray-600 transition-colors">
+              <X size={13} />
+            </button>
+          </div>
+          <p className="text-[11px] text-gray-500 mb-3 leading-relaxed">
+            Add these scopes in{' '}
+            <a href="https://marketplace.zoom.us" target="_blank" rel="noreferrer" className="text-blue-600 underline underline-offset-2 hover:text-blue-800">Zoom Marketplace</a>
+            {' '}→ Your App → <span className="font-semibold">Scopes</span> tab.
+          </p>
+          <div className="space-y-1.5">
+            {REQUIRED_ZOOM_SCOPES.map(({ scope, desc }) => (
+              <div key={scope} className="flex items-start gap-2 rounded-lg bg-blue-50 px-2.5 py-2">
+                <Check size={11} className="mt-0.5 shrink-0 text-blue-500" />
+                <div className="min-w-0">
+                  <p className="text-[11px] font-mono font-semibold text-blue-800 break-all">{scope}</p>
+                  <p className="text-[10px] text-blue-600">{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+          <p className="mt-3 text-[10px] text-gray-400 leading-relaxed">
+            After adding scopes, re-activate the app or wait a few minutes for Zoom to propagate changes.
+          </p>
+        </div>
+      )}
+    </>
+  );
+}
+
 export default function MeetingsAdminPage() {
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [zoomAccounts, setZoomAccounts] = useState<ZoomAccount[]>([]);
@@ -963,6 +1075,7 @@ export default function MeetingsAdminPage() {
   const [newScheduledAt, setNewScheduledAt] = useState('');
   const [newGrade, setNewGrade] = useState<Grade | ''>('');
   const [newZoomAccountId, setNewZoomAccountId] = useState('');
+  const hasAutoSelectedAccount = useRef(false);
   const [newDurationMinutes, setNewDurationMinutes] = useState(40);
   const [newIsRecurring, setNewIsRecurring] = useState(false);
   const [newHostVideo, setNewHostVideo] = useState(false);
@@ -1013,12 +1126,16 @@ export default function MeetingsAdminPage() {
       else setError(data.error || 'Failed to fetch meetings');
       if (accountsRes.ok) {
         setZoomAccounts(accountsData.accounts);
-        if (accountsData.accounts.length > 0 && !newZoomAccountId)
+        // Auto-select the first Zoom account only once on initial mount.
+        // After that, the user's selection (including "Manual Link") is respected.
+        if (accountsData.accounts.length > 0 && !hasAutoSelectedAccount.current) {
+          hasAutoSelectedAccount.current = true;
           setNewZoomAccountId(accountsData.accounts[0].id);
+        }
       } else setError(accountsData.error || 'Failed to fetch accounts');
     } catch { setError('Connection error'); }
     finally { setLoading(false); }
-  }, [newZoomAccountId]);
+  }, []);
 
   useEffect(() => { fetchMeetings(); }, [fetchMeetings]);
 
