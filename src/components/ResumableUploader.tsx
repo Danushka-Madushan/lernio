@@ -11,9 +11,18 @@ import {
   MAX_PROCESSABLE_BYTES,
   type RemuxProgress,
 } from '@/lib/moovAtom';
-import { Button } from '@heroui/react';
 
 const CHUNK_SIZE = 6 * 1024 * 1024; // 6 MB per part (AWS/R2 minimum is 5 MB)
+
+// Retry tuning for a single part. These are deliberately generous: mobile
+// and flaky networks routinely drop a request without the connection being
+// "really down," and we don't want that to look like a hard failure.
+const MAX_RETRIES = 5;
+const BASE_BACKOFF_MS = 1000; // 1s, 2s, 4s, 8s, 16s
+// If a chunk PUT goes this long with zero upload progress, treat it as a
+// stalled connection (not a clean error) and abort so we can retry, rather
+// than leaving the UI hung on a spinner indefinitely.
+const STALL_TIMEOUT_MS = 20_000;
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -28,6 +37,7 @@ interface UploadState {
   totalSize: number;
   parts: { partNumber: number; etag: string }[];
   currentPart: number;
+  wasOptimized: boolean; // Persisted to safe-guard block slicing on recovery
 }
 
 /**
@@ -52,10 +62,48 @@ type Phase =
   | 'paused'
   | 'done';
 
+// ─── Error types used to route failures correctly ───────────────────────────
+//
+// Not all failures should be treated the same way:
+//  - RetryableError  → transient (network blip, 5xx, stall) - retry with backoff
+//  - SignatureExpiredError → presigned URL expired - re-sign and retry
+//  - PausedError     → we aborted the request ourselves because the user hit
+//                      Pause - not an error, just stop cleanly
+//  - UploadAbortedError → we aborted because the user cancelled - stop and
+//                      let the caller's cleanup run
+//  - anything else   → genuine, non-retryable failure - surface to the user
+
+class RetryableError extends Error {}
+class SignatureExpiredError extends Error {}
+class PausedError extends Error {}
+class UploadAbortedError extends Error {}
+
+type AbortReason = 'user-pause' | 'user-cancel' | 'stall' | null;
+
+interface ChunkHandle {
+  xhr: XMLHttpRequest | null;
+  abortReason: AbortReason;
+}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 function formatMB(bytes: number) {
   return (bytes / (1024 * 1024)).toFixed(1);
+}
+
+/** Sleep for `ms`, but wake up early (and repeatedly re-check) if `shouldWakeEarly` goes true. */
+function sleepUnless(ms: number, shouldWakeEarly: () => boolean): Promise<void> {
+  return new Promise((resolve) => {
+    const start = Date.now();
+    const tick = () => {
+      if (shouldWakeEarly() || Date.now() - start >= ms) {
+        resolve();
+        return;
+      }
+      setTimeout(tick, 200);
+    };
+    tick();
+  });
 }
 
 /**
@@ -66,23 +114,45 @@ function formatMB(bytes: number) {
  * XHR's `upload.onprogress` event fires continuously as bytes actually go
  * out over the wire, so we use it here purely to get smooth, byte-level
  * progress - everything else about the request is unchanged.
+ *
+ * `handle` is a mutable, externally-visible slot: whoever calls this stores
+ * `handle` in a ref, so a Pause/Cancel button click elsewhere in the app can
+ * reach into the *actual in-flight request* and abort it immediately,
+ * instead of just flipping a flag the loop won't check until the chunk
+ * finishes on its own.
  */
 function putChunkWithProgress(
   url: string,
   chunk: Blob,
   contentType: string,
   onProgress: (loadedBytes: number) => void,
+  handle: ChunkHandle,
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const xhr = new XMLHttpRequest();
+    handle.xhr = xhr;
     xhr.open('PUT', url, true);
     if (contentType) xhr.setRequestHeader('Content-Type', contentType);
 
+    // Stall watchdog - see STALL_TIMEOUT_MS comment above.
+    let stallTimer: ReturnType<typeof setTimeout>;
+    const resetStallTimer = () => {
+      clearTimeout(stallTimer);
+      stallTimer = setTimeout(() => {
+        handle.abortReason = 'stall';
+        xhr.abort();
+      }, STALL_TIMEOUT_MS);
+    };
+    resetStallTimer();
+
     xhr.upload.onprogress = (e) => {
+      resetStallTimer();
       if (e.lengthComputable) onProgress(e.loaded);
     };
 
     xhr.onload = () => {
+      clearTimeout(stallTimer);
+      handle.xhr = null;
       if (xhr.status >= 200 && xhr.status < 300) {
         const etag = xhr.getResponseHeader('ETag');
         if (!etag) {
@@ -91,16 +161,48 @@ function putChunkWithProgress(
         }
         onProgress(chunk.size); // snap to 100% for this chunk on completion
         resolve(etag);
+      } else if (xhr.status === 403 || xhr.status === 400) {
+        // Most likely an expired/invalid presigned URL - re-sign and retry.
+        reject(new SignatureExpiredError(`Upload URL rejected (status ${xhr.status})`));
+      } else if (xhr.status >= 500) {
+        reject(new RetryableError(`Server error while uploading part (status ${xhr.status})`));
       } else {
         reject(new Error(`Failed to upload part (status ${xhr.status})`));
       }
     };
 
-    xhr.onerror = () => reject(new Error('Network error while uploading part'));
-    xhr.onabort = () => reject(new Error('Upload aborted'));
+    xhr.onerror = () => {
+      clearTimeout(stallTimer);
+      handle.xhr = null;
+      reject(new RetryableError('Network error while uploading part'));
+    };
+
+    xhr.onabort = () => {
+      clearTimeout(stallTimer);
+      const reason = handle.abortReason;
+      handle.xhr = null;
+      if (reason === 'user-cancel') reject(new UploadAbortedError());
+      else if (reason === 'user-pause') reject(new PausedError());
+      else reject(new RetryableError('Upload stalled (no response) - retrying'));
+    };
 
     xhr.send(chunk);
   });
+}
+
+/** fetch() wrapper that can be aborted via the same AbortController ref used for cancel. */
+async function fetchAbortable(
+  url: string,
+  init: RequestInit,
+  controllerRef: { current: AbortController | null },
+): Promise<Response> {
+  const controller = new AbortController();
+  controllerRef.current = controller;
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    if (controllerRef.current === controller) controllerRef.current = null;
+  }
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -113,16 +215,28 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
 
   const [uploadState, setUploadState] = useState<UploadState | null>(null);
   const [phase, setPhase] = useState<Phase>('idle');
-  const [progress, setProgress] = useState(0);        // upload %
-  const [preProgress, setPreProgress] = useState(0);  // ffmpeg load / remux %
+  const [progress, setProgress] = useState(0); // upload %
+  const [preProgress, setPreProgress] = useState(0); // ffmpeg load / remux %
   const [uploadedBytes, setUploadedBytes] = useState(0);
   const [statusText, setStatusText] = useState('');
   const [preStatusText, setPreStatusText] = useState('');
   const [error, setError] = useState('');
   const [remuxError, setRemuxError] = useState('');
   const [wasOptimized, setWasOptimized] = useState(false);
+  const [isOffline, setIsOffline] = useState(false);
 
   const pausedRef = useRef(false);
+  // Set the instant Cancel is pressed; every loop/retry checks this and bails
+  // immediately instead of finishing whatever request happens to be in flight.
+  const cancelRequestedRef = useRef(false);
+  // The in-flight chunk request, if any - lets Pause/Cancel abort it directly.
+  const activeChunkHandleRef = useRef<ChunkHandle>({ xhr: null, abortReason: null });
+  // The in-flight sign/init/complete fetch, if any - same idea for non-chunk calls.
+  const activeFetchControllerRef = useRef<AbortController | null>(null);
+  // Set when we pause specifically because the browser reports we're offline,
+  // so we know to auto-resume once connectivity returns.
+  const autoResumeOnReconnectRef = useRef(false);
+  const resumeUploadRef = useRef<() => void>(() => {});
 
   // ── Restore incomplete upload session from localStorage ────────────────────
   useEffect(() => {
@@ -131,6 +245,9 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
       try {
         const parsed = JSON.parse(saved) as UploadState;
         setUploadState(parsed);
+        if (parsed.wasOptimized) {
+          setWasOptimized(true);
+        }
         const bytesAlreadyUploaded = (parsed.currentPart - 1) * CHUNK_SIZE;
         setUploadedBytes(Math.min(bytesAlreadyUploaded, parsed.totalSize));
         setProgress(Math.round((bytesAlreadyUploaded / parsed.totalSize) * 100));
@@ -147,6 +264,25 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
     pausedRef.current = phase === 'paused';
   }, [phase]);
 
+  // ── Track browser online/offline state, and auto-resume when we're back ───
+  useEffect(() => {
+    const handleOffline = () => setIsOffline(true);
+    const handleOnline = () => {
+      setIsOffline(false);
+      if (autoResumeOnReconnectRef.current) {
+        autoResumeOnReconnectRef.current = false;
+        resumeUploadRef.current();
+      }
+    };
+    window.addEventListener('offline', handleOffline);
+    window.addEventListener('online', handleOnline);
+    setIsOffline(typeof navigator !== 'undefined' && !navigator.onLine);
+    return () => {
+      window.removeEventListener('offline', handleOffline);
+      window.removeEventListener('online', handleOnline);
+    };
+  }, []);
+
   // ── Reset everything ───────────────────────────────────────────────────────
   const resetUploader = () => {
     setRawFile(null);
@@ -161,7 +297,40 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
     setError('');
     setRemuxError('');
     setWasOptimized(false);
+    autoResumeOnReconnectRef.current = false;
     localStorage.removeItem('lernio_active_upload');
+  };
+
+  // ── Cancel: abort whatever is in flight immediately, then reset ──────────
+  // Per your call: Cancel keeps the partial upload on the server (we don't
+  // call an abort-multipart endpoint here) but does clear the local session,
+  // since "Cancel Session" is meant to fully back out. Pause (below) is the
+  // "stop now, resume later" action that keeps local state around.
+  const cancelUpload = () => {
+    cancelRequestedRef.current = true;
+    const chunkHandle = activeChunkHandleRef.current;
+    if (chunkHandle.xhr) {
+      chunkHandle.abortReason = 'user-cancel';
+      chunkHandle.xhr.abort();
+    }
+    if (activeFetchControllerRef.current) {
+      activeFetchControllerRef.current.abort();
+    }
+    resetUploader();
+
+    // Allow a fresh upload to start normally afterward.
+    setTimeout(() => { cancelRequestedRef.current = false; }, 0);
+  };
+
+  // ── Pause: abort the in-flight chunk immediately, keep state for resume ──
+  const pauseUpload = () => {
+    pausedRef.current = true;
+    const chunkHandle = activeChunkHandleRef.current;
+    if (chunkHandle.xhr) {
+      chunkHandle.abortReason = 'user-pause';
+      chunkHandle.xhr.abort();
+    }
+    setPhase('paused');
   };
 
   // ── Chunked multipart upload loop ─────────────────────────────────────────
@@ -172,79 +341,133 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
     let currentPart = state.currentPart;
     let bytesDone = (currentPart - 1) * CHUNK_SIZE;
 
+    const savePausedState = () => {
+      const updatedState = { ...state, parts, currentPart };
+      setUploadState(updatedState);
+      localStorage.setItem('lernio_active_upload', JSON.stringify(updatedState));
+      setPhase('paused');
+    };
+
     while (currentPart <= totalChunks) {
+      if (cancelRequestedRef.current) return;
       if (pausedRef.current) {
         setStatusText('Upload paused.');
-        const updatedState = { ...state, parts, currentPart };
-        setUploadState(updatedState);
-        localStorage.setItem('lernio_active_upload', JSON.stringify(updatedState));
-        setPhase('paused');
+        savePausedState();
         return;
       }
 
       const start = (currentPart - 1) * CHUNK_SIZE;
       const end = Math.min(start + CHUNK_SIZE, currentFile.size);
       const chunk = currentFile.slice(start, end);
-
       const doneLabel = formatMB(Math.min(bytesDone, currentFile.size));
       const totalLabel = formatMB(currentFile.size);
-      setStatusText(`Part ${currentPart}/${totalChunks} - ${doneLabel} MB / ${totalLabel} MB`);
 
-      try {
-        // 1. Sign this part
-        const signRes = await fetch('/api/upload/sign-part', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ key: state.key, uploadId: state.uploadId, partNumber: currentPart }),
-        });
-        const signData = await signRes.json();
-        if (!signRes.ok) throw new Error(signData.error || 'Failed to sign part');
+      let attempt = 0;
+      let uploadedEtag: string | null = null;
 
-        // 2. PUT the chunk directly to R2, reporting real byte-level progress
-        //    as it streams (see putChunkWithProgress above for why this
-        //    needs XHR instead of fetch).
-        const etag = await putChunkWithProgress(
-          signData.url,
-          chunk,
-          currentFile.type,
-          (loadedInChunk) => {
-            const overallBytes = start + loadedInChunk;
-            const livePct = Math.min(99, Math.round((overallBytes / currentFile.size) * 100));
-            setProgress(livePct);
-            setUploadedBytes(overallBytes);
-            setStatusText(`Part ${currentPart}/${totalChunks} - ${formatMB(overallBytes)} MB / ${totalLabel} MB`);
-          },
+      while (uploadedEtag === null) {
+        if (cancelRequestedRef.current) return;
+        if (pausedRef.current) {
+          setStatusText('Upload paused.');
+          savePausedState();
+          return;
+        }
+
+        setStatusText(
+          attempt === 0
+            ? `Part ${currentPart}/${totalChunks} - ${doneLabel} MB / ${totalLabel} MB`
+            : `Part ${currentPart}/${totalChunks} - retrying (${attempt}/${MAX_RETRIES})…`,
         );
 
-        parts.push({ partNumber: currentPart, etag });
-        bytesDone = end;
-        currentPart++;
+        try {
+          // Re-sign on every attempt: presigned URLs are time-limited, and a
+          // slow or retried upload can easily outlive the original signature.
+          const signRes = await fetchAbortable(
+            '/api/upload/sign-part',
+            {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ key: state.key, uploadId: state.uploadId, partNumber: currentPart }),
+            },
+            activeFetchControllerRef,
+          );
+          const signData = await signRes.json();
+          if (!signRes.ok) throw new Error(signData.error || 'Failed to sign part');
 
-        const pct = Math.round((bytesDone / currentFile.size) * 100);
-        setProgress(pct);
-        setUploadedBytes(bytesDone);
+          const handle: ChunkHandle = { xhr: null, abortReason: null };
+          activeChunkHandleRef.current = handle;
 
-        const doneLabelPost = formatMB(bytesDone);
-        setStatusText(`Part ${currentPart - 1}/${totalChunks} done - ${doneLabelPost} MB / ${totalLabel} MB`);
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : String(err);
-        setError(`Error on part ${currentPart}: ${message}`);
-        const updatedState = { ...state, parts, currentPart };
-        setUploadState(updatedState);
-        localStorage.setItem('lernio_active_upload', JSON.stringify(updatedState));
-        setPhase('paused');
-        return;
+          uploadedEtag = await putChunkWithProgress(
+            signData.url,
+            chunk,
+            currentFile.type,
+            (loadedInChunk) => {
+              const overallBytes = start + loadedInChunk;
+              const livePct = Math.min(99, Math.round((overallBytes / currentFile.size) * 100));
+              setProgress(livePct);
+              setUploadedBytes(overallBytes);
+              setStatusText(`Part ${currentPart}/${totalChunks} - ${formatMB(overallBytes)} MB / ${totalLabel} MB`);
+            },
+            handle,
+          );
+        } catch (err: unknown) {
+          activeChunkHandleRef.current = { xhr: null, abortReason: null };
+
+          if (err instanceof UploadAbortedError || cancelRequestedRef.current) return;
+          if (err instanceof PausedError) {
+            setStatusText('Upload paused.');
+            savePausedState();
+            return;
+          }
+          // A fetch abort (e.g. cancel fired mid-sign) surfaces as a DOMException.
+          if (err instanceof DOMException && err.name === 'AbortError') return;
+
+          const retryable = err instanceof RetryableError || err instanceof SignatureExpiredError;
+          attempt++;
+
+          if (!retryable || attempt > MAX_RETRIES) {
+            const message = err instanceof Error ? err.message : String(err);
+            const offline = typeof navigator !== 'undefined' && !navigator.onLine;
+            setError(
+              offline
+                ? "You're offline. Your progress is saved - we'll resume automatically once you're back online."
+                : `Error on part ${currentPart}: ${message}`,
+            );
+            if (offline) autoResumeOnReconnectRef.current = true;
+            savePausedState();
+            return;
+          }
+
+          // Exponential backoff, but wake up immediately if paused/cancelled
+          // during the wait instead of sitting through the full delay.
+          const backoffMs = BASE_BACKOFF_MS * 2 ** (attempt - 1);
+          await sleepUnless(backoffMs, () => pausedRef.current || cancelRequestedRef.current);
+        }
       }
+
+      parts.push({ partNumber: currentPart, etag: uploadedEtag });
+      bytesDone = end;
+      currentPart++;
+
+      const pct = Math.round((bytesDone / currentFile.size) * 100);
+      setProgress(pct);
+      setUploadedBytes(bytesDone);
+      setStatusText(`Part ${currentPart - 1}/${totalChunks} done - ${formatMB(bytesDone)} MB / ${totalLabel} MB`);
     }
 
     // 3. Finalize
+    if (cancelRequestedRef.current) return;
     setStatusText('Finalizing - stitching parts…');
     try {
-      const completeRes = await fetch('/api/upload/complete', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key: state.key, uploadId: state.uploadId, parts }),
-      });
+      const completeRes = await fetchAbortable(
+        '/api/upload/complete',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ key: state.key, uploadId: state.uploadId, parts }),
+        },
+        activeFetchControllerRef,
+      );
       const completeData = await completeRes.json();
       if (!completeRes.ok) throw new Error(completeData.error || 'Stitching failed');
 
@@ -255,24 +478,29 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
       localStorage.removeItem('lernio_active_upload');
       onSuccess(state.key);
     } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       const message = err instanceof Error ? err.message : String(err);
       setError(`Stitching failed: ${message}`);
       setPhase('paused');
     }
   };
 
-  // ── Start a brand-new multipart upload ────────────────────────────────────
-  const startNewUpload = async (fileToUpload: File) => {
+// ── Start a brand-new multipart upload ────────────────────────────────────
+  const startNewUpload = async (fileToUpload: File, optimized: boolean) => {
     setProgress(0);
     setUploadedBytes(0);
     setStatusText('Initiating resumable upload…');
 
     try {
-      const res = await fetch('/api/upload/init', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ filename: fileToUpload.name, contentType: fileToUpload.type }),
-      });
+      const res = await fetchAbortable(
+        '/api/upload/init',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ filename: fileToUpload.name, contentType: fileToUpload.type }),
+        },
+        activeFetchControllerRef,
+      );
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'Failed to initialize upload');
 
@@ -283,12 +511,14 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
         totalSize: fileToUpload.size,
         parts: [],
         currentPart: 1,
+        wasOptimized: optimized,
       };
 
       setUploadState(newState);
       localStorage.setItem('lernio_active_upload', JSON.stringify(newState));
       uploadChunks(fileToUpload, newState);
     } catch (err: unknown) {
+      if (err instanceof DOMException && err.name === 'AbortError') return;
       const message = err instanceof Error ? err.message : String(err);
       setError(message || 'Error initiating upload.');
       setPhase('idle');
@@ -301,20 +531,57 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
     setRemuxError('');
     setUploadFile(rawFile);
     setPhase('uploading');
-    await startNewUpload(rawFile);
+    await startNewUpload(rawFile, false);
   };
 
   // ── Resume a paused upload ─────────────────────────────────────────────────
-  const resumeUpload = () => {
-    const fileForUpload = uploadFile ?? rawFile;
-    if (!uploadState || !fileForUpload) {
+  const resumeUpload = useCallback(async () => {
+    if (!uploadState || !rawFile) {
       setError('Please select the original file to resume the upload.');
       return;
     }
-    setPhase('uploading');
+    
+    pausedRef.current = false;
     setError('');
+
+    let fileForUpload = uploadFile;
+
+    // Fix context alignment: Regenerate optimized stream deterministically if state requires it
+    if (uploadState.wasOptimized && !fileForUpload) {
+      setPhase('checking');
+      setPreStatusText('Re-optimizing file for streaming resume…');
+      try {
+        setPreProgress(0);
+        fileForUpload = await applyFastStart(rawFile, (p: RemuxProgress) => {
+          setPreProgress(p.percent);
+          setPreStatusText(p.label);
+          if (p.phase === 'remuxing') {
+            setPhase('remuxing');
+          } else if (p.phase === 'loading-ffmpeg') {
+            setPhase('loading-ffmpeg');
+          }
+        });
+        setUploadFile(fileForUpload);
+        setWasOptimized(true);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        setRemuxError(`Failed to restore optimized stream: ${message}`);
+        setPhase('remux-error');
+        return;
+      }
+    }
+
+    // Default back to raw if optimization was never executed
+    fileForUpload = fileForUpload || rawFile;
+
+    setPhase('uploading');
     uploadChunks(fileForUpload, uploadState);
-  };
+  }, [uploadFile, rawFile, uploadState]);
+
+  // Keep a stable ref to the latest resumeUpload for the online-listener effect above.
+  useEffect(() => {
+    resumeUploadRef.current = resumeUpload;
+  }, [resumeUpload]);
 
   // ── Pre-process: check moov atom + optionally remux ───────────────────────
   // Declared last because it calls startNewUpload (declared above).
@@ -344,11 +611,10 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
     }
 
     if (!shouldFix) {
-      // No fix needed - go straight to upload.
       setUploadFile(file);
       setPreStatusText('');
       setPhase('uploading');
-      await startNewUpload(file);
+      await startNewUpload(file, false);
       return;
     }
 
@@ -375,7 +641,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
     setWasOptimized(true);
     setUploadFile(remuxedFile);
     setPhase('uploading');
-    await startNewUpload(remuxedFile);
+    await startNewUpload(remuxedFile, true);
   }, []);
 
   // ── File input handler ─────────────────────────────────────────────────────
@@ -414,7 +680,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
         <h3 className="text-xs font-medium uppercase tracking-wide text-[#5f6368]">Video File</h3>
         {(uploadState || phase !== 'idle') && (
           <button
-            onClick={resetUploader}
+            onClick={cancelUpload}
             className="flex items-center gap-1 text-[10px] font-medium text-red-500 hover:underline"
           >
             <X size={11} />
@@ -429,13 +695,21 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
           accept="video/*"
           onChange={handleFileChange}
           disabled={isActive}
-          className="w-full cursor-pointer text-xs text-[#5f6368] file:mr-3 file:rounded-full file:border-0 file:bg-[#e8f0fe] file:px-3.5 file:py-1.5  file:font-medium hover:file:bg-[#d2e3fc]"
+          className="w-full cursor-pointer text-xs text-[#5f6368] file:mr-3 file:rounded-full file:border-0 file:bg-[#e8f0fe] file:px-3.5 file:py-1.5 file:font-medium hover:file:bg-[#d2e3fc]"
         />
 
         {rawFile && (
           <div className="text-[10px] text-[#5f6368]">
             <span className="font-medium text-[#3c4043]">{rawFile.name}</span>
             {' '}- {formatMB(rawFile.size)} MB
+          </div>
+        )}
+
+        {/* ── Offline indicator ───────────────────────────────────────────── */}
+        {isOffline && isActive && (
+          <div className="flex items-center gap-1.5 rounded-lg border border-[#fce8e6] bg-[#fef7f6] px-2.5 py-1.5 text-[10px] font-medium text-[#b06000]">
+            <WifiOff size={11} />
+            You&rsquo;re offline - we&rsquo;ll resume automatically once connectivity returns.
           </div>
         )}
 
@@ -558,7 +832,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
             <button
               type="button"
               onClick={resumeUpload}
-              disabled={!rawFile && !uploadFile}
+              disabled={!rawFile}
               className="flex items-center gap-1.5 rounded-full bg-[#f9ab00] px-4 py-1.5 text-xs font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#e8a000] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Play size={13} />
@@ -570,7 +844,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
           {isUploading && (
             <button
               type="button"
-              onClick={() => { pausedRef.current = true; setPhase('paused'); }}
+              onClick={pauseUpload}
               className="flex items-center gap-1.5 rounded-full border border-[#feefc3] bg-[#fef7e0] px-4 py-1.5 text-xs font-medium text-[#b06000] transition-colors hover:bg-[#fdedc0]"
             >
               <Pause size={13} />
