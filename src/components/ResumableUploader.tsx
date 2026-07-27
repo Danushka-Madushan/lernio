@@ -37,6 +37,7 @@ interface UploadState {
   totalSize: number;
   parts: { partNumber: number; etag: string }[];
   currentPart: number;
+  wasOptimized: boolean; // Persisted to safe-guard block slicing on recovery
 }
 
 /**
@@ -214,8 +215,8 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
 
   const [uploadState, setUploadState] = useState<UploadState | null>(null);
   const [phase, setPhase] = useState<Phase>('idle');
-  const [progress, setProgress] = useState(0);        // upload %
-  const [preProgress, setPreProgress] = useState(0);  // ffmpeg load / remux %
+  const [progress, setProgress] = useState(0); // upload %
+  const [preProgress, setPreProgress] = useState(0); // ffmpeg load / remux %
   const [uploadedBytes, setUploadedBytes] = useState(0);
   const [statusText, setStatusText] = useState('');
   const [preStatusText, setPreStatusText] = useState('');
@@ -244,6 +245,9 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
       try {
         const parsed = JSON.parse(saved) as UploadState;
         setUploadState(parsed);
+        if (parsed.wasOptimized) {
+          setWasOptimized(true);
+        }
         const bytesAlreadyUploaded = (parsed.currentPart - 1) * CHUNK_SIZE;
         setUploadedBytes(Math.min(bytesAlreadyUploaded, parsed.totalSize));
         setProgress(Math.round((bytesAlreadyUploaded / parsed.totalSize) * 100));
@@ -304,7 +308,6 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
   // "stop now, resume later" action that keeps local state around.
   const cancelUpload = () => {
     cancelRequestedRef.current = true;
-
     const chunkHandle = activeChunkHandleRef.current;
     if (chunkHandle.xhr) {
       chunkHandle.abortReason = 'user-cancel';
@@ -313,7 +316,6 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
     if (activeFetchControllerRef.current) {
       activeFetchControllerRef.current.abort();
     }
-
     resetUploader();
 
     // Allow a fresh upload to start normally afterward.
@@ -483,8 +485,8 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
     }
   };
 
-  // ── Start a brand-new multipart upload ────────────────────────────────────
-  const startNewUpload = async (fileToUpload: File) => {
+// ── Start a brand-new multipart upload ────────────────────────────────────
+  const startNewUpload = async (fileToUpload: File, optimized: boolean) => {
     setProgress(0);
     setUploadedBytes(0);
     setStatusText('Initiating resumable upload…');
@@ -509,6 +511,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
         totalSize: fileToUpload.size,
         parts: [],
         currentPart: 1,
+        wasOptimized: optimized,
       };
 
       setUploadState(newState);
@@ -528,19 +531,50 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
     setRemuxError('');
     setUploadFile(rawFile);
     setPhase('uploading');
-    await startNewUpload(rawFile);
+    await startNewUpload(rawFile, false);
   };
 
   // ── Resume a paused upload ─────────────────────────────────────────────────
-  const resumeUpload = useCallback(() => {
-    const fileForUpload = uploadFile ?? rawFile;
-    if (!uploadState || !fileForUpload) {
+  const resumeUpload = useCallback(async () => {
+    if (!uploadState || !rawFile) {
       setError('Please select the original file to resume the upload.');
       return;
     }
+    
     pausedRef.current = false;
-    setPhase('uploading');
     setError('');
+
+    let fileForUpload = uploadFile;
+
+    // Fix context alignment: Regenerate optimized stream deterministically if state requires it
+    if (uploadState.wasOptimized && !fileForUpload) {
+      setPhase('checking');
+      setPreStatusText('Re-optimizing file for streaming resume…');
+      try {
+        setPreProgress(0);
+        fileForUpload = await applyFastStart(rawFile, (p: RemuxProgress) => {
+          setPreProgress(p.percent);
+          setPreStatusText(p.label);
+          if (p.phase === 'remuxing') {
+            setPhase('remuxing');
+          } else if (p.phase === 'loading-ffmpeg') {
+            setPhase('loading-ffmpeg');
+          }
+        });
+        setUploadFile(fileForUpload);
+        setWasOptimized(true);
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : String(err);
+        setRemuxError(`Failed to restore optimized stream: ${message}`);
+        setPhase('remux-error');
+        return;
+      }
+    }
+
+    // Default back to raw if optimization was never executed
+    fileForUpload = fileForUpload || rawFile;
+
+    setPhase('uploading');
     uploadChunks(fileForUpload, uploadState);
   }, [uploadFile, rawFile, uploadState]);
 
@@ -577,11 +611,10 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
     }
 
     if (!shouldFix) {
-      // No fix needed - go straight to upload.
       setUploadFile(file);
       setPreStatusText('');
       setPhase('uploading');
-      await startNewUpload(file);
+      await startNewUpload(file, false);
       return;
     }
 
@@ -608,7 +641,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
     setWasOptimized(true);
     setUploadFile(remuxedFile);
     setPhase('uploading');
-    await startNewUpload(remuxedFile);
+    await startNewUpload(remuxedFile, true);
   }, []);
 
   // ── File input handler ─────────────────────────────────────────────────────
@@ -662,7 +695,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
           accept="video/*"
           onChange={handleFileChange}
           disabled={isActive}
-          className="w-full cursor-pointer text-xs text-[#5f6368] file:mr-3 file:rounded-full file:border-0 file:bg-[#e8f0fe] file:px-3.5 file:py-1.5  file:font-medium hover:file:bg-[#d2e3fc]"
+          className="w-full cursor-pointer text-xs text-[#5f6368] file:mr-3 file:rounded-full file:border-0 file:bg-[#e8f0fe] file:px-3.5 file:py-1.5 file:font-medium hover:file:bg-[#d2e3fc]"
         />
 
         {rawFile && (
@@ -799,7 +832,7 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
             <button
               type="button"
               onClick={resumeUpload}
-              disabled={!rawFile && !uploadFile}
+              disabled={!rawFile}
               className="flex items-center gap-1.5 rounded-full bg-[#f9ab00] px-4 py-1.5 text-xs font-medium text-white shadow-sm transition-all duration-150 hover:bg-[#e8a000] hover:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Play size={13} />
