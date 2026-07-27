@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { headers } from 'next/headers';
+import { Suspense } from 'react';
 import { isRTL, Toast } from '@heroui/react';
 import { ClientProviders } from './provider';
 import { inter } from '@/lib/fonts';
+import NavigationLoader from '@/components/NavigationLoader';
 
 export const metadata: Metadata = {
   title: "Lernio",
@@ -23,6 +25,9 @@ export default async function RootLayout({
       
       <body className="min-h-full flex flex-col bg-surface-muted">
         <ClientProviders lang={lang}>
+          <Suspense fallback={null}>
+            <NavigationLoader />
+          </Suspense>
           <Toast.Provider />
           {children}
         </ClientProviders>
