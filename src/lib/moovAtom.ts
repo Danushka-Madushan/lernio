@@ -167,7 +167,7 @@ export async function applyFastStart(
     if (p.phase === 'downloading') {
       onProgress?.({
         phase: 'loading-ffmpeg',
-        percent: Math.round(p.percent * 0.8), // downloading = 0–80 % of load phase
+        percent: Math.round(p.percent * 0.8),
         label: `Downloading FFmpeg engine… ${p.percent}%`,
       });
     } else {
@@ -186,21 +186,28 @@ export async function applyFastStart(
   // ── Step 3: Run remux ─────────────────────────────────────────────────────
   onProgress?.({ phase: 'remuxing', percent: 0, label: 'Remuxing for streaming…' });
 
-  // Wire up FFmpeg's own progress events (ratio 0–1).
-  ffmpeg.on('progress', ({ progress }: { progress: number }) => {
+  // Retain explicit reference to avoid handler leaks
+  const handleProgress = ({ progress }: { progress: number }) => {
     onProgress?.({
       phase: 'remuxing',
       percent: Math.round(Math.max(0, Math.min(1, progress)) * 100),
       label: `Optimizing for streaming… ${Math.round(progress * 100)}%`,
     });
-  });
+  };
 
-  await ffmpeg.exec([
-    '-i', inputName,
-    '-c', 'copy',          // stream copy - no re-encode
-    '-movflags', '+faststart',
-    outputName,
-  ]);
+  ffmpeg.on('progress', handleProgress);
+
+  try {
+    await ffmpeg.exec([
+      '-i', inputName,
+      '-c', 'copy',
+      '-movflags', '+faststart',
+      outputName,
+    ]);
+  } finally {
+    // Ensure the event handler is fully detached even if execution fails
+    ffmpeg.off('progress', handleProgress);
+  }
 
   // ── Step 4: Read output from virtual FS ──────────────────────────────────
   onProgress?.({ phase: 'remuxing', percent: 99, label: 'Reading optimized file…' });
@@ -216,9 +223,6 @@ export async function applyFastStart(
   } catch {
     // Non-fatal cleanup failure.
   }
-
-  // Remove the progress listener to avoid leaking handlers on future calls.
-  ffmpeg.off('progress', () => {});
 
   onProgress?.({ phase: 'done', percent: 100, label: 'Optimization complete!' });
 
