@@ -1,6 +1,23 @@
 import axios from 'axios';
 import { db } from './db';
 
+/**
+ * Convert a UTC ISO string to a Colombo (UTC+5:30) local-time string
+ * in the format Zoom expects when `timezone` is also provided:
+ * "YYYY-MM-DDTHH:mm:ss" — no Z, no offset suffix.
+ *
+ * Zoom's API docs state: when `timezone` is given, `start_time` must be in
+ * local time (no UTC indicator). Sending a Z-suffixed UTC string alongside
+ * `timezone: 'Asia/Colombo'` is ambiguous and can cause Zoom to schedule
+ * at the wrong time.
+ */
+function toColomboClock(utcIso: string): string {
+  // 'sv-SE' locale gives "YYYY-MM-DD HH:mm:ss" — swap space for T
+  return new Date(utcIso)
+    .toLocaleString('sv-SE', { timeZone: 'Asia/Colombo' })
+    .replace(' ', 'T');
+}
+
 interface ZoomTokenResponse {
   access_token: string;
   token_type: string;
@@ -63,7 +80,7 @@ export async function createZoomMeeting(
   const payload: any = {
     topic: details.topic,
     type: type,
-    start_time: details.startTime,
+    start_time: toColomboClock(details.startTime), // local Colombo time, no Z
     duration: details.durationMinutes,
     timezone: details.timezone,
     settings: {
@@ -79,8 +96,9 @@ export async function createZoomMeeting(
     if (details.recurrence) {
       payload.recurrence = details.recurrence;
     } else {
-      // Default to weekly recurrence
-      const dayOfWeek = new Date(details.startTime).getDay() + 1; // 1=Sun..7=Sat
+      // Use Colombo local day-of-week (not UTC) for the recurrence anchor day
+      const colomboDateStr = toColomboClock(details.startTime); // e.g. "2024-01-28T10:00:00"
+      const dayOfWeek = new Date(colomboDateStr).getDay() + 1; // 1=Sun..7=Sat
       payload.recurrence = {
         type: 2,
         repeat_interval: 1,
@@ -120,7 +138,7 @@ export async function updateZoomMeeting(
 
   const payload: any = {};
   if (updatedDetails.topic) payload.topic = updatedDetails.topic;
-  if (updatedDetails.startTime) payload.start_time = updatedDetails.startTime;
+  if (updatedDetails.startTime) payload.start_time = toColomboClock(updatedDetails.startTime); // local Colombo, no Z
   if (updatedDetails.durationMinutes) payload.duration = updatedDetails.durationMinutes;
   if (updatedDetails.timezone) payload.timezone = updatedDetails.timezone;
   if (updatedDetails.isRecurring !== undefined) payload.type = updatedDetails.isRecurring ? 8 : 2;
