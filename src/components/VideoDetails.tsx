@@ -4,6 +4,8 @@ import { useState, useOptimistic, startTransition } from 'react';
 import { Heart, Send, MessageSquare, Eye } from 'lucide-react';
 import { notoSans } from '@/lib/fonts';
 import { MediaChrome } from './MediaChrome';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
 
 interface CommentType {
   id: string;
@@ -177,9 +179,11 @@ export default function VideoDetails({
         </div>
 
         {video.description && (
-          <p className={`rounded-xl border border-[#e8eaed] bg-[#f8f9fa] p-3 sm:p-3.5 text-xs leading-relaxed text-[#3c4043] ${notoSans.className}`}>
-            {video.description}
-          </p>
+          <div className={`rounded-xl border border-[#e8eaed] bg-[#f8f9fa] p-3 sm:p-3.5 text-xs leading-relaxed text-[#3c4043] ${notoSans.className} [&_ul]:list-disc [&_ul]:pl-5 [&_ul]:my-1.5 [&_ol]:list-decimal [&_ol]:pl-5 [&_ol]:my-1.5 [&_li]:mb-0.5 [&_p:not(:last-child)]:mb-2.5 [&_h1]:text-lg [&_h1]:font-bold [&_h1]:mb-2 [&_h1]:mt-4 [&_h2]:text-base [&_h2]:font-bold [&_h2]:mb-2 [&_h2]:mt-3 [&_h3]:text-sm [&_h3]:font-bold [&_h3]:mb-1 [&_h3]:mt-2 [&_a]:text-blue-600 [&_a]:underline [&_a:hover]:text-blue-800 [&_strong]:font-semibold [&_blockquote]:border-l-2 [&_blockquote]:border-gray-300 [&_blockquote]:pl-3 [&_blockquote]:italic [&_blockquote]:my-2 [&_pre]:bg-gray-100 [&_pre]:p-2 [&_pre]:rounded-md [&_pre]:overflow-x-auto [&_code]:bg-gray-100 [&_code]:px-1 [&_code]:py-0.5 [&_code]:rounded-sm [&_code]:font-mono [&_code]:text-[11px]`}>
+            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+              {video.description}
+            </ReactMarkdown>
+          </div>
         )}
       </div>
 
