@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { LogOut, Loader2 } from 'lucide-react';
 import { Button } from '@heroui/react';
 
-export default function LogoutButton() {
+const LogoutButton = () => {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
@@ -42,3 +42,5 @@ export default function LogoutButton() {
     </Button>
   );
 }
+
+export default LogoutButton;
