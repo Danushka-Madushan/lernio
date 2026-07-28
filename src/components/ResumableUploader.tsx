@@ -207,7 +207,7 @@ async function fetchAbortable(
 
 // ─── Component ───────────────────────────────────────────────────────────────
 
-export default function ResumableUploader({ onSuccess }: ResumableUploaderProps) {
+const ResumableUploader = ({ onSuccess }: ResumableUploaderProps) => {
   // The raw file selected by the user.
   const [rawFile, setRawFile] = useState<File | null>(null);
   // The file we'll actually upload (may be remuxed version of rawFile).
@@ -872,3 +872,5 @@ export default function ResumableUploader({ onSuccess }: ResumableUploaderProps)
     </div>
   );
 }
+
+export default ResumableUploader;
