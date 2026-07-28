@@ -15,14 +15,14 @@ const DateTimePicker = ({
 }) => {
   return (
     <div>
-      <label className="mb-1 block text-[11px] font-medium text-[#5f6368]">{label}</label>
+      <label className="mb-1 block text-xs font-medium text-[#5f6368]">{label}</label>
       <input
         type="datetime-local"
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
         min={minDate}
-        className="w-full rounded-lg border bg-white px-3 py-2 text-xs text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
+        className="w-full rounded-lg border bg-white px-3 py-2 text-base text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
       />
     </div>
   );
