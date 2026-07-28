@@ -10,7 +10,7 @@ import { useRouter } from 'next/navigation';
 import { notoSans } from '@/lib/fonts';
 import { Button } from '@heroui/react';
 
-export default function VideoUploadPage() {
+const VideoUploadPage = () => {
   const router = useRouter();
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -249,3 +249,5 @@ export default function VideoUploadPage() {
     </div>
   );
 }
+
+export default VideoUploadPage;
