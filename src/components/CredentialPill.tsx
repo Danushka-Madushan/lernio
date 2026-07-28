@@ -1,5 +1,3 @@
-"use client";
-
 import CopyButton from './CopyButton';
 
 const CredentialPill = ({ label, value }: { label: string; value: string }) => {
