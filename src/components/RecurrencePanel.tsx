@@ -73,8 +73,8 @@ const RecurrencePanel = ({
       </div>
 
       {/* Custom day picker */}
-      {activePreset === 3 && config.type === 2 && (
-        <div className="space-y-1.5">
+      {config.type === 2 && (
+        <div className="space-y-1.5 pt-1">
           <p className="text-[11px] font-medium text-blue-700">Pick days:</p>
           <div className="flex gap-1">
             {WEEKDAY_LABELS.map((day, i) => {
@@ -85,7 +85,7 @@ const RecurrencePanel = ({
                   onClick={() => toggleDay(val)}
                   className={[
                     'flex h-8 w-8 items-center justify-center rounded-full text-[11px] font-semibold transition-colors border',
-                    active ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-blue-700 border-blue-200 hover:bg-blue-100',
+                    active ? 'bg-blue-600 text-white border-blue-600 shadow-sm' : 'bg-white text-blue-700 border-blue-200 hover:bg-blue-100',
                   ].join(' ')}>
                   {day[0]}
                 </button>
