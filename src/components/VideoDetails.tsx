@@ -31,12 +31,12 @@ interface VideoDetailsProps {
   currentUsername: string;
 }
 
-export default function VideoDetails({
+const VideoDetails = ({
   video,
   initialComments,
   initialHasLiked,
   currentUsername,
-}: VideoDetailsProps) {
+}: VideoDetailsProps) => {
   // Likes State
   const [likesCount, setLikesCount] = useState(video.likesCount);
   const [hasLiked, setHasLiked] = useState(initialHasLiked);
@@ -241,3 +241,5 @@ export default function VideoDetails({
     </div>
   );
 }
+
+export default VideoDetails;
