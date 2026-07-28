@@ -99,7 +99,7 @@ async function fetchLatestTag(owner: string, repo: string): Promise<TagInfo> {
   return data;
 }
 
-export default function RepoVersionBadge({ owner, repo, prefix = 'v', className = '' }: RepoVersionBadgeProps) {
+const RepoVersionBadge = ({ owner, repo, prefix = 'v', className = '' }: RepoVersionBadgeProps) => {
   const [info, setInfo] = useState<TagInfo | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
@@ -246,3 +246,5 @@ export default function RepoVersionBadge({ owner, repo, prefix = 'v', className 
     </div>
   );
 }
+
+export default RepoVersionBadge;
