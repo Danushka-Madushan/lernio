@@ -1,5 +1,3 @@
-'use client';
-
 import { ShieldOff } from 'lucide-react';
 
 const AccountInactiveScreen = () => {
