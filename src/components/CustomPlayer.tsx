@@ -27,7 +27,7 @@ interface CustomPlayerProps {
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 const HIDE_DELAY_MS = 1000;
 
-export default function CustomPlayer({ videoId }: CustomPlayerProps) {
+const CustomPlayer = ({ videoId }: CustomPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -169,3 +169,5 @@ export default function CustomPlayer({ videoId }: CustomPlayerProps) {
     </MediaController>
   );
 }
+
+export default CustomPlayer;
