@@ -1,5 +1,7 @@
 import LoadingScreen from '@/components/LoadingScreen';
 
-export default function AdminLoading() {
+const AdminLoading = () => {
   return <LoadingScreen />;
 }
+
+export default AdminLoading;
