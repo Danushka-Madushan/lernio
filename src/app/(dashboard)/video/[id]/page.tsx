@@ -4,11 +4,11 @@ import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import VideoDetails from '@/components/VideoDetails';
 
-export default async function VideoPage({
+const VideoPage = async ({
   params,
 }: {
   params: Promise<{ id: string }>;
-}) {
+}) => {
   const { id } = await params;
   const cookieStore = await cookies();
   const token = cookieStore.get('session_token')?.value;
@@ -88,3 +88,5 @@ export default async function VideoPage({
     </div>
   );
 }
+
+export default VideoPage;
