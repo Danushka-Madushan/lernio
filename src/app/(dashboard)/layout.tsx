@@ -5,7 +5,7 @@ import Image from 'next/image';
 import LogoutButton from '@/components/LogoutButton';
 import StudentMeetingsNav from '@/components/StudentMeetingsNav';
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   const cookieStore = await cookies();
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
@@ -79,3 +79,5 @@ export default async function DashboardLayout({ children }: { children: React.Re
     </div>
   );
 }
+
+export default DashboardLayout;
