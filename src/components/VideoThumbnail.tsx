@@ -15,7 +15,7 @@ type VideoThumbnailProps = {
   showGrade?: boolean;
 };
 
-export default function VideoThumbnail({ videoId, title, grade, hasThumbnail, showGrade }: VideoThumbnailProps) {
+const VideoThumbnail = ({ videoId, title, grade, hasThumbnail, showGrade }: VideoThumbnailProps) => {
   // No thumbnail key at all -> skip straight to the fallback, no need to fake a loading state.
   const [status, setStatus] = useState<ThumbnailStatus>(hasThumbnail ? 'loading' : 'error');
 
@@ -82,3 +82,5 @@ export default function VideoThumbnail({ videoId, title, grade, hasThumbnail, sh
     </Link>
   );
 }
+
+export default VideoThumbnail;

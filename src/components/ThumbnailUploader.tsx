@@ -95,7 +95,7 @@ async function getCroppedImg(
   });
 }
 
-export default function ThumbnailUploader({ onSuccess, existingPreview }: ThumbnailUploaderProps) {
+const ThumbnailUploader = ({ onSuccess, existingPreview }: ThumbnailUploaderProps) => {
   // Base State
   const [preview, setPreview] = useState<string>(existingPreview ?? '');
   const [uploading, setUploading] = useState(false);
@@ -410,3 +410,5 @@ export default function ThumbnailUploader({ onSuccess, existingPreview }: Thumbn
     </div>
   );
 }
+
+export default ThumbnailUploader;

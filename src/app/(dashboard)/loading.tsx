@@ -1,5 +1,7 @@
 import LoadingScreen from '@/components/LoadingScreen';
 
-export default function DashboardLoading() {
+const DashboardLoading = () => {
   return <LoadingScreen />;
-}
+};
+
+export default DashboardLoading;

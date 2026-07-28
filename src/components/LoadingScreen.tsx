@@ -5,7 +5,7 @@ import { Loader2 } from 'lucide-react';
  * Full-page loading screen shown by Next.js App Router during server component loading.
  * Matches the header/body style of both dashboard and admin layouts.
  */
-export default function LoadingScreen() {
+const LoadingScreen = () => {
   return (
     <div className="fixed inset-0 z-9998 flex flex-col items-center justify-center bg-[#f8f9fa]">
       {/* Logo */}
@@ -37,3 +37,5 @@ export default function LoadingScreen() {
     </div>
   );
 }
+
+export default LoadingScreen;

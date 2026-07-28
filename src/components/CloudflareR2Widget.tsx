@@ -14,7 +14,7 @@ import {
   ChevronDown,
 } from 'lucide-react';
 
-export default function CloudflareR2Widget() {
+const CloudflareR2Widget = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isOpen, setIsOpen] = useState(false);
@@ -221,3 +221,5 @@ export default function CloudflareR2Widget() {
     </div>
   );
 }
+
+export default CloudflareR2Widget;

@@ -2,7 +2,7 @@
 
 import { ShieldOff } from 'lucide-react';
 
-export default function AccountInactiveScreen() {
+const AccountInactiveScreen = () => {
   return (
     <div className="flex min-h-[60vh] flex-col items-center justify-center px-4 text-center">
       <div className="mx-auto max-w-md">
@@ -51,3 +51,5 @@ export default function AccountInactiveScreen() {
     </div>
   );
 }
+
+export default AccountInactiveScreen;

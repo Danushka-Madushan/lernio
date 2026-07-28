@@ -62,8 +62,10 @@ function LoaderBar() {
  * Must be wrapped in <Suspense> because useSearchParams() suspends.
  * Import and render this in the root layout.
  */
-export default function NavigationLoader() {
+const NavigationLoader = () => {
   return (
     <LoaderBar />
   );
 }
+
+export default NavigationLoader;

@@ -50,7 +50,7 @@ function parseZoomLink(link: string): { appLink: string; webLink: string } {
   return { appLink: link, webLink: link };
 }
 
-export default function StudentMeetingsNav() {
+const StudentMeetingsNav = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [meetings, setMeetings] = useState<Meeting[]>([]);
   const [loading, setLoading] = useState(false);
@@ -175,3 +175,5 @@ export default function StudentMeetingsNav() {
     </>
   );
 }
+
+export default StudentMeetingsNav;
