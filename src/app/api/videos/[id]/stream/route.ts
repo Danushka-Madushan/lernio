@@ -3,23 +3,25 @@ import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { s3, bucketName } from '@/lib/r2';
 
 /**
  * GET /api/videos/[id]/stream
  *
- * Secure streaming proxy - the browser's <video> src points here.
- * - Validates session cookie (auth guard)
- * - Forwards the Range header to Cloudflare R2 (enables seek & progressive play)
- * - Pipes the R2 response body directly back - the real R2 URL is never exposed
+ * Auth guard → generates a short-lived presigned R2 URL → 302 redirect.
+ * Video bytes travel directly from R2 to the browser; zero bytes pass
+ * through the server, which eliminates Vercel / Deno fast-origin-transfer.
+ *
+ * Security is preserved:
+ *  - Only authenticated users receive a signed URL.
+ *  - Signed URLs expire in 5 minutes (enough to start playback, too short to share).
+ *  - The permanent R2 bucket URL is never exposed.
  */
 
-// A browser's MP4 demuxer can issue dozens of small sequential Range
-// requests for the *same* video (walking the moov atom) before real
-// playback starts. Without this, every one of those requests pays a fresh
-// DB round-trip just to look up the same R2 key. This only caches within a
-// single warm server instance - that's fine, since that's exactly where the
-// burst of requests for one video lands.
+// A browser's video demuxer can issue many DB lookups in quick succession
+// while resolving the same video. Cache the R2 key in-process to avoid
+// redundant round-trips for the same video within a 60-second window.
 const r2KeyCache = new Map<string, { key: string; expires: number }>();
 const R2_KEY_CACHE_TTL_MS = 60_000;
 
@@ -41,12 +43,12 @@ async function resolveR2Key(id: string): Promise<string | null> {
 }
 
 export async function GET(
-  request: Request,
+  _request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
 
-  // ── Auth ────────────────────────────────────────────────────────────────────
+  // ── Auth ─────────────────────────────────────────────────────────────────────
   const cookieStore = await cookies();
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
@@ -55,74 +57,22 @@ export async function GET(
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
-  // ── Resolve the R2 key for this video (cached - see resolveR2Key above) ────
+  // ── Resolve the R2 key ───────────────────────────────────────────────────────
   const r2Key = await resolveR2Key(id);
-
   if (!r2Key) {
     return new NextResponse('Not Found', { status: 404 });
   }
 
-  // ── Build GetObject command, forwarding Range header ────────────────────────
-  const rangeHeader = request.headers.get('range') ?? undefined;
-
-  const command = new GetObjectCommand({
-    Bucket: bucketName,
-    Key: r2Key,
-    // Pass through the Range header so R2 returns a 206 Partial Content response
-    ...(rangeHeader ? { Range: rangeHeader } : {}),
-  });
-
+  // ── Generate a short-lived presigned URL and redirect ────────────────────────
   try {
-    const r2Response = await s3.send(command);
+    const command = new GetObjectCommand({ Bucket: bucketName, Key: r2Key });
+    // 5 minutes: long enough for the browser to begin playback, short enough
+    // to be useless if shared. R2 enforces this server-side.
+    const signedUrl = await getSignedUrl(s3, command, { expiresIn: 300 });
 
-    if (!r2Response.Body) {
-      return new NextResponse('Empty body from R2', { status: 502 });
-    }
-
-    // Build response headers
-    const headers = new Headers();
-
-    if (r2Response.ContentType) {
-      headers.set('Content-Type', r2Response.ContentType);
-    } else {
-      headers.set('Content-Type', 'video/mp4');
-    }
-
-    if (r2Response.ContentLength != null) {
-      headers.set('Content-Length', String(r2Response.ContentLength));
-    }
-
-    if (r2Response.ContentRange) {
-      headers.set('Content-Range', r2Response.ContentRange);
-    }
-
-    if (r2Response.AcceptRanges) {
-      headers.set('Accept-Ranges', r2Response.AcceptRanges);
-    } else {
-      headers.set('Accept-Ranges', 'bytes');
-    }
-
-    if (r2Response.ETag) {
-      headers.set('ETag', r2Response.ETag);
-    }
-
-    if (r2Response.LastModified) {
-      headers.set('Last-Modified', r2Response.LastModified.toUTCString());
-    }
-
-    // Tell browsers not to cache the raw stream URL but allow range requests
-    headers.set('Cache-Control', 'no-cache');
-
-    // Security: prevent the browser from sniffing the URL
-    headers.set('Content-Security-Policy', "media-src 'self'");
-
-    // Convert the AWS SDK's readable stream to a Web ReadableStream
-    const webStream = r2Response.Body.transformToWebStream();
-
-    const statusCode = r2Response.$metadata.httpStatusCode ?? (rangeHeader ? 206 : 200);
-    return new NextResponse(webStream, { status: statusCode, headers });
+    return NextResponse.redirect(signedUrl, { status: 302 });
   } catch (err: any) {
-    console.error('[stream] R2 error:', err);
-    return new NextResponse('Failed to stream video', { status: 502 });
+    console.error('[stream] R2 presign error:', err);
+    return new NextResponse('Failed to generate stream URL', { status: 502 });
   }
 }

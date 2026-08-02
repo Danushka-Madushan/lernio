@@ -18,16 +18,21 @@ import {
 } from 'media-chrome/react';
 
 interface CustomPlayerProps {
-  /** The video database ID. The player calls /api/videos/[videoId]/stream
-   *  which is a server-side proxy that forwards Range requests to R2.
-   *  The real R2 URL is never sent to the browser. */
+  /** The video database ID – used to build the fallback stream URL. */
   videoId: string;
+  /**
+   * Optional short-lived presigned R2 URL generated server-side.
+   * When provided the player points directly at R2 (zero extra round-trip).
+   * When omitted the player falls back to /api/videos/[videoId]/stream,
+   * which does a cheap auth-check → 302 redirect to R2 itself.
+   */
+  presignedUrl?: string;
 }
 
 const SPEEDS = [0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 const HIDE_DELAY_MS = 1000;
 
-const CustomPlayer = ({ videoId }: CustomPlayerProps) => {
+const CustomPlayer = ({ videoId, presignedUrl }: CustomPlayerProps) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const hideTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -36,7 +41,17 @@ const CustomPlayer = ({ videoId }: CustomPlayerProps) => {
   const [error, setError] = useState('');
   const [showControls, setShowControls] = useState(true);
 
-  const streamUrl = `/api/videos/${videoId}/stream`;
+  // Prefer a server-generated presigned URL (direct R2, no proxy hop).
+  // Fall back to the /stream route which now does a cheap 302 redirect itself.
+  const streamUrl = presignedUrl ?? `/api/videos/${videoId}/stream`;
+
+  // The /api/stream fallback always generates a fresh presigned URL — used
+  // for error recovery when the original presigned URL has expired.
+  const fallbackUrl = `/api/videos/${videoId}/stream`;
+
+  // Active src for the <video> element — starts with streamUrl, may fall
+  // back to fallbackUrl if the presigned URL expires and the user retries.
+  const [activeSrc, setActiveSrc] = useState(streamUrl);
 
   // ── Activity-based control visibility ───────────────────────────────────────
   // Any pointer/touch/keyboard activity reveals the bar; it auto-hides after a
@@ -75,7 +90,12 @@ const CustomPlayer = ({ videoId }: CustomPlayerProps) => {
   const handleRetry = () => {
     setError('');
     setIsBuffering(true);
-    videoRef.current?.load();
+    // If the original src was a presigned URL it may have expired — switch to
+    // /api/stream which always generates a fresh presigned URL on every call.
+    setActiveSrc(fallbackUrl);
+    // The <video> element watches `src`; changing state triggers a re-render
+    // with the new src, then we call load() after the DOM has updated.
+    setTimeout(() => videoRef.current?.load(), 0);
   };
 
   return (
@@ -93,7 +113,7 @@ const CustomPlayer = ({ videoId }: CustomPlayerProps) => {
       <video
         ref={videoRef}
         slot="media"
-        src={streamUrl}
+        src={activeSrc}
         disablePictureInPicture
         playsInline
         preload="metadata"

@@ -29,6 +29,8 @@ interface VideoDetailsProps {
   initialComments: CommentType[];
   initialHasLiked: boolean;
   currentUsername: string;
+  /** Short-lived presigned R2 URL for the video, generated server-side. */
+  presignedUrl: string;
 }
 
 const VideoDetails = ({
@@ -36,6 +38,7 @@ const VideoDetails = ({
   initialComments,
   initialHasLiked,
   currentUsername,
+  presignedUrl,
 }: VideoDetailsProps) => {
   // Likes State
   const [likesCount, setLikesCount] = useState(video.likesCount);
@@ -136,8 +139,8 @@ const VideoDetails = ({
 
   return (
     <div className="space-y-4 p-4 sm:space-y-5">
-      {/* Secure Video Player */}
-      <MediaChrome videoId={video.id} />
+      {/* Secure Video Player - presignedUrl points browser directly at R2 */}
+      <MediaChrome videoId={video.id} presignedUrl={presignedUrl} />
 
       {/* Video Info Section */}
       <div className="space-y-4 rounded-2xl bg-white p-4 sm:p-5 shadow-[0_1px_2px_0_rgba(60,64,67,0.3),0_1px_3px_1px_rgba(60,64,67,0.15)]">

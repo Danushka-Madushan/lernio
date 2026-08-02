@@ -3,6 +3,10 @@ import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import { notFound, redirect } from 'next/navigation';
 import VideoDetails from '@/components/VideoDetails';
+import { s3, bucketName } from '@/lib/r2';
+import { GetObjectCommand } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
+import { VideoVisibility } from '@/generated/client/enums';
 
 const VideoPage = async ({
   params,
@@ -38,7 +42,40 @@ const VideoPage = async ({
     notFound();
   }
 
-  // 2. Increment view count (best-effort - don't fail the page on duplicate)
+  // 2. Students: enforce access rules before issuing any URL
+  if (user.role === 'STUDENT') {
+    const studentRecord = await db.user.findUnique({
+      where: { id: user.id },
+      select: { grade: true, activeFrom: true, activeTo: true, accessMode: true },
+    });
+
+    if (!studentRecord) notFound();
+
+    const now = new Date();
+    if (
+      (studentRecord.activeFrom && now < studentRecord.activeFrom) ||
+      (studentRecord.activeTo && now > studentRecord.activeTo)
+    ) {
+      // Redirect to login with a message rather than crashing
+      redirect('/login?error=account_inactive');
+    }
+
+    if (studentRecord.accessMode === 'CUSTOM') {
+      const customEntry = await db.customVideoAccess.findUnique({
+        where: { userId_videoId: { userId: user.id, videoId: id } },
+      });
+      if (!customEntry) notFound();
+    } else {
+      // GRADE mode: GRADE-visibility videos must match the student's grade
+      if (video.visibility === VideoVisibility.GRADE) {
+        if (!studentRecord.grade || !video.grade || studentRecord.grade !== video.grade) {
+          notFound();
+        }
+      }
+    }
+  }
+
+  // 3. Increment view count (best-effort - don't fail the page on duplicate)
   try {
     await db.$transaction([
       db.view.create({
@@ -53,12 +90,23 @@ const VideoPage = async ({
     console.error('View tracking error:', err);
   }
 
-  // 3. Check if current user already liked this video
+  // 4. Check if current user already liked this video
   const userHasLiked = await db.like.findUnique({
     where: {
       userId_videoId: { userId: user!.id, videoId: video.id },
     },
   });
+
+  // 5. Generate presigned URL server-side (valid 4 hours).
+  //    Bytes flow R2 → browser directly; nothing transits the server.
+  //    4-hour expiry covers any realistic educational video watch session
+  //    without the URL going stale mid-playback. Auth is already enforced
+  //    above before we reach this line — the URL is never exposed publicly.
+  const presignedUrl = await getSignedUrl(
+    s3,
+    new GetObjectCommand({ Bucket: bucketName, Key: video.cloudflareR2Key }),
+    { expiresIn: 60 * 60 * 4 } // 4 hours
+  );
 
   const initialVideoData = {
     id: video.id,
@@ -84,9 +132,12 @@ const VideoPage = async ({
         initialComments={initialComments}
         initialHasLiked={!!userHasLiked}
         currentUsername={user!.username}
+        presignedUrl={presignedUrl}
       />
     </div>
   );
 }
 
 export default VideoPage;
+
+
