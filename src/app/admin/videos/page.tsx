@@ -19,6 +19,7 @@ import CloudflareR2Widget from '@/components/CloudflareR2Widget';
 import { GRADE_LABELS } from '@/lib/constants';
 import EditVideoModal from '@/components/EditVideoModal';
 import VideoDeleteConfirmModal from '@/components/VideoDeleteConfirmModal';
+import { triggerUnauthorized } from '@/lib/utils';
 
 interface Video {
   id: string;
@@ -60,6 +61,7 @@ const VideosAdminPage = () => {
       const res = await fetch('/api/videos');
       const data = await res.json();
       if (res.ok) setVideos(data.videos);
+      else if (res.status === 401) { triggerUnauthorized(); }
       else showToast(data.error || 'Failed to load catalog', 'err');
     } catch {
       showToast('Connection error fetching catalog', 'err');
@@ -102,6 +104,8 @@ const VideosAdminPage = () => {
         );
         showToast(`"${data.title}" updated.`);
         setEditTarget(null);
+      } else if (res.status === 401) {
+        triggerUnauthorized();
       } else {
         showToast(json.error || 'Failed to update video.', 'err');
       }
@@ -121,6 +125,8 @@ const VideosAdminPage = () => {
       if (res.ok) {
         setVideos((prev) => prev.filter((v) => v.id !== deleteTarget.id));
         showToast(`"${deleteTarget.title}" deleted.`);
+      } else if (res.status === 401) {
+        triggerUnauthorized();
       } else {
         const json = await res.json();
         showToast(json.error || 'Failed to delete.', 'err');
