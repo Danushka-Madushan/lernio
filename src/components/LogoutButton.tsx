@@ -30,7 +30,7 @@ const LogoutButton = () => {
       isDisabled={loading}
       variant='outline'
       aria-label="Logout"
-      size='sm'
+      size='md'
       className="font-normal"
     >
       {loading ? (
