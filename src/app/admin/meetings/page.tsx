@@ -28,6 +28,7 @@ import ZoomAccountmDeleteConfirmModal from '@/components/ZoomAccountmDeleteConfi
 import ManageZoomAccountsModal from '@/components/ManageZoomAccountsModal';
 import StatCard from '@/components/StatCard';
 import { GRADE_COLORS, GRADE_LABELS } from '@/lib/constants';
+import { triggerUnauthorized } from '@/lib/utils';
 
 // 1=Daily, 2=Weekly, 3=Monthly
 type RecurrenceType = 1 | 2 | 3;
@@ -165,6 +166,7 @@ const MeetingsAdminPage = () => {
       const data = await meetingsRes.json();
       const accountsData = await accountsRes.json();
       if (meetingsRes.ok) setMeetings(data.meetings);
+      else if (meetingsRes.status === 401) { triggerUnauthorized(); }
       else setError(data.error || 'Failed to fetch meetings');
       if (accountsRes.ok) {
         setZoomAccounts(accountsData.accounts);
@@ -174,7 +176,8 @@ const MeetingsAdminPage = () => {
           hasAutoSelectedAccount.current = true;
           setNewZoomAccountId(accountsData.accounts[0].id);
         }
-      } else setError(accountsData.error || 'Failed to fetch accounts');
+      } else if (accountsRes.status === 401) { triggerUnauthorized(); }
+      else setError(accountsData.error || 'Failed to fetch accounts');
     } catch { setError('Connection error'); }
     finally { setLoading(false); }
   }, []);
@@ -190,6 +193,7 @@ const MeetingsAdminPage = () => {
       const res = await fetch('/api/zoom-accounts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, accountId, clientId, clientSecret }) });
       const data = await res.json();
       if (res.ok) { setSuccess('Account added.'); fetchMeetings(); return true; }
+      if (res.status === 401) { triggerUnauthorized(); return false; }
       setError(data.error || 'Failed to add account'); return false;
     } catch { setError('Connection error'); return false; }
     finally { setManageAccountsLoading(false); }
@@ -200,6 +204,7 @@ const MeetingsAdminPage = () => {
     try {
       const res = await fetch(`/api/zoom-accounts/${id}`, { method: 'DELETE' });
       if (res.ok) { setSuccess('Account deleted.'); fetchMeetings(); return true; }
+      if (res.status === 401) { triggerUnauthorized(); return false; }
       setError('Failed to delete account'); return false;
     } catch { setError('Connection error'); return false; }
     finally { setManageAccountsLoading(false); }
@@ -231,6 +236,8 @@ const MeetingsAdminPage = () => {
         setSuccess(`Meeting '${newTitle}' created.`);
         setNewTitle(''); setNewLink(''); setNewScheduledAt(''); setNewGrade('');
         setShowAddModal(false); fetchMeetings();
+      } else if (res.status === 401) {
+        triggerUnauthorized();
       } else setError(data.error || 'Failed to create meeting');
     } catch { setError('Connection error'); }
     finally { setCreating(false); }
@@ -246,6 +253,7 @@ const MeetingsAdminPage = () => {
         body: JSON.stringify({ title, link, scheduledAt: new Date(scheduledAt).toISOString(), grade: grade || null, durationMinutes, isRecurring, recurrenceConfig: isRecurring ? recurrenceConfig : undefined, hostVideo, participantVideo, waitingRoom }),
       });
       if (res.ok) { setSuccess(`Meeting updated.`); setEditTarget(null); fetchMeetings(); }
+      else if (res.status === 401) { triggerUnauthorized(); setEditTarget(null); }
       else { const d = await res.json(); setError(d.error || 'Failed to update'); setEditTarget(null); }
     } catch { setError('Connection error'); setEditTarget(null); }
     finally { setEditLoading(false); }
@@ -257,6 +265,7 @@ const MeetingsAdminPage = () => {
     try {
       const res = await fetch(`/api/meetings/${deleteTarget.id}`, { method: 'DELETE' });
       if (res.ok) { setSuccess(`Meeting deleted.`); setDeleteTarget(null); fetchMeetings(); }
+      else if (res.status === 401) { triggerUnauthorized(); setDeleteTarget(null); }
       else { const d = await res.json(); setError(d.error || 'Failed to delete'); setDeleteTarget(null); }
     } catch { setError('Connection error'); setDeleteTarget(null); }
     finally { setDeleteLoading(false); }
