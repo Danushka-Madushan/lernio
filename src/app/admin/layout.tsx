@@ -5,6 +5,7 @@ import { verifyToken } from '@/lib/jwt';
 import { redirect } from 'next/navigation';
 import LogoutButton from '@/components/LogoutButton';
 import RepoVersionBadge from '@/components/RepoVersionBadge';
+import { AdminContent } from '@/components/AdminContent';
 import { ArrowLeft } from 'lucide-react';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -104,7 +105,9 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
       {/* Main Panel Content Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8">
-        {children}
+        <AdminContent>
+          {children}
+        </AdminContent>
       </main>
     </div>
   );
