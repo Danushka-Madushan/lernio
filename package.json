@@ -1,5 +1,5 @@
 {
-  "name": "lernio",
+  "name": "lernio-lms",
   "private": true,
   "scripts": {
     "dev": "next dev",

@@ -1,5 +1,20 @@
 import { Grade } from './db';
 
+/**
+ * Fires the global `lernio:unauthorized` custom event.
+ * Call this in any admin-panel fetch handler when you receive an unexpected
+ * HTTP 401 response. The AdminContent wrapper will surface the
+ * ReAuthenticateModal in response.
+ *
+ * Only call this for genuinely unexpected 401s — not for anticipated
+ * auth failures that already have their own user-facing handling.
+ */
+export const triggerUnauthorized = () => {
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('lernio:unauthorized'));
+  }
+};
+
 const secureRandInt = (max: number): number => {
   const buf = new Uint32Array(1);
   crypto.getRandomValues(buf);

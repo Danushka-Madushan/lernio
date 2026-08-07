@@ -28,7 +28,7 @@ import EditStudentModal from '@/components/EditStudentModal';
 import CustomVideoPickerModal from '@/components/CustomVideoPickerModal';
 import AddStudentModal from '@/components/AddStudentModal';
 import StatCard from '@/components/StatCard';
-import { generatePassword, getAccountStatus } from '@/lib/utils';
+import { generatePassword, getAccountStatus, triggerUnauthorized } from '@/lib/utils';
 import AccountStatusBadge from '@/components/AccountStatusBadge';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -158,6 +158,7 @@ const UsersAdminPage = () => {
       const res = await fetch('/api/users');
       const data = await res.json();
       if (res.ok) setStudents(data.students);
+      else if (res.status === 401) { triggerUnauthorized(); }
       else setError(data.error || 'Failed to fetch student list');
     } catch {
       setError('Connection error fetching student list');
@@ -207,6 +208,8 @@ const UsersAdminPage = () => {
         setNewGrade(''); setNewActiveFrom(''); setNewActiveTo(''); setNewAccessMode('GRADE');
         setShowAddModal(false);
         fetchStudents();
+      } else if (res.status === 401) {
+        triggerUnauthorized();
       } else {
         setError(data.error || 'Failed to create student account');
       }
@@ -228,6 +231,9 @@ const UsersAdminPage = () => {
       });
       if (res.ok) {
         setSuccess(`Password updated successfully for '${resetTarget.username}'.`);
+        setResetTarget(null);
+      } else if (res.status === 401) {
+        triggerUnauthorized();
         setResetTarget(null);
       } else {
         const data = await res.json();
@@ -262,6 +268,9 @@ const UsersAdminPage = () => {
         setShareInfo({ username: shareResetTarget.username, password });
         setSuccess(`Credentials for '${shareResetTarget.username}' ready to share.`);
         setShareResetTarget(null); setShareResetPassword('');
+      } else if (res.status === 401) {
+        triggerUnauthorized();
+        setShareResetTarget(null);
       } else {
         const data = await res.json();
         setError(data.error || 'Failed to reset password');
@@ -289,6 +298,9 @@ const UsersAdminPage = () => {
         setSuccess(`Account '${editTarget.username}' updated.`);
         setEditTarget(null);
         fetchStudents();
+      } else if (res.status === 401) {
+        triggerUnauthorized();
+        setEditTarget(null);
       } else {
         const data = await res.json();
         setError(data.error || 'Failed to update account');
@@ -309,6 +321,9 @@ const UsersAdminPage = () => {
       if (res.ok) {
         setSuccess(`Custom video list updated for '${customVideoTarget.username}'.`);
         setCustomVideoTarget(null);
+      } else if (res.status === 401) {
+        triggerUnauthorized();
+        setCustomVideoTarget(null);
       } else {
         const data = await res.json();
         setError(data.error || 'Failed to save custom video list');
@@ -326,6 +341,9 @@ const UsersAdminPage = () => {
         setSuccess(`Student account '${deleteTarget.username}' deleted.`);
         setDeleteTarget(null);
         fetchStudents();
+      } else if (res.status === 401) {
+        triggerUnauthorized();
+        setDeleteTarget(null);
       } else {
         const data = await res.json();
         setError(data.error || 'Failed to delete student');
