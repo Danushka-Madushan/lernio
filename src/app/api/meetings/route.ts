@@ -29,7 +29,7 @@ export async function GET(request: Request) {
       orderBy: { scheduledAt: 'desc' },
       include: {
         zoomAccount: { select: { name: true, email: true } },
-        teacher: { select: { id: true, name: true, email: true } },
+        teacher: { select: { id: true, username: true } },
       },
     });
 

@@ -126,7 +126,11 @@ const AddTeacherModal = ({
 
           {shareInfo && (
             <div className="mt-4">
-              <ShareCredentialsCard info={shareInfo} onDismiss={onDismissShareInfo} />
+              <ShareCredentialsCard
+                title="Teacher Credentials"
+                info={shareInfo}
+                onDismiss={onDismissShareInfo}
+              />
             </div>
           )}
         </div>

@@ -16,7 +16,7 @@ import {
 import { Button } from '@heroui/react';
 import StatCard from '@/components/StatCard';
 import ResetPasswordModal from '@/components/ResetPasswordModal';
-import AccountDeleteConfirmModal from '@/components/AccountDeleteConfirmModal';
+import TeacherDeleteConfirmModal from '@/components/TeacherDeleteConfirmModal';
 import AddTeacherModal from '@/components/AddTeacherModal';
 import ShareCredentialsCard from '@/components/ShareCredentialsCard';
 import { triggerUnauthorized } from '@/lib/utils';
@@ -189,7 +189,7 @@ const TeachersAdminPage = () => {
     }
   };
 
-  const handleDeleteTeacher = async () => {
+  const handleDeleteTeacher = async (confirmationUsername: string) => {
     if (!deleteTarget) return;
     setDeleteLoading(true);
     setError('');
@@ -197,6 +197,8 @@ const TeachersAdminPage = () => {
     try {
       const res = await fetch(`/api/teachers/${deleteTarget.id}`, {
         method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirmationUsername }),
       });
       const data = await res.json();
 
@@ -250,7 +252,7 @@ const TeachersAdminPage = () => {
 
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
-        <AccountDeleteConfirmModal
+        <TeacherDeleteConfirmModal
           target={deleteTarget}
           loading={deleteLoading}
           onConfirm={handleDeleteTeacher}

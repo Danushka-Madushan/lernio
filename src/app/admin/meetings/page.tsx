@@ -51,8 +51,8 @@ interface ZoomAccount {
 
 interface TeacherOption {
   id: string;
-  name: string;
-  email: string;
+  username: string;
+  role?: string;
 }
 
 interface Meeting {
@@ -71,7 +71,7 @@ interface Meeting {
   waitingRoom?: boolean;
   zoomAccount?: { name: string; email: string } | null;
   teacherId?: string | null;
-  teacher?: { id: string; name: string; email: string } | null;
+  teacher?: { id: string; username: string } | null;
   createdAt: string;
 }
 
@@ -329,7 +329,7 @@ const MeetingsAdminPage = () => {
       {isAdmin && (
         <td className="py-3.5">
           <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-medium text-purple-700">
-            {meeting.teacher?.name || 'Admin'}
+            {meeting.teacher?.username || 'Admin'}
           </span>
         </td>
       )}
@@ -486,7 +486,7 @@ const MeetingsAdminPage = () => {
                       <option value="">All Teachers</option>
                       {teachers.map((t) => (
                         <option key={t.id} value={t.id}>
-                          {t.name}
+                          {t.username} {t.role === 'ADMIN' ? '(Admin)' : ''}
                         </option>
                       ))}
                     </select>

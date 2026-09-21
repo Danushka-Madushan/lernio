@@ -21,7 +21,15 @@ const buildShareMessage = (username: string, password: string): string => {
   ].join('\n');
 }
 
-const ShareCredentialsCard = ({ info, onDismiss }: { info: ShareInfo; onDismiss: () => void }) => {
+const ShareCredentialsCard = ({
+  info,
+  onDismiss,
+  title = 'Student Credentials',
+}: {
+  info: ShareInfo;
+  onDismiss: () => void;
+  title?: string;
+}) => {
   const message = buildShareMessage(info.username, info.password);
   return (
     <div className="my-5 overflow-hidden rounded-2xl shadow-lg ring-1 ring-black/5">
@@ -32,7 +40,7 @@ const ShareCredentialsCard = ({ info, onDismiss }: { info: ShareInfo; onDismiss:
               <Key size={14} className="text-white" />
             </div>
             <div>
-              <p className="text-[13px] font-semibold leading-tight text-white">Student Credentials</p>
+              <p className="text-[13px] font-semibold leading-tight text-white">{title}</p>
               <p className="mt-0.5 text-[11px] leading-tight text-blue-200">Ready to share · {info.username}</p>
             </div>
           </div>

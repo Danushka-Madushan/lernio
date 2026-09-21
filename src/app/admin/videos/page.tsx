@@ -354,12 +354,6 @@ const VideosAdminPage = () => {
                         </span>
                       </th>
                       <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
-                        Likes
-                      </th>
-                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
-                        Comments
-                      </th>
-                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
                         Published
                       </th>
                       <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-[#5f6368]">
@@ -415,7 +409,7 @@ const VideosAdminPage = () => {
                         )}
 
                         {/* Grade badge */}
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 whitespace-nowrap">
                           {video.grade ? (
                             <span className="rounded-full bg-[#e8f0fe] px-2.5 py-1 text-[11px] font-medium text-blue-500">
                               {GRADE_LABELS[video.grade]}
@@ -426,7 +420,7 @@ const VideosAdminPage = () => {
                         </td>
 
                         {/* Visibility badge */}
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 whitespace-nowrap">
                           {video.visibility === 'PUBLIC' ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-[#e6f4ea] px-2.5 py-1 text-[11px] font-medium text-[#137333]">
                               <Globe size={10} />
@@ -443,16 +437,6 @@ const VideosAdminPage = () => {
                         {/* Views */}
                         <td className="px-4 py-3 text-[#5f6368]">
                           {video.viewsCount.toLocaleString()}
-                        </td>
-
-                        {/* Likes */}
-                        <td className="px-4 py-3 text-[#5f6368]">
-                          {video._count.likes.toLocaleString()}
-                        </td>
-
-                        {/* Comments */}
-                        <td className="px-4 py-3 text-[#5f6368]">
-                          {video._count.comments.toLocaleString()}
                         </td>
 
                         {/* Date */}
