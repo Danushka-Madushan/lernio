@@ -14,7 +14,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const user = token ? await verifyToken(token) : null;
 
   // Server-side guard (proxy also enforces this, but belt-and-suspenders)
-  if (!user || user.role !== 'ADMIN') {
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER')) {
     redirect('/');
   }
 
@@ -73,6 +73,14 @@ export default async function AdminLayout({ children }: { children: React.ReactN
               >
                 Meetings
               </Link>
+              {user.role === 'ADMIN' && (
+                <Link
+                  href="/admin/teachers"
+                  className="text-gray-600 hover:text-blue-500 hover:bg-[#e8f0fe]/60 font-medium transition-all duration-150 rounded-lg px-3 py-2 focus-visible:outline-none "
+                >
+                  Teachers
+                </Link>
+              )}
             </nav>
           </div>
 
@@ -80,8 +88,10 @@ export default async function AdminLayout({ children }: { children: React.ReactN
           <div className="flex items-center space-x-4 text-sm">
             <RepoVersionBadge owner='Danushka-Madushan' repo='lernio' />
             <div className="flex items-center bg-[#f1f3f4] border border-gray-200 rounded-full pl-2 pr-3 py-1">
-              <span className="bg-blue-500 text-white px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase mr-2 shadow-sm">
-                Admin
+              <span className={`text-white px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase mr-2 shadow-sm ${
+                user.role === 'ADMIN' ? 'bg-blue-500' : 'bg-purple-600'
+              }`}>
+                {user.role === 'ADMIN' ? 'Admin' : 'Teacher'}
               </span>
               <span className="text-gray-800 font-medium max-w-30 truncate">
                 {user.username}
