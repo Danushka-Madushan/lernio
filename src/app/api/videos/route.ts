@@ -12,12 +12,12 @@ function isAccountActive(activeFrom: Date | null, activeTo: Date | null): boolea
   return true;
 }
 
-// GET: List videos - filtered by student's access rules or admin
+// GET: List videos - filtered by student's access rules, teacher's own videos, or admin
 export async function GET(request: Request) {
   const cookieStore = await cookies();
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
-  
+
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -25,13 +25,14 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
     const gradeParam = searchParams.get('grade');
+    const teacherParam = searchParams.get('teacherId');
 
-    // ADMIN: return all videos with optional grade filter
-    if (user.role === 'ADMIN') {
-      let whereClause: any = {};
+    // TEACHER: return only this teacher's videos
+    if (user.role === 'TEACHER') {
+      const whereClause: any = { teacherId: user.id };
       if (gradeParam) {
         if (Object.values(Grade).includes(gradeParam as Grade)) {
-          whereClause = { grade: gradeParam as Grade };
+          whereClause.grade = gradeParam as Grade;
         } else {
           return NextResponse.json({ error: 'Invalid grade filter' }, { status: 400 });
         }
@@ -49,6 +50,7 @@ export async function GET(request: Request) {
           grade: true,
           visibility: true,
           viewsCount: true,
+          teacherId: true,
           createdAt: true,
           updatedAt: true,
           _count: {
@@ -63,7 +65,54 @@ export async function GET(request: Request) {
       return NextResponse.json({ videos });
     }
 
-    // STUDENT: enforce access rules
+    // ADMIN: return all videos with optional teacher and grade filter
+    if (user.role === 'ADMIN') {
+      const whereClause: any = {};
+      if (teacherParam) {
+        whereClause.teacherId = teacherParam;
+      }
+      if (gradeParam) {
+        if (Object.values(Grade).includes(gradeParam as Grade)) {
+          whereClause.grade = gradeParam as Grade;
+        } else {
+          return NextResponse.json({ error: 'Invalid grade filter' }, { status: 400 });
+        }
+      }
+
+      const videos = await db.video.findMany({
+        where: whereClause,
+        orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          cloudflareR2Key: true,
+          cloudflareR2ThumbnailKey: true,
+          grade: true,
+          visibility: true,
+          viewsCount: true,
+          teacherId: true,
+          teacher: {
+            select: {
+              id: true,
+              username: true,
+            },
+          },
+          createdAt: true,
+          updatedAt: true,
+          _count: {
+            select: {
+              likes: true,
+              comments: true,
+            },
+          },
+        },
+      });
+
+      return NextResponse.json({ videos });
+    }
+
+    // STUDENT: enforce access rules and teacher isolation
     const studentRecord = await db.user.findUnique({
       where: { id: user.id },
       select: {
@@ -72,6 +121,7 @@ export async function GET(request: Request) {
         activeFrom: true,
         activeTo: true,
         accessMode: true,
+        teacherId: true,
       },
     });
 
@@ -81,7 +131,10 @@ export async function GET(request: Request) {
 
     // Check account validity
     if (!isAccountActive(studentRecord.activeFrom, studentRecord.activeTo)) {
-      return NextResponse.json({ error: 'account_inactive', message: 'Your account is not active. Please contact staff.' }, { status: 403 });
+      return NextResponse.json(
+        { error: 'account_inactive', message: 'Your account is not active. Please contact staff.' },
+        { status: 403 }
+      );
     }
 
     let videos;
@@ -102,8 +155,9 @@ export async function GET(request: Request) {
       });
       videos = customAccess.map((ca) => ca.video);
     } else {
-      // GRADE mode: PUBLIC videos + GRADE videos matching student's grade
+      // GRADE mode: scoped strictly to assigned teacher!
       const whereClause: any = {
+        ...(studentRecord.teacherId ? { teacherId: studentRecord.teacherId } : {}),
         OR: [
           { visibility: VideoVisibility.PUBLIC },
           ...(studentRecord.grade
@@ -135,18 +189,19 @@ export async function GET(request: Request) {
   }
 }
 
-// POST: Save video metadata after successful upload
+// POST: Save video metadata after successful upload (ADMIN or TEACHER)
 export async function POST(request: Request) {
   const cookieStore = await cookies();
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
-  
-  if (!user || user.role !== 'ADMIN') {
+
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   try {
-    const { title, description, cloudflareR2Key, cloudflareR2ThumbnailKey, grade, visibility } = await request.json();
+    const { title, description, cloudflareR2Key, cloudflareR2ThumbnailKey, grade, visibility } =
+      await request.json();
 
     if (!title || !cloudflareR2Key) {
       return NextResponse.json({ error: 'Title and cloudflareR2Key are required' }, { status: 400 });
@@ -158,7 +213,8 @@ export async function POST(request: Request) {
     }
 
     // Validate visibility if provided
-    const resolvedVisibility: VideoVisibility = visibility === 'GRADE' ? VideoVisibility.GRADE : VideoVisibility.PUBLIC;
+    const resolvedVisibility: VideoVisibility =
+      visibility === 'GRADE' ? VideoVisibility.GRADE : VideoVisibility.PUBLIC;
 
     const video = await db.video.create({
       data: {
@@ -168,6 +224,7 @@ export async function POST(request: Request) {
         cloudflareR2ThumbnailKey,
         grade: grade ? (grade as Grade) : null,
         visibility: resolvedVisibility,
+        teacherId: user.id,
       },
     });
 
