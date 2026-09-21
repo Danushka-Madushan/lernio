@@ -5,6 +5,7 @@ import { cookies } from 'next/headers';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { s3, bucketName } from '@/lib/r2';
+import { verifyVideoAccess } from '@/lib/video-access';
 
 /**
  * GET /api/videos/[id]/thumbnail
@@ -26,13 +27,25 @@ export async function GET(
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
-  try {
-    const video = await db.video.findUnique({
-      where: { id },
-      select: { cloudflareR2ThumbnailKey: true },
-    });
+  // ── Verify Access & Tenancy ──────────────────────────────────────────────────
+  const access = await verifyVideoAccess(user, id);
+  if (!access.allowed || !access.video) {
+    if (access.reason === 'unauthorized') {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+    if (access.reason === 'not_found') {
+      return new NextResponse('Not Found', { status: 404 });
+    }
+    if (access.reason === 'account_inactive') {
+      return new NextResponse('Account Inactive', { status: 403 });
+    }
+    return new NextResponse('Forbidden', { status: 403 });
+  }
 
-    if (!video || !video.cloudflareR2ThumbnailKey) {
+  try {
+    const video = access.video;
+
+    if (!video.cloudflareR2ThumbnailKey) {
       return new NextResponse('Thumbnail not found', { status: 404 });
     }
 

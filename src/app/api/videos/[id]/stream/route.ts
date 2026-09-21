@@ -1,10 +1,10 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { s3, bucketName } from '@/lib/r2';
+import { verifyVideoAccess } from '@/lib/video-access';
 
 /**
  * GET /api/videos/[id]/stream
@@ -18,29 +18,6 @@ import { s3, bucketName } from '@/lib/r2';
  *  - Signed URLs expire in 5 minutes (enough to start playback, too short to share).
  *  - The permanent R2 bucket URL is never exposed.
  */
-
-// A browser's video demuxer can issue many DB lookups in quick succession
-// while resolving the same video. Cache the R2 key in-process to avoid
-// redundant round-trips for the same video within a 60-second window.
-const r2KeyCache = new Map<string, { key: string; expires: number }>();
-const R2_KEY_CACHE_TTL_MS = 60_000;
-
-async function resolveR2Key(id: string): Promise<string | null> {
-  const cached = r2KeyCache.get(id);
-  if (cached && cached.expires > Date.now()) {
-    return cached.key;
-  }
-
-  const video = await db.video.findUnique({
-    where: { id },
-    select: { cloudflareR2Key: true },
-  });
-
-  if (!video) return null;
-
-  r2KeyCache.set(id, { key: video.cloudflareR2Key, expires: Date.now() + R2_KEY_CACHE_TTL_MS });
-  return video.cloudflareR2Key;
-}
 
 export async function GET(
   _request: Request,
@@ -57,15 +34,24 @@ export async function GET(
     return new NextResponse('Unauthorized', { status: 401 });
   }
 
-  // ── Resolve the R2 key ───────────────────────────────────────────────────────
-  const r2Key = await resolveR2Key(id);
-  if (!r2Key) {
-    return new NextResponse('Not Found', { status: 404 });
+  // ── Verify Access & Tenancy ──────────────────────────────────────────────────
+  const access = await verifyVideoAccess(user, id);
+  if (!access.allowed || !access.video) {
+    if (access.reason === 'unauthorized') {
+      return new NextResponse('Unauthorized', { status: 401 });
+    }
+    if (access.reason === 'not_found') {
+      return new NextResponse('Not Found', { status: 404 });
+    }
+    if (access.reason === 'account_inactive') {
+      return new NextResponse('Account Inactive', { status: 403 });
+    }
+    return new NextResponse('Forbidden', { status: 403 });
   }
 
   // ── Generate a short-lived presigned URL and redirect ────────────────────────
   try {
-    const command = new GetObjectCommand({ Bucket: bucketName, Key: r2Key });
+    const command = new GetObjectCommand({ Bucket: bucketName, Key: access.video.cloudflareR2Key });
     // 5 minutes: long enough for the browser to begin playback, short enough
     // to be useless if shared. R2 enforces this server-side.
     const signedUrl = await getSignedUrl(s3, command, { expiresIn: 300 });

@@ -24,7 +24,7 @@ export async function GET(
   const cookieStore = await cookies();
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
-  
+
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -54,7 +54,12 @@ export async function GET(
       return NextResponse.json({ error: 'Video not found' }, { status: 404 });
     }
 
-    // 2. For students: enforce access rules
+    // 2. For teachers: check video ownership
+    if (user.role === 'TEACHER' && video.teacherId !== user.id) {
+      return NextResponse.json({ error: 'Access denied to this video' }, { status: 403 });
+    }
+
+    // 3. For students: enforce access rules and teacher isolation
     if (user.role === 'STUDENT') {
       const studentRecord = await db.user.findUnique({
         where: { id: user.id },
@@ -63,6 +68,7 @@ export async function GET(
           activeFrom: true,
           activeTo: true,
           accessMode: true,
+          teacherId: true,
         },
       });
 
@@ -76,6 +82,11 @@ export async function GET(
           { error: 'account_inactive', message: 'Your account is not active. Please contact staff.' },
           { status: 403 }
         );
+      }
+
+      // Strict Teacher isolation: video must belong to student's assigned teacher
+      if (!studentRecord.teacherId || video.teacherId !== studentRecord.teacherId) {
+        return NextResponse.json({ error: 'Access denied to this video' }, { status: 403 });
       }
 
       // Access mode check
@@ -95,11 +106,11 @@ export async function GET(
             return NextResponse.json({ error: 'Access denied to this video' }, { status: 403 });
           }
         }
-        // PUBLIC videos are always accessible in GRADE mode
+        // PUBLIC videos are always accessible in GRADE mode (within their teacher)
       }
     }
 
-    // 3. Increment View Count & Track View
+    // 4. Increment View Count & Track View
     try {
       await db.$transaction([
         db.view.create({
@@ -116,18 +127,17 @@ export async function GET(
         }),
       ]);
     } catch (viewErr) {
-      // Non-blocking log, if they double click/reload quickly, it might trigger transaction collision
       console.warn('View tracking transaction issue:', viewErr);
     }
 
-    // 4. Generate presigned URL (valid for 5 minutes)
+    // 5. Generate presigned URL (valid for 5 minutes)
     const getCommand = new GetObjectCommand({
       Bucket: bucketName,
       Key: video.cloudflareR2Key,
     });
     const presignedUrl = await getSignedUrl(s3, getCommand, { expiresIn: 300 });
 
-    // 5. Check if current user liked this video
+    // 6. Check if current user liked this video
     const userHasLiked = await db.like.findUnique({
       where: {
         userId_videoId: {
@@ -140,7 +150,7 @@ export async function GET(
     return NextResponse.json({
       video: {
         ...video,
-        viewsCount: video.viewsCount + 1, // Reflect the current view in payload
+        viewsCount: video.viewsCount + 1,
       },
       presignedUrl,
       hasLiked: !!userHasLiked,
@@ -151,7 +161,7 @@ export async function GET(
   }
 }
 
-// PUT: Update video metadata (ADMIN only)
+// PUT: Update video metadata (ADMIN or TEACHER who owns the video)
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -160,13 +170,26 @@ export async function PUT(
   const cookieStore = await cookies();
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
-  
-  if (!user || user.role !== 'ADMIN') {
+
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   try {
-    const { title, description, grade, cloudflareR2ThumbnailKey, visibility } = await request.json();
+    const existingVideo = await db.video.findUnique({ where: { id } });
+    if (!existingVideo) {
+      return NextResponse.json({ error: 'Video not found' }, { status: 404 });
+    }
+
+    if (user.role === 'TEACHER' && existingVideo.teacherId !== user.id) {
+      return NextResponse.json(
+        { error: 'Forbidden: You can only edit your own videos' },
+        { status: 403 }
+      );
+    }
+
+    const { title, description, grade, cloudflareR2ThumbnailKey, visibility } =
+      await request.json();
 
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
@@ -177,16 +200,16 @@ export async function PUT(
       return NextResponse.json({ error: 'Invalid grade value' }, { status: 400 });
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const updateData: any = {
-      title,
-      description,
+      title: title.trim(),
+      description: typeof description === 'string' ? (description.trim() || null) : (description ?? null),
       grade: grade ? (grade as Grade) : null,
       ...(cloudflareR2ThumbnailKey !== undefined ? { cloudflareR2ThumbnailKey } : {}),
     };
 
     if (visibility !== undefined) {
-      updateData.visibility = visibility === 'GRADE' ? VideoVisibility.GRADE : VideoVisibility.PUBLIC;
+      updateData.visibility =
+        visibility === 'GRADE' ? VideoVisibility.GRADE : VideoVisibility.PUBLIC;
     }
 
     const updatedVideo = await db.video.update({
@@ -201,7 +224,7 @@ export async function PUT(
   }
 }
 
-// DELETE: Delete video from R2 and DB (ADMIN only)
+// DELETE: Delete video from R2 and DB (ADMIN or TEACHER who owns the video)
 export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -210,13 +233,13 @@ export async function DELETE(
   const cookieStore = await cookies();
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
-  
-  if (!user || user.role !== 'ADMIN') {
+
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   try {
-    // 1. Get video record to locate Cloudflare R2 Key
+    // 1. Get video record to locate Cloudflare R2 Key and verify ownership
     const video = await db.video.findUnique({
       where: { id },
     });
@@ -225,19 +248,37 @@ export async function DELETE(
       return NextResponse.json({ error: 'Video not found' }, { status: 404 });
     }
 
-    // 2. Delete file from Cloudflare R2
-    try {
-      const deleteCommand = new DeleteObjectCommand({
-        Bucket: bucketName,
-        Key: video.cloudflareR2Key,
-      });
-      await s3.send(deleteCommand);
-    } catch (r2Err) {
-      console.error('Failed to delete file from R2 bucket:', r2Err);
-      // Continue deleting DB entry even if R2 deletion failed
+    if (user.role === 'TEACHER' && video.teacherId !== user.id) {
+      return NextResponse.json(
+        { error: 'Forbidden: You can only delete your own videos' },
+        { status: 403 }
+      );
     }
 
-    // 3. Delete database record (cascading deletes comments, likes, views automatically)
+    // 2. Delete file and thumbnail from Cloudflare R2
+    try {
+      const videoKey = video.cloudflareR2Key?.trim();
+      if (videoKey && !videoKey.startsWith('http')) {
+        const deleteCommand = new DeleteObjectCommand({
+          Bucket: bucketName,
+          Key: videoKey,
+        });
+        await s3.send(deleteCommand);
+      }
+
+      const thumbKey = video.cloudflareR2ThumbnailKey?.trim();
+      if (thumbKey && !thumbKey.startsWith('http') && thumbKey !== videoKey) {
+        const deleteThumbCommand = new DeleteObjectCommand({
+          Bucket: bucketName,
+          Key: thumbKey,
+        });
+        await s3.send(deleteThumbCommand);
+      }
+    } catch (r2Err) {
+      console.error('Failed to delete file from R2 bucket:', r2Err);
+    }
+
+    // 3. Delete database record
     await db.video.delete({
       where: { id },
     });

@@ -9,6 +9,7 @@ generator client {
 
 enum Role {
   ADMIN
+  TEACHER
   STUDENT
 }
 
@@ -40,13 +41,19 @@ model User {
   activeFrom     DateTime?
   activeTo       DateTime?
   accessMode     AccessMode @default(GRADE)
+  teacherId      String?
+  teacher        User?      @relation("TeacherStudents", fields: [teacherId], references: [id], onDelete: SetNull)
+  students       User[]     @relation("TeacherStudents")
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
-  comments     Comment[]
-  likes        Like[]
-  views        View[]
-  customVideos CustomVideoAccess[]
+  comments       Comment[]
+  likes          Like[]
+  views          View[]
+  customVideos   CustomVideoAccess[]
+  videos         Video[]    @relation("TeacherVideos")
+  meetings       ZoomLink[] @relation("TeacherMeetings")
+  zoomAccounts   ZoomAccount[] @relation("TeacherZoomAccounts")
 }
 
 model Video {
@@ -58,6 +65,8 @@ model Video {
   grade                    Grade?
   visibility               VideoVisibility @default(PUBLIC)
   viewsCount               Int             @default(0)
+  teacherId                String?
+  teacher                  User?           @relation("TeacherVideos", fields: [teacherId], references: [id], onDelete: Cascade)
   createdAt                DateTime        @default(now())
   updatedAt                DateTime        @updatedAt
 
@@ -75,6 +84,8 @@ model ZoomAccount {
   clientId     String
   clientSecret String
   picUrl       String?
+  userId       String?
+  user         User?      @relation("TeacherZoomAccounts", fields: [userId], references: [id], onDelete: Cascade)
   createdAt    DateTime   @default(now())
   updatedAt    DateTime   @updatedAt
 
@@ -88,6 +99,9 @@ model ZoomLink {
   grade       Grade?
   link        String   // Student join URL
   
+  teacherId   String?
+  teacher     User?    @relation("TeacherMeetings", fields: [teacherId], references: [id], onDelete: Cascade)
+
   zoomAccountId String?
   zoomAccount   ZoomAccount? @relation(fields: [zoomAccountId], references: [id], onDelete: SetNull)
   meetingId     String?

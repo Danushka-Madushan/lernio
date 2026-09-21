@@ -9,14 +9,28 @@ export async function GET(request: Request) {
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
   
-  if (!user || user.role !== 'ADMIN') {
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
+  const { searchParams } = new URL(request.url);
+  const teacherIdFilter = searchParams.get('teacherId');
+
   try {
+    const whereClause: any = {};
+    if (user.role === 'TEACHER') {
+      whereClause.teacherId = user.id;
+    } else if (user.role === 'ADMIN' && teacherIdFilter) {
+      whereClause.teacherId = teacherIdFilter;
+    }
+
     const meetings = await db.zoomLink.findMany({
+      where: whereClause,
       orderBy: { scheduledAt: 'desc' },
-      include: { zoomAccount: { select: { name: true, email: true } } }
+      include: {
+        zoomAccount: { select: { name: true, email: true } },
+        teacher: { select: { id: true, username: true } },
+      },
     });
 
     return NextResponse.json({ meetings });
@@ -31,7 +45,7 @@ export async function POST(request: Request) {
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
   
-  if (!user || user.role !== 'ADMIN') {
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -78,6 +92,10 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Zoom account not found' }, { status: 404 });
       }
 
+      if (user.role === 'TEACHER' && zoomAccount.userId && zoomAccount.userId !== user.id) {
+        return NextResponse.json({ error: 'Forbidden: Access to this Zoom account is restricted' }, { status: 403 });
+      }
+
       const zoomRes = await createZoomMeeting(
         zoomAccount.email,
         zoomAccount.accountId,
@@ -115,6 +133,7 @@ export async function POST(request: Request) {
         hostVideo: hostVideo || false,
         participantVideo: participantVideo || false,
         waitingRoom: waitingRoom ?? true,
+        teacherId: user.id,
       },
     });
 

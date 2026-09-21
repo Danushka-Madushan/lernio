@@ -49,6 +49,12 @@ interface ZoomAccount {
   picUrl?: string | null;
 }
 
+interface TeacherOption {
+  id: string;
+  username: string;
+  role?: string;
+}
+
 interface Meeting {
   id: string;
   title: string;
@@ -64,6 +70,8 @@ interface Meeting {
   participantVideo?: boolean;
   waitingRoom?: boolean;
   zoomAccount?: { name: string; email: string } | null;
+  teacherId?: string | null;
+  teacher?: { id: string; username: string } | null;
   createdAt: string;
 }
 
@@ -109,6 +117,10 @@ const MeetingsAdminPage = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
 
+  const [isAdmin, setIsAdmin] = useState(false);
+  const [teachers, setTeachers] = useState<TeacherOption[]>([]);
+  const [teacherFilter, setTeacherFilter] = useState('');
+
   const [showManageAccountsModal, setShowManageAccountsModal] = useState(false);
   const [manageAccountsLoading, setManageAccountsLoading] = useState(false);
 
@@ -149,12 +161,30 @@ const MeetingsAdminPage = () => {
     return list.filter((m) => {
       const matchSearch = m.title.toLowerCase().includes(q) || m.link?.toLowerCase().includes(q);
       const matchGrade = gradeFilter ? m.grade === gradeFilter : true;
-      return matchSearch && matchGrade;
+      const matchTeacher = teacherFilter
+        ? m.teacherId === teacherFilter || m.teacher?.id === teacherFilter
+        : true;
+      return matchSearch && matchGrade && matchTeacher;
     });
-  }, [searchQuery, gradeFilter]);
+  }, [searchQuery, gradeFilter, teacherFilter]);
 
   const filteredActive = useMemo(() => filterMeetings(activeMeetings), [filterMeetings, activeMeetings]);
   const filteredExpired = useMemo(() => filterMeetings(expiredMeetings), [filterMeetings, expiredMeetings]);
+
+  const fetchRoleAndTeachers = useCallback(async () => {
+    try {
+      const res = await fetch('/api/teachers');
+      if (res.ok) {
+        const data = await res.json();
+        setIsAdmin(true);
+        setTeachers(data.teachers || []);
+      } else {
+        setIsAdmin(false);
+      }
+    } catch {
+      setIsAdmin(false);
+    }
+  }, []);
 
   const fetchMeetings = useCallback(async () => {
     setLoading(true);
@@ -182,7 +212,10 @@ const MeetingsAdminPage = () => {
     finally { setLoading(false); }
   }, []);
 
-  useEffect(() => { fetchMeetings(); }, [fetchMeetings]);
+  useEffect(() => {
+    fetchRoleAndTeachers();
+    fetchMeetings();
+  }, [fetchRoleAndTeachers, fetchMeetings]);
 
   useEffect(() => { if (success) { const t = setTimeout(() => setSuccess(''), 5000); return () => clearTimeout(t); } }, [success]);
   useEffect(() => { if (error) { const t = setTimeout(() => setError(''), 5000); return () => clearTimeout(t); } }, [error]);
@@ -293,6 +326,13 @@ const MeetingsAdminPage = () => {
           </div>
         </div>
       </td>
+      {isAdmin && (
+        <td className="py-3.5">
+          <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-medium text-purple-700">
+            {meeting.teacher?.username || 'Admin'}
+          </span>
+        </td>
+      )}
       <td className="py-3.5">
         {meeting.grade ? (
           <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${GRADE_COLORS[meeting.grade]}`}>{GRADE_LABELS[meeting.grade]}</span>
@@ -349,6 +389,7 @@ const MeetingsAdminPage = () => {
         <thead>
           <tr className="border-b border-[#e8eaed]">
             <th className="py-2.5 pl-4 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Meeting</th>
+            {isAdmin && <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Teacher</th>}
             <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Grade</th>
             <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">Schedule</th>
             <th className="py-2.5 pr-4 text-right text-xs font-medium uppercase tracking-wide text-[#5f6368]">Actions</th>
@@ -434,6 +475,24 @@ const MeetingsAdminPage = () => {
                 )}
               </div>
               <div className="flex items-center gap-2">
+                {isAdmin && (
+                  <div className="relative">
+                    <select
+                      value={teacherFilter}
+                      onChange={(e) => setTeacherFilter(e.target.value)}
+                      aria-label="Filter meetings by teacher"
+                      className="appearance-none rounded-full border border-[#dadce0] bg-white py-2 pl-3 pr-7 text-xs text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
+                    >
+                      <option value="">All Teachers</option>
+                      {teachers.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.username} {t.role === 'ADMIN' ? '(Admin)' : ''}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={12} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5f6368]" />
+                  </div>
+                )}
                 <div className="relative">
                   <select value={gradeFilter} onChange={(e) => setGradeFilter(e.target.value as Grade | '')}
                     className="appearance-none rounded-full border border-[#dadce0] bg-white py-2 pl-3 pr-7 text-xs text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">

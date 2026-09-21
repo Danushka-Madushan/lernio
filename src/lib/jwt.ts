@@ -6,7 +6,8 @@ const secretKey = new TextEncoder().encode(JWT_SECRET);
 export interface UserSession {
   id: string;
   username: string;
-  role: 'ADMIN' | 'STUDENT';
+  role: 'ADMIN' | 'TEACHER' | 'STUDENT';
+  teacherId?: string | null;
 }
 
 export async function signToken(payload: UserSession): Promise<string> {
@@ -14,6 +15,7 @@ export async function signToken(payload: UserSession): Promise<string> {
     id: payload.id,
     username: payload.username,
     role: payload.role,
+    ...(payload.teacherId ? { teacherId: payload.teacherId } : {}),
   })
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
@@ -29,7 +31,8 @@ export async function verifyToken(token: string): Promise<UserSession | null> {
     return {
       id: payload.id as string,
       username: payload.username as string,
-      role: payload.role as 'ADMIN' | 'STUDENT',
+      role: payload.role as 'ADMIN' | 'TEACHER' | 'STUDENT',
+      teacherId: (payload.teacherId as string | undefined) || null,
     };
   } catch (error) {
     return null;

@@ -8,18 +8,13 @@ import { useEffect, useState } from 'react';
 
 type AccessMode = 'GRADE' | 'CUSTOM';
 
-interface Student {
+interface UserTarget {
   id: string;
   username: string;
-  grade: Grade | null;
-  activeFrom: string | null;
-  activeTo: string | null;
-  accessMode: AccessMode;
-  createdAt: string;
 }
 
 const ResetPasswordModal = ({ target, loading, onConfirm, onCancel }: {
-  target: Student; loading: boolean;
+  target: UserTarget; loading: boolean;
   onConfirm: (password: string) => void; onCancel: () => void;
 }) => {
   const [password, setPassword] = useState('');

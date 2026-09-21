@@ -16,6 +16,7 @@ interface Student {
   activeFrom: string | null;
   activeTo: string | null;
   accessMode: AccessMode;
+  teacherId?: string | null;
   createdAt: string;
 }
 
@@ -42,8 +43,9 @@ const CustomVideoPickerModal = ({ student, onSave, onCancel }: {
     const load = async () => {
       setLoading(true);
       try {
+        const videoUrl = student.teacherId ? `/api/videos?teacherId=${student.teacherId}` : '/api/videos';
         const [videosRes, customRes] = await Promise.all([
-          fetch('/api/videos'),
+          fetch(videoUrl),
           fetch(`/api/users/${student.id}/custom-videos`),
         ]);
         const videosData = await videosRes.json();

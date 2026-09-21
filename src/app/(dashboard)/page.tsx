@@ -26,7 +26,7 @@ const DashboardPage = async ({
   const token = cookieStore.get('session_token')?.value;
   const sessionUser = token ? await verifyToken(token) : null;
 
-  // For students: enforce account validity and access mode
+  // For students: enforce account validity, access mode, and teacher isolation
   if (sessionUser && sessionUser.role === 'STUDENT') {
     const studentRecord = await db.user.findUnique({
       where: { id: sessionUser.id },
@@ -35,6 +35,7 @@ const DashboardPage = async ({
         activeFrom: true,
         activeTo: true,
         accessMode: true,
+        teacherId: true,
       },
     });
 
@@ -48,10 +49,27 @@ const DashboardPage = async ({
       );
     }
 
-    // CUSTOM mode: show only assigned videos (no grade tabs)
+    // If student has no assigned teacher, return empty feed
+    if (!studentRecord.teacherId) {
+      return (
+        <div className="min-h-screen bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-6xl space-y-6">
+            <GradeTabs activeGrade={activeGrade} />
+            <VideoGrid videos={[]} />
+          </div>
+        </div>
+      );
+    }
+
+    // CUSTOM mode: show only assigned videos from student's teacher (no grade tabs)
     if (studentRecord.accessMode === 'CUSTOM') {
       const customAccess = await db.customVideoAccess.findMany({
-        where: { userId: sessionUser.id },
+        where: {
+          userId: sessionUser.id,
+          video: {
+            teacherId: studentRecord.teacherId,
+          },
+        },
         include: {
           video: {
             include: {
@@ -60,7 +78,10 @@ const DashboardPage = async ({
           },
         },
       });
-      const videos = customAccess.map((ca) => ca.video);
+      const videos = customAccess
+        .map((ca) => ca.video)
+        .filter(Boolean)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
       return (
         <div className="min-h-screen bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
@@ -75,8 +96,10 @@ const DashboardPage = async ({
       );
     }
 
-    // GRADE mode: PUBLIC + grade-matched GRADE videos
+    // GRADE mode: PUBLIC + grade-matched GRADE videos (scoped strictly to assigned teacher)
+
     const whereClause: any = {
+      teacherId: studentRecord.teacherId,
       OR: [
         { visibility: VideoVisibility.PUBLIC },
         ...(studentRecord.grade
@@ -105,10 +128,13 @@ const DashboardPage = async ({
     );
   }
 
-  // ADMIN or unauthenticated: show all videos with grade filter
-  let whereClause: any = {};
+  // Staff (TEACHER or ADMIN): show their own videos in the preview feed
+  const whereClause: any = {};
+  if (sessionUser && (sessionUser.role === 'TEACHER' || sessionUser.role === 'ADMIN')) {
+    whereClause.teacherId = sessionUser.id;
+  }
   if (activeGrade && Object.values(Grade).includes(activeGrade)) {
-    whereClause = { grade: activeGrade };
+    whereClause.grade = activeGrade;
   }
 
   const videos = await db.video.findMany({
@@ -132,6 +158,6 @@ const DashboardPage = async ({
       </div>
     </div>
   );
-}
+};
 
 export default DashboardPage;

@@ -17,15 +17,24 @@ interface ShareInfo {
   password: string;
 }
 
+interface TeacherOption {
+  id: string;
+  username: string;
+  role: string;
+}
+
 const AddStudentModal = ({
   usernamePrefix, usernameSuffix, password, grade, accessMode, activeFrom, activeTo,
+  teacherId, teachers,
   creating, error, success, shareInfo,
   onPrefixChange, onSuffixChange, onSuffixBulkSet, onPasswordChange,
   onGradeChange, onAccessModeChange, onActiveFromChange, onActiveToChange,
+  onTeacherChange,
   onSubmit, onCancel, onDismissShareInfo,
 }: {
   usernamePrefix: string; usernameSuffix: string[]; password: string;
   grade: Grade | ''; accessMode: AccessMode; activeFrom: string; activeTo: string;
+  teacherId: string; teachers: TeacherOption[];
   creating: boolean; error: string; success: string; shareInfo: ShareInfo | null;
   onPrefixChange: (v: string) => void;
   onSuffixChange: (i: number, v: string) => void;
@@ -35,6 +44,7 @@ const AddStudentModal = ({
   onAccessModeChange: (v: AccessMode) => void;
   onActiveFromChange: (v: string) => void;
   onActiveToChange: (v: string) => void;
+  onTeacherChange: (v: string) => void;
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
   onDismissShareInfo: () => void;
@@ -99,6 +109,31 @@ const AddStudentModal = ({
                   disabled={creating} placeholder="Initial password"
                   className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all  hover:border-[#c4c7cc]  focus:ring-2 focus:ring-blue-500/20  "
                   required />
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">
+                  Assigned Teacher <span className="text-red-500">*</span>
+                </label>
+                <div className="relative">
+                  <select
+                    value={teacherId}
+                    onChange={(e) => onTeacherChange(e.target.value)}
+                    disabled={creating}
+                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
+                    required
+                  >
+                    {teachers.map((t) => (
+                      <option key={t.id} value={t.id}>
+                        {t.username} {t.role === 'ADMIN' ? '(Admin Teacher)' : '(Teacher)'}
+                      </option>
+                    ))}
+                  </select>
+                  <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
+                </div>
+                <p className="mt-1 text-[11px] text-[#9aa0a6]">
+                  This student will only see videos and meetings from this teacher.
+                </p>
               </div>
 
               <div>

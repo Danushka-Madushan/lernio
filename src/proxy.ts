@@ -43,11 +43,15 @@ export async function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl);
   }
 
-  // ---- Admin-only routes ----
+  // ---- Staff routes (/admin) ----
   if (pathname.startsWith('/admin')) {
-    if (user.role !== 'ADMIN') {
-      // Non-admin visiting /admin → redirect to student feed
+    if (user.role !== 'ADMIN' && user.role !== 'TEACHER') {
+      // Non-staff visiting /admin → redirect to student feed
       return NextResponse.redirect(new URL('/', request.url));
+    }
+    // Teachers cannot access teacher management
+    if (pathname.startsWith('/admin/teachers') && user.role !== 'ADMIN') {
+      return NextResponse.redirect(new URL('/admin/videos', request.url));
     }
   }
 

@@ -5,13 +5,13 @@ import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
 import { Grade, AccessMode } from '@/generated/client/enums';
 
-// GET: List all students (with optional grade and status filters)
+// GET: List students (filtered by teacher for TEACHER role, or all with filters for ADMIN)
 export async function GET(request: Request) {
   const cookieStore = await cookies();
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
-  
-  if (!user || user.role !== 'ADMIN') {
+
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -19,11 +19,21 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const gradeParam = searchParams.get('grade');
     const statusParam = searchParams.get('status'); // 'active' | 'expired'
+    const teacherParam = searchParams.get('teacherId');
 
     const now = new Date();
 
     // Build where clause
     const where: any = { role: 'STUDENT' };
+
+    // Role-based tenant filter:
+    // TEACHER only sees their own assigned students.
+    // ADMIN can see all or filter by specific teacher.
+    if (user.role === 'TEACHER') {
+      where.teacherId = user.id;
+    } else if (teacherParam) {
+      where.teacherId = teacherParam;
+    }
 
     if (gradeParam && Object.values(Grade).includes(gradeParam as Grade)) {
       where.grade = gradeParam as Grade;
@@ -51,6 +61,13 @@ export async function GET(request: Request) {
         activeFrom: true,
         activeTo: true,
         accessMode: true,
+        teacherId: true,
+        teacher: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
         createdAt: true,
       },
       orderBy: { createdAt: 'desc' },
@@ -63,18 +80,22 @@ export async function GET(request: Request) {
   }
 }
 
-// POST: Create a new student account
+// POST: Create a new student account (ADMIN only - requires teacher assignment)
 export async function POST(request: Request) {
   const cookieStore = await cookies();
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
-  
+
   if (!user || user.role !== 'ADMIN') {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    return NextResponse.json(
+      { error: 'Only administrators can create new student accounts.' },
+      { status: 403 }
+    );
   }
 
   try {
-    const { username, password, grade, activeFrom, activeTo, accessMode } = await request.json();
+    const { username, password, grade, activeFrom, activeTo, accessMode, teacherId } =
+      await request.json();
 
     if (!username || !password || username.trim().length < 3 || password.length < 4) {
       return NextResponse.json(
@@ -104,6 +125,19 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Username is already taken' }, { status: 400 });
     }
 
+    // Resolve teacher assignment (default to current admin if not provided)
+    let assignedTeacherId = teacherId || user.id;
+
+    const teacherUser = await db.user.findUnique({
+      where: { id: assignedTeacherId },
+      select: { id: true, role: true },
+    });
+
+    if (!teacherUser || (teacherUser.role !== 'ADMIN' && teacherUser.role !== 'TEACHER')) {
+      // Fallback to the creating admin if invalid teacher selected
+      assignedTeacherId = user.id;
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const newStudent = await db.user.create({
       data: {
@@ -114,6 +148,7 @@ export async function POST(request: Request) {
         activeFrom: activeFrom ? new Date(activeFrom) : null,
         activeTo: activeTo ? new Date(activeTo) : null,
         accessMode: accessMode ? (accessMode as AccessMode) : 'GRADE',
+        teacherId: assignedTeacherId,
       },
       select: {
         id: true,
@@ -123,6 +158,13 @@ export async function POST(request: Request) {
         activeFrom: true,
         activeTo: true,
         accessMode: true,
+        teacherId: true,
+        teacher: {
+          select: {
+            id: true,
+            username: true,
+          },
+        },
         createdAt: true,
       },
     });

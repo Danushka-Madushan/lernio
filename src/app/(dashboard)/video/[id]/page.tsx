@@ -42,11 +42,16 @@ const VideoPage = async ({
     notFound();
   }
 
-  // 2. Students: enforce access rules before issuing any URL
+  // 2. Teachers: can only view their own videos (unless admin)
+  if (user.role === 'TEACHER' && video.teacherId !== user.id) {
+    notFound();
+  }
+
+  // 3. Students: enforce access rules and teacher isolation before issuing any URL
   if (user.role === 'STUDENT') {
     const studentRecord = await db.user.findUnique({
       where: { id: user.id },
-      select: { grade: true, activeFrom: true, activeTo: true, accessMode: true },
+      select: { grade: true, activeFrom: true, activeTo: true, accessMode: true, teacherId: true },
     });
 
     if (!studentRecord) notFound();
@@ -58,6 +63,11 @@ const VideoPage = async ({
     ) {
       // Redirect to login with a message rather than crashing
       redirect('/login?error=account_inactive');
+    }
+
+    // Strict Teacher Isolation: student can only watch videos from their assigned teacher
+    if (!studentRecord.teacherId || video.teacherId !== studentRecord.teacherId) {
+      notFound();
     }
 
     if (studentRecord.accessMode === 'CUSTOM') {
@@ -139,5 +149,3 @@ const VideoPage = async ({
 }
 
 export default VideoPage;
-
-

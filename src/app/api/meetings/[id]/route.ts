@@ -9,7 +9,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
   
-  if (!user || user.role !== 'ADMIN') {
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -24,7 +24,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
       isRecurring, 
       hostVideo, 
       participantVideo, 
-      waitingRoom,
+      waitingRoom, 
       link 
     } = await request.json();
 
@@ -41,7 +41,11 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
 
     const existingMeeting = await db.zoomLink.findUnique({ where: { id }, include: { zoomAccount: true } });
     if (!existingMeeting) {
-        return NextResponse.json({ error: 'Meeting not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Meeting not found' }, { status: 404 });
+    }
+
+    if (user.role === 'TEACHER' && existingMeeting.teacherId !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const dataToUpdate: any = {
@@ -95,7 +99,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
   
-  if (!user || user.role !== 'ADMIN') {
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -104,7 +108,11 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
     
     const existingMeeting = await db.zoomLink.findUnique({ where: { id }, include: { zoomAccount: true } });
     if (!existingMeeting) {
-        return NextResponse.json({ error: 'Meeting not found' }, { status: 404 });
+      return NextResponse.json({ error: 'Meeting not found' }, { status: 404 });
+    }
+
+    if (user.role === 'TEACHER' && existingMeeting.teacherId !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Delete from Zoom API if applicable

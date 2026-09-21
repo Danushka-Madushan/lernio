@@ -6,18 +6,13 @@ import { AlertTriangle, Loader2, Trash, Trash2, X } from 'lucide-react';
 
 type AccessMode = 'GRADE' | 'CUSTOM';
 
-interface Student {
+interface UserTarget {
   id: string;
   username: string;
-  grade: Grade | null;
-  activeFrom: string | null;
-  activeTo: string | null;
-  accessMode: AccessMode;
-  createdAt: string;
 }
 
 const AccountDeleteConfirmModal = ({ target, loading, onConfirm, onCancel }: {
-  target: Student; loading: boolean;
+  target: UserTarget; loading: boolean;
   onConfirm: () => void; onCancel: () => void;
 }) => {
   return (
