@@ -18,25 +18,35 @@ const fs = require('fs');
 const path = require('path');
 const { Pool } = require('pg');
 
-// 1. Load environment variables from .env if present
+// 1. Load environment variables from .env and .env.local if present
 function loadEnv() {
-  const envPath = path.resolve(__dirname, '.env');
-  if (!fs.existsSync(envPath)) return;
+  const envCandidates = [
+    path.resolve(__dirname, '../.env.local'),
+    path.resolve(__dirname, '../.env'),
+    path.resolve(process.cwd(), '.env.local'),
+    path.resolve(process.cwd(), '.env'),
+    path.resolve(__dirname, '.env.local'),
+    path.resolve(__dirname, '.env'),
+  ];
 
-  const content = fs.readFileSync(envPath, 'utf8');
-  const lines = content.split('\n');
-  for (const rawLine of lines) {
-    const line = rawLine.trim();
-    if (!line || line.startsWith('#')) continue;
-    const eqIdx = line.indexOf('=');
-    if (eqIdx !== -1) {
-      const key = line.slice(0, eqIdx).trim();
-      let value = line.slice(eqIdx + 1).trim();
-      if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
-        value = value.slice(1, -1);
-      }
-      if (!process.env[key]) {
-        process.env[key] = value;
+  for (const envPath of envCandidates) {
+    if (!fs.existsSync(envPath)) continue;
+
+    const content = fs.readFileSync(envPath, 'utf8');
+    const lines = content.split('\n');
+    for (const rawLine of lines) {
+      const line = rawLine.trim();
+      if (!line || line.startsWith('#')) continue;
+      const eqIdx = line.indexOf('=');
+      if (eqIdx !== -1) {
+        const key = line.slice(0, eqIdx).trim();
+        let value = line.slice(eqIdx + 1).trim();
+        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+          value = value.slice(1, -1);
+        }
+        if (!process.env[key]) {
+          process.env[key] = value;
+        }
       }
     }
   }
