@@ -21,12 +21,17 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
     }
 
+    // If student has no assigned teacher, they have no meetings
+    if (!student.teacherId) {
+      return NextResponse.json({ meetings: [] });
+    }
+
     // Only fetch meetings for the student's assigned teacher and grade or global meetings (grade is null)
     // and where scheduledAt is not older than 2 hours.
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
     const whereClause: any = {
-      ...(student.teacherId ? { teacherId: student.teacherId } : {}),
+      teacherId: student.teacherId,
       OR: [
         { grade: null },
         ...(student.grade ? [{ grade: student.grade }] : []),
