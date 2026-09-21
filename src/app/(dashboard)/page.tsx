@@ -77,8 +77,19 @@ const DashboardPage = async ({
     }
 
     // GRADE mode: PUBLIC + grade-matched GRADE videos (scoped strictly to assigned teacher)
+    if (!studentRecord.teacherId) {
+      return (
+        <div className="min-h-screen bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-6xl space-y-6">
+            <GradeTabs activeGrade={activeGrade} />
+            <VideoGrid videos={[]} />
+          </div>
+        </div>
+      );
+    }
+
     const whereClause: any = {
-      ...(studentRecord.teacherId ? { teacherId: studentRecord.teacherId } : {}),
+      teacherId: studentRecord.teacherId,
       OR: [
         { visibility: VideoVisibility.PUBLIC },
         ...(studentRecord.grade

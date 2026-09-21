@@ -156,8 +156,12 @@ export async function GET(request: Request) {
       videos = customAccess.map((ca) => ca.video);
     } else {
       // GRADE mode: scoped strictly to assigned teacher!
+      if (!studentRecord.teacherId) {
+        return NextResponse.json({ videos: [] });
+      }
+
       const whereClause: any = {
-        ...(studentRecord.teacherId ? { teacherId: studentRecord.teacherId } : {}),
+        teacherId: studentRecord.teacherId,
         OR: [
           { visibility: VideoVisibility.PUBLIC },
           ...(studentRecord.grade
