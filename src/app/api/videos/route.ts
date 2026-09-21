@@ -51,6 +51,12 @@ export async function GET(request: Request) {
           visibility: true,
           viewsCount: true,
           teacherId: true,
+          teacher: {
+            select: {
+              id: true,
+              username: true,
+            },
+          },
           createdAt: true,
           updatedAt: true,
           _count: {
@@ -163,7 +169,10 @@ export async function GET(request: Request) {
           },
         },
       });
-      videos = customAccess.map((ca) => ca.video).filter(Boolean);
+      videos = customAccess
+        .map((ca) => ca.video)
+        .filter(Boolean)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
     } else {
       // GRADE mode: scoped strictly to assigned teacher!
       const whereClause: any = {

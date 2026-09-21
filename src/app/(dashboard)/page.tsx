@@ -78,7 +78,10 @@ const DashboardPage = async ({
           },
         },
       });
-      const videos = customAccess.map((ca) => ca.video).filter(Boolean);
+      const videos = customAccess
+        .map((ca) => ca.video)
+        .filter(Boolean)
+        .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
       return (
         <div className="min-h-screen bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
