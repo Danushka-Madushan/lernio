@@ -162,13 +162,15 @@ export async function DELETE(
     const seenKeys = new Set<string>();
     const r2KeysToDelete: { Key: string }[] = [];
     for (const v of teacherVideos) {
-      if (v.cloudflareR2Key && !v.cloudflareR2Key.startsWith('http') && !seenKeys.has(v.cloudflareR2Key)) {
-        seenKeys.add(v.cloudflareR2Key);
-        r2KeysToDelete.push({ Key: v.cloudflareR2Key });
+      const key = v.cloudflareR2Key?.trim();
+      if (key && !key.startsWith('http') && !seenKeys.has(key)) {
+        seenKeys.add(key);
+        r2KeysToDelete.push({ Key: key });
       }
-      if (v.cloudflareR2ThumbnailKey && !v.cloudflareR2ThumbnailKey.startsWith('http') && !seenKeys.has(v.cloudflareR2ThumbnailKey)) {
-        seenKeys.add(v.cloudflareR2ThumbnailKey);
-        r2KeysToDelete.push({ Key: v.cloudflareR2ThumbnailKey });
+      const thumbKey = v.cloudflareR2ThumbnailKey?.trim();
+      if (thumbKey && !thumbKey.startsWith('http') && !seenKeys.has(thumbKey)) {
+        seenKeys.add(thumbKey);
+        r2KeysToDelete.push({ Key: thumbKey });
       }
     }
 
