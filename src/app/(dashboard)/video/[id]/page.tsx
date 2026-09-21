@@ -43,7 +43,7 @@ const VideoPage = async ({
   }
 
   // 2. Teachers: can only view their own videos (unless admin)
-  if (user.role === 'TEACHER' && video.teacherId && video.teacherId !== user.id) {
+  if (user.role === 'TEACHER' && video.teacherId !== user.id) {
     notFound();
   }
 
@@ -66,7 +66,7 @@ const VideoPage = async ({
     }
 
     // Strict Teacher Isolation: student can only watch videos from their assigned teacher
-    if (video.teacherId && studentRecord.teacherId && video.teacherId !== studentRecord.teacherId) {
+    if (!studentRecord.teacherId || video.teacherId !== studentRecord.teacherId) {
       notFound();
     }
 
