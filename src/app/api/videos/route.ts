@@ -137,12 +137,22 @@ export async function GET(request: Request) {
       );
     }
 
+    // If student has no assigned teacher, return empty list
+    if (!studentRecord.teacherId) {
+      return NextResponse.json({ videos: [] });
+    }
+
     let videos;
 
     if (studentRecord.accessMode === 'CUSTOM') {
-      // CUSTOM mode: only videos in their explicit list
+      // CUSTOM mode: only videos in their explicit list belonging to their assigned teacher
       const customAccess = await db.customVideoAccess.findMany({
-        where: { userId: user.id },
+        where: {
+          userId: user.id,
+          video: {
+            teacherId: studentRecord.teacherId,
+          },
+        },
         include: {
           video: {
             include: {
@@ -153,13 +163,9 @@ export async function GET(request: Request) {
           },
         },
       });
-      videos = customAccess.map((ca) => ca.video);
+      videos = customAccess.map((ca) => ca.video).filter(Boolean);
     } else {
       // GRADE mode: scoped strictly to assigned teacher!
-      if (!studentRecord.teacherId) {
-        return NextResponse.json({ videos: [] });
-      }
-
       const whereClause: any = {
         teacherId: studentRecord.teacherId,
         OR: [

@@ -49,10 +49,27 @@ const DashboardPage = async ({
       );
     }
 
-    // CUSTOM mode: show only assigned videos (no grade tabs)
+    // If student has no assigned teacher, return empty feed
+    if (!studentRecord.teacherId) {
+      return (
+        <div className="min-h-screen bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-6xl space-y-6">
+            <GradeTabs activeGrade={activeGrade} />
+            <VideoGrid videos={[]} />
+          </div>
+        </div>
+      );
+    }
+
+    // CUSTOM mode: show only assigned videos from student's teacher (no grade tabs)
     if (studentRecord.accessMode === 'CUSTOM') {
       const customAccess = await db.customVideoAccess.findMany({
-        where: { userId: sessionUser.id },
+        where: {
+          userId: sessionUser.id,
+          video: {
+            teacherId: studentRecord.teacherId,
+          },
+        },
         include: {
           video: {
             include: {
@@ -61,7 +78,7 @@ const DashboardPage = async ({
           },
         },
       });
-      const videos = customAccess.map((ca) => ca.video);
+      const videos = customAccess.map((ca) => ca.video).filter(Boolean);
 
       return (
         <div className="min-h-screen bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
@@ -77,16 +94,6 @@ const DashboardPage = async ({
     }
 
     // GRADE mode: PUBLIC + grade-matched GRADE videos (scoped strictly to assigned teacher)
-    if (!studentRecord.teacherId) {
-      return (
-        <div className="min-h-screen bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-6xl space-y-6">
-            <GradeTabs activeGrade={activeGrade} />
-            <VideoGrid videos={[]} />
-          </div>
-        </div>
-      );
-    }
 
     const whereClause: any = {
       teacherId: studentRecord.teacherId,

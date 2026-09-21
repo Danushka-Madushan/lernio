@@ -79,6 +79,10 @@ export async function PUT(
       });
       if (targetTeacher && (targetTeacher.role === 'ADMIN' || targetTeacher.role === 'TEACHER')) {
         updateData.teacherId = teacherId;
+        // If teacher is being changed, clear custom video access to prevent stale cross-tenant access
+        if (student.teacherId !== teacherId) {
+          await db.customVideoAccess.deleteMany({ where: { userId: id } });
+        }
       } else {
         return NextResponse.json({ error: 'Invalid teacher specified' }, { status: 400 });
       }
