@@ -55,7 +55,7 @@ export async function GET(
     }
 
     // 2. For teachers: check video ownership
-    if (user.role === 'TEACHER' && video.teacherId && video.teacherId !== user.id) {
+    if (user.role === 'TEACHER' && video.teacherId !== user.id) {
       return NextResponse.json({ error: 'Access denied to this video' }, { status: 403 });
     }
 
@@ -84,8 +84,8 @@ export async function GET(
         );
       }
 
-      // Strict Teacher isolation: video must belong to student's teacher
-      if (video.teacherId && studentRecord.teacherId && video.teacherId !== studentRecord.teacherId) {
+      // Strict Teacher isolation: video must belong to student's assigned teacher
+      if (!studentRecord.teacherId || video.teacherId !== studentRecord.teacherId) {
         return NextResponse.json({ error: 'Access denied to this video' }, { status: 403 });
       }
 
