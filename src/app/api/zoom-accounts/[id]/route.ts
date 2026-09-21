@@ -73,6 +73,12 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
+    // Unlink any meetings using this Zoom account before deleting
+    await db.zoomLink.updateMany({
+      where: { zoomAccountId: id },
+      data: { zoomAccountId: null },
+    });
+
     await db.zoomAccount.delete({
       where: { id },
     });

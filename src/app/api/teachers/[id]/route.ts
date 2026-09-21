@@ -210,8 +210,19 @@ export async function DELETE(
       // Delete Zoom meetings
       await tx.zoomLink.deleteMany({ where: { teacherId: id } });
 
-      // Delete Zoom accounts
-      await tx.zoomAccount.deleteMany({ where: { userId: id } });
+      // Unlink and delete Zoom accounts
+      const teacherZoomAccounts = await tx.zoomAccount.findMany({
+        where: { userId: id },
+        select: { id: true },
+      });
+      const zoomAccountIds = teacherZoomAccounts.map((a) => a.id);
+      if (zoomAccountIds.length > 0) {
+        await tx.zoomLink.updateMany({
+          where: { zoomAccountId: { in: zoomAccountIds } },
+          data: { zoomAccountId: null },
+        });
+        await tx.zoomAccount.deleteMany({ where: { id: { in: zoomAccountIds } } });
+      }
 
       // Delete teacher's own comments, likes, views, and custom video access
       await tx.customVideoAccess.deleteMany({ where: { userId: id } });
