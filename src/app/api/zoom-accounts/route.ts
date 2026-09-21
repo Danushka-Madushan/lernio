@@ -9,12 +9,14 @@ export async function GET(req: NextRequest) {
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
 
-  if (!user) {
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
+    const whereClause = user.role === 'TEACHER' ? { userId: user.id } : {};
     const accounts = await db.zoomAccount.findMany({
+      where: whereClause,
       orderBy: { createdAt: 'desc' },
       select: {
         id: true,
@@ -39,7 +41,7 @@ export async function POST(req: NextRequest) {
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
 
-  if (!user) {
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -67,6 +69,7 @@ export async function POST(req: NextRequest) {
         clientId,
         clientSecret,
         picUrl,
+        userId: user.id,
       },
     });
 
