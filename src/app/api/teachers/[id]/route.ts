@@ -41,6 +41,15 @@ export async function PUT(
       updateData.hashedPassword = await bcrypt.hash(password, 10);
     }
 
+    const targetTeacher = await db.user.findUnique({
+      where: { id },
+      select: { id: true, role: true },
+    });
+
+    if (!targetTeacher || targetTeacher.role === 'STUDENT') {
+      return NextResponse.json({ error: 'Teacher not found' }, { status: 404 });
+    }
+
     const updated = await db.user.update({
       where: { id },
       data: updateData,
@@ -88,6 +97,15 @@ export async function DELETE(
   }
 
   try {
+    const adminUser = await db.user.findUnique({
+      where: { id: user.id },
+      select: { id: true, role: true },
+    });
+
+    if (!adminUser || adminUser.role !== 'ADMIN') {
+      return NextResponse.json({ error: 'Unauthorized: Admin record not found' }, { status: 403 });
+    }
+
     const targetTeacher = await db.user.findUnique({
       where: { id },
       select: { id: true, role: true, username: true },
@@ -141,12 +159,15 @@ export async function DELETE(
     });
 
     // ─── 2. Delete all video files & thumbnails from Cloudflare R2 ────
+    const seenKeys = new Set<string>();
     const r2KeysToDelete: { Key: string }[] = [];
     for (const v of teacherVideos) {
-      if (v.cloudflareR2Key && !v.cloudflareR2Key.startsWith('http')) {
+      if (v.cloudflareR2Key && !v.cloudflareR2Key.startsWith('http') && !seenKeys.has(v.cloudflareR2Key)) {
+        seenKeys.add(v.cloudflareR2Key);
         r2KeysToDelete.push({ Key: v.cloudflareR2Key });
       }
-      if (v.cloudflareR2ThumbnailKey && !v.cloudflareR2ThumbnailKey.startsWith('http')) {
+      if (v.cloudflareR2ThumbnailKey && !v.cloudflareR2ThumbnailKey.startsWith('http') && !seenKeys.has(v.cloudflareR2ThumbnailKey)) {
+        seenKeys.add(v.cloudflareR2ThumbnailKey);
         r2KeysToDelete.push({ Key: v.cloudflareR2ThumbnailKey });
       }
     }
@@ -194,7 +215,7 @@ export async function DELETE(
       // Reassign assigned students to current admin so students are not left orphaned
       await tx.user.updateMany({
         where: { teacherId: id },
-        data: { teacherId: user.id },
+        data: { teacherId: adminUser.id },
       });
 
       if (videoIds.length > 0) {

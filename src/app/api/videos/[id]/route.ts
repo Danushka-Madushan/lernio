@@ -201,8 +201,8 @@ export async function PUT(
     }
 
     const updateData: any = {
-      title,
-      description,
+      title: title.trim(),
+      description: typeof description === 'string' ? (description.trim() || null) : (description ?? null),
       grade: grade ? (grade as Grade) : null,
       ...(cloudflareR2ThumbnailKey !== undefined ? { cloudflareR2ThumbnailKey } : {}),
     };
