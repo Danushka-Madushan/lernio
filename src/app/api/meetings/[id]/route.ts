@@ -44,7 +44,7 @@ export async function PUT(request: Request, context: { params: Promise<{ id: str
       return NextResponse.json({ error: 'Meeting not found' }, { status: 404 });
     }
 
-    if (user.role === 'TEACHER' && existingMeeting.teacherId && existingMeeting.teacherId !== user.id) {
+    if (user.role === 'TEACHER' && existingMeeting.teacherId !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -111,7 +111,7 @@ export async function DELETE(request: Request, context: { params: Promise<{ id: 
       return NextResponse.json({ error: 'Meeting not found' }, { status: 404 });
     }
 
-    if (user.role === 'TEACHER' && existingMeeting.teacherId && existingMeeting.teacherId !== user.id) {
+    if (user.role === 'TEACHER' && existingMeeting.teacherId !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
