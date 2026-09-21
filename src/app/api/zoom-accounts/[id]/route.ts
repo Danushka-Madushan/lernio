@@ -8,12 +8,21 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
 
-  if (!user) {
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     const { id } = await context.params;
+    const existingAccount = await db.zoomAccount.findUnique({ where: { id } });
+    if (!existingAccount) {
+      return NextResponse.json({ error: 'Zoom account not found' }, { status: 404 });
+    }
+
+    if (user.role === 'TEACHER' && existingAccount.userId && existingAccount.userId !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const { name, email, accountId, clientId, clientSecret } = await req.json();
 
     const dataToUpdate: any = {};
@@ -49,12 +58,21 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
 
-  if (!user) {
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER')) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     const { id } = await context.params;
+    const existingAccount = await db.zoomAccount.findUnique({ where: { id } });
+    if (!existingAccount) {
+      return NextResponse.json({ error: 'Zoom account not found' }, { status: 404 });
+    }
+
+    if (user.role === 'TEACHER' && existingAccount.userId && existingAccount.userId !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     await db.zoomAccount.delete({
       where: { id },
     });
