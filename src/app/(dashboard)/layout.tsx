@@ -68,13 +68,13 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
                   </div>
                 </div>
 
-                {/* Admin Panel link — only entry point from client side for admins */}
-                {user.role === 'ADMIN' && (
+                {/* Admin / Teacher Panel link */}
+                {(user.role === 'ADMIN' || user.role === 'TEACHER') && (
                   <Link
                     href="/admin"
                     className="flex items-center px-3 py-1.5 bg-[#e8f0fe] text-blue-500 font-medium text-xs rounded-full hover:bg-[#d2e3fc] transition-colors focus-visible:ring-2 focus-visible:ring-blue-500/40 outline-none"
                   >
-                    Admin Panel
+                    {user.role === 'ADMIN' ? 'Admin Panel' : 'Teacher Panel'}
                   </Link>
                 )}
 
