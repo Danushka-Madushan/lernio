@@ -13,11 +13,24 @@ export async function GET(
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
 
-  if (!user || user.role !== 'ADMIN') {
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   try {
+    const student = await db.user.findUnique({
+      where: { id },
+      select: { id: true, role: true, teacherId: true },
+    });
+
+    if (!student || student.role !== 'STUDENT') {
+      return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+    }
+
+    if (user.role === 'TEACHER' && student.teacherId !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const customAccess = await db.customVideoAccess.findMany({
       where: { userId: id },
       include: {
@@ -28,6 +41,7 @@ export async function GET(
             grade: true,
             visibility: true,
             cloudflareR2ThumbnailKey: true,
+            teacherId: true,
           },
         },
       },
@@ -36,7 +50,7 @@ export async function GET(
     const videoIds = customAccess.map((ca) => ca.videoId);
     const videos = customAccess.map((ca) => ca.video);
 
-    return NextResponse.json({ videoIds, videos });
+    return NextResponse.json({ videoIds, videos, teacherId: student.teacherId });
   } catch (error: unknown) {
     console.error('Get custom videos error:', error);
     return NextResponse.json({ error: 'Failed to retrieve custom video list' }, { status: 500 });
@@ -53,24 +67,50 @@ export async function PUT(
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
 
-  if (!user || user.role !== 'ADMIN') {
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
   try {
+    const student = await db.user.findUnique({
+      where: { id },
+      select: { id: true, role: true, teacherId: true },
+    });
+
+    if (!student || student.role !== 'STUDENT') {
+      return NextResponse.json({ error: 'Student not found' }, { status: 404 });
+    }
+
+    if (user.role === 'TEACHER' && student.teacherId !== user.id) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const { videoIds } = await request.json();
 
     if (!Array.isArray(videoIds)) {
       return NextResponse.json({ error: 'videoIds must be an array' }, { status: 400 });
     }
 
+    // If student has an assigned teacher, only assign videos from that teacher
+    let allowedVideoIds = videoIds;
+    if (videoIds.length > 0 && student.teacherId) {
+      const validVideos = await db.video.findMany({
+        where: {
+          id: { in: videoIds },
+          teacherId: student.teacherId,
+        },
+        select: { id: true },
+      });
+      allowedVideoIds = validVideos.map((v) => v.id);
+    }
+
     // Replace all custom video access entries for this user atomically
     await db.$transaction([
       db.customVideoAccess.deleteMany({ where: { userId: id } }),
-      ...(videoIds.length > 0
+      ...(allowedVideoIds.length > 0
         ? [
             db.customVideoAccess.createMany({
-              data: videoIds.map((videoId: string) => ({
+              data: allowedVideoIds.map((videoId: string) => ({
                 userId: id,
                 videoId,
               })),
@@ -80,7 +120,7 @@ export async function PUT(
         : []),
     ]);
 
-    return NextResponse.json({ success: true, count: videoIds.length });
+    return NextResponse.json({ success: true, count: allowedVideoIds.length });
   } catch (error: unknown) {
     console.error('Set custom videos error:', error);
     return NextResponse.json({ error: 'Failed to update custom video list' }, { status: 500 });
