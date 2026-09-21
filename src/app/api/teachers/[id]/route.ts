@@ -143,8 +143,12 @@ export async function DELETE(
     // ─── 2. Delete all video files & thumbnails from Cloudflare R2 ────
     const r2KeysToDelete: { Key: string }[] = [];
     for (const v of teacherVideos) {
-      if (v.cloudflareR2Key) r2KeysToDelete.push({ Key: v.cloudflareR2Key });
-      if (v.cloudflareR2ThumbnailKey) r2KeysToDelete.push({ Key: v.cloudflareR2ThumbnailKey });
+      if (v.cloudflareR2Key && !v.cloudflareR2Key.startsWith('http')) {
+        r2KeysToDelete.push({ Key: v.cloudflareR2Key });
+      }
+      if (v.cloudflareR2ThumbnailKey && !v.cloudflareR2ThumbnailKey.startsWith('http')) {
+        r2KeysToDelete.push({ Key: v.cloudflareR2ThumbnailKey });
+      }
     }
 
     if (r2KeysToDelete.length > 0) {

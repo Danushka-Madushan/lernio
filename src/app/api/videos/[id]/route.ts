@@ -255,13 +255,23 @@ export async function DELETE(
       );
     }
 
-    // 2. Delete file from Cloudflare R2
+    // 2. Delete file and thumbnail from Cloudflare R2
     try {
-      const deleteCommand = new DeleteObjectCommand({
-        Bucket: bucketName,
-        Key: video.cloudflareR2Key,
-      });
-      await s3.send(deleteCommand);
+      if (video.cloudflareR2Key && !video.cloudflareR2Key.startsWith('http')) {
+        const deleteCommand = new DeleteObjectCommand({
+          Bucket: bucketName,
+          Key: video.cloudflareR2Key,
+        });
+        await s3.send(deleteCommand);
+      }
+
+      if (video.cloudflareR2ThumbnailKey && !video.cloudflareR2ThumbnailKey.startsWith('http')) {
+        const deleteThumbCommand = new DeleteObjectCommand({
+          Bucket: bucketName,
+          Key: video.cloudflareR2ThumbnailKey,
+        });
+        await s3.send(deleteThumbCommand);
+      }
     } catch (r2Err) {
       console.error('Failed to delete file from R2 bucket:', r2Err);
     }
