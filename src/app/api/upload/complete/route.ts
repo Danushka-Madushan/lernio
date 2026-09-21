@@ -9,7 +9,7 @@ export async function POST(request: Request) {
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
   
-  if (!user || user.role !== 'ADMIN') {
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
