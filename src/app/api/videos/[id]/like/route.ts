@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
+import { verifyVideoAccess } from '@/lib/video-access';
 
 export async function POST(
   request: Request,
@@ -14,6 +15,14 @@ export async function POST(
   
   if (!user) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const access = await verifyVideoAccess(user, videoId);
+  if (!access.allowed) {
+    if (access.reason === 'not_found') {
+      return NextResponse.json({ error: 'Video not found' }, { status: 404 });
+    }
+    return NextResponse.json({ error: 'Access denied to this video' }, { status: 403 });
   }
 
   try {
