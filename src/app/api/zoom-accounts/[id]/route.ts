@@ -19,7 +19,7 @@ export async function PUT(req: NextRequest, context: { params: Promise<{ id: str
       return NextResponse.json({ error: 'Zoom account not found' }, { status: 404 });
     }
 
-    if (user.role === 'TEACHER' && existingAccount.userId && existingAccount.userId !== user.id) {
+    if (user.role === 'TEACHER' && existingAccount.userId !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -69,7 +69,7 @@ export async function DELETE(req: NextRequest, context: { params: Promise<{ id: 
       return NextResponse.json({ error: 'Zoom account not found' }, { status: 404 });
     }
 
-    if (user.role === 'TEACHER' && existingAccount.userId && existingAccount.userId !== user.id) {
+    if (user.role === 'TEACHER' && existingAccount.userId !== user.id) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
