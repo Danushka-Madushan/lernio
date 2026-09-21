@@ -21,20 +21,23 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
     }
 
-    // Only fetch meetings for the student's grade or global meetings (grade is null)
+    // Only fetch meetings for the student's assigned teacher and grade or global meetings (grade is null)
     // and where scheduledAt is not older than 2 hours.
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
-    const meetings = await db.zoomLink.findMany({
-      where: {
-        OR: [
-          { grade: null },
-          ...(student.grade ? [{ grade: student.grade }] : []),
-        ],
-        scheduledAt: {
-          gte: twoHoursAgo,
-        },
+    const whereClause: any = {
+      ...(student.teacherId ? { teacherId: student.teacherId } : {}),
+      OR: [
+        { grade: null },
+        ...(student.grade ? [{ grade: student.grade }] : []),
+      ],
+      scheduledAt: {
+        gte: twoHoursAgo,
       },
+    };
+
+    const meetings = await db.zoomLink.findMany({
+      where: whereClause,
       orderBy: { scheduledAt: 'asc' }, // Show next meetings first
     });
 
