@@ -14,16 +14,31 @@ import {
   ChevronDown,
 } from 'lucide-react';
 
-const CloudflareR2Widget = () => {
+interface StorageMetrics {
+  storageGB: number;
+  classAOps: number;
+  classBOps: number;
+  percentUsed: number;
+  status: 'healthy' | 'warning' | 'critical';
+  role?: 'ADMIN' | 'TEACHER';
+}
+
+interface CloudflareR2WidgetProps {
+  isAdmin?: boolean;
+}
+
+const CloudflareR2Widget = ({ isAdmin = false }: CloudflareR2WidgetProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
-  
-  const [data, setData] = useState({
+
+  const [data, setData] = useState<StorageMetrics>({
     storageGB: 0,
     classAOps: 0,
     classBOps: 0,
+    percentUsed: 0,
+    status: 'healthy',
   });
 
   // Handle clicking outside the popup to close it
@@ -37,7 +52,7 @@ const CloudflareR2Widget = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // 2026 Pricing Constants
+  // 2026 Pricing Constants (for Admin view)
   const STORAGE_PRICE_PER_GB = 0.015;
   const CLASS_A_PRICE_PER_M = 4.5;
   const CLASS_B_PRICE_PER_M = 0.36;
@@ -63,9 +78,12 @@ const CloudflareR2Widget = () => {
 
         if (isMounted) {
           setData({
-            storageGB: json.storageGB,
-            classAOps: json.classAOps,
-            classBOps: json.classBOps,
+            storageGB: json.storageGB || 0,
+            classAOps: json.classAOps || 0,
+            classBOps: json.classBOps || 0,
+            percentUsed: json.percentUsed || 0,
+            status: json.status || 'healthy',
+            role: json.role,
           });
         }
       } catch (err: any) {
@@ -86,7 +104,9 @@ const CloudflareR2Widget = () => {
     };
   }, []);
 
-  // Move calculations up so they can be shown on the trigger button
+  const isEffectiveAdmin = isAdmin || data.role === 'ADMIN';
+
+  // Cost calculations for Admin view
   const billableStorage = Math.max(0, data.storageGB - FREE_TIER_STORAGE);
   const billableClassA = Math.max(0, data.classAOps - FREE_TIER_CLASS_A);
   const billableClassB = Math.max(0, data.classBOps - FREE_TIER_CLASS_B);
@@ -102,39 +122,106 @@ const CloudflareR2Widget = () => {
     return num.toString();
   };
 
+  // Status color helpers
+  const getStatusColor = () => {
+    if (data.status === 'critical') return 'text-rose-600 bg-rose-50 border-rose-200';
+    if (data.status === 'warning') return 'text-amber-600 bg-amber-50 border-amber-200';
+    return 'text-emerald-700 bg-emerald-50 border-emerald-200';
+  };
+
+  const getProgressBarColor = () => {
+    if (data.status === 'critical') return 'bg-rose-500';
+    if (data.status === 'warning') return 'bg-amber-500';
+    return 'bg-emerald-500';
+  };
+
+  // ── Teacher Minimal Trigger Button ─────────────────────────────────────────
+  const renderTeacherTrigger = () => (
+    <button
+      onClick={() => setIsOpen(!isOpen)}
+      type="button"
+      className={`flex items-center gap-2 rounded-full border px-3.5 py-2 text-xs font-medium shadow-2xs transition-all duration-150 ${
+        data.status === 'critical'
+          ? 'bg-rose-50/80 border-rose-300 text-rose-700 hover:bg-rose-100'
+          : data.status === 'warning'
+          ? 'bg-amber-50/80 border-amber-300 text-amber-800 hover:bg-amber-100'
+          : 'bg-white border-[#dadce0] text-[#5f6368] hover:bg-[#f8f9fa] hover:border-[#c4c7cc]'
+      }`}
+    >
+      <HardDrive
+        size={14}
+        className={
+          loading
+            ? 'animate-pulse text-blue-500'
+            : data.status === 'critical'
+            ? 'text-rose-600'
+            : data.status === 'warning'
+            ? 'text-amber-600'
+            : 'text-gray-500'
+        }
+      />
+      {loading ? (
+        <span>Checking storage…</span>
+      ) : error ? (
+        <span className="text-gray-500">Storage</span>
+      ) : (
+        <div className="flex items-center gap-1.5">
+          <span
+            className={`inline-block h-2 w-2 rounded-full ${
+              data.status === 'critical'
+                ? 'bg-rose-500 animate-pulse'
+                : data.status === 'warning'
+                ? 'bg-amber-500'
+                : 'bg-emerald-500'
+            }`}
+          />
+          <span>Storage • {data.percentUsed}%</span>
+          {data.status === 'critical' && <span className="font-semibold text-rose-600">(Low)</span>}
+        </div>
+      )}
+      <ChevronDown size={13} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+    </button>
+  );
+
+  // ── Admin Trigger Button ───────────────────────────────────────────────────
+  const renderAdminTrigger = () => (
+    <button
+      onClick={() => setIsOpen(!isOpen)}
+      type="button"
+      className="flex items-center gap-2 rounded-full bg-white border border-[#dadce0] px-4 py-2 text-sm font-medium text-[#5f6368] shadow-2xs transition-all duration-150 hover:bg-[#f8f9fa] hover:border-[#c4c7cc]"
+    >
+      <Cloud size={15} className={loading ? 'animate-pulse text-blue-500' : 'text-[#f6821f]'} />
+      {loading ? (
+        <span>Syncing...</span>
+      ) : error ? (
+        <span className="text-red-500">Error</span>
+      ) : (
+        <span>{data.storageGB.toFixed(2)}GB • ${totalCost.toFixed(2)}</span>
+      )}
+      <ChevronDown size={14} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
+    </button>
+  );
+
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Trigger Button - Sized to match the "Upload New Video" button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 rounded-full bg-white border border-[#dadce0] px-4 py-2 text-sm font-medium text-[#5f6368] shadow-sm transition-all duration-150 hover:bg-[#f8f9fa] hover:border-[#c4c7cc]"
-      >
-        <Cloud size={15} className={loading ? "animate-pulse text-blue-500" : "text-[#f6821f]"} />
-        {loading ? (
-          <span>Syncing...</span>
-        ) : error ? (
-          <span className="text-red-500">Error</span>
-        ) : (
-          <span>{data.storageGB.toFixed(2)}GB • ${totalCost.toFixed(2)}</span>
-        )}
-        <ChevronDown size={14} className={`transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`} />
-      </button>
+      {isEffectiveAdmin ? renderAdminTrigger() : renderTeacherTrigger()}
 
       {/* Floating Widget Popup */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 z-50 flex w-96 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(0,0,0,0.15)] ring-1 ring-black/5 origin-top-right">
+        <div className="absolute right-0 top-full mt-2 z-50 flex w-84 sm:w-96 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(0,0,0,0.15)] ring-1 ring-black/5 origin-top-right">
           {loading ? (
-            <div className="flex h-80 flex-col items-center justify-center p-6 text-center">
+            <div className="flex h-56 flex-col items-center justify-center p-6 text-center">
               <Loader2 size={24} className="mb-3 animate-spin text-blue-500" />
-              <p className="text-xs text-[#5f6368]">Syncing live metrics...</p>
+              <p className="text-xs text-[#5f6368]">Checking system storage…</p>
             </div>
           ) : error ? (
-            <div className="flex h-80 flex-col items-center justify-center p-6 text-center">
+            <div className="flex h-56 flex-col items-center justify-center p-6 text-center">
               <AlertTriangle size={24} className="mb-3 text-red-500" />
-              <p className="mb-1 text-sm font-medium text-[#202124]">Failed to load metrics</p>
+              <p className="mb-1 text-sm font-medium text-[#202124]">Storage check unavailable</p>
               <p className="text-xs text-[#5f6368]">{error}</p>
             </div>
-          ) : (
+          ) : isEffectiveAdmin ? (
+            // ── Admin Full Cloudflare View ─────────────────────────────────
             <>
               {/* Header */}
               <div className="flex items-center justify-between border-b border-[#e8eaed] px-5 py-4">
@@ -215,11 +302,78 @@ const CloudflareR2Widget = () => {
                 </div>
               </div>
             </>
+          ) : (
+            // ── Teacher Minimal View (Sanitized, No Cloudflare exposure) ────
+            <div className="p-5 space-y-4">
+              {/* Header */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div
+                    className={`flex h-8 w-8 items-center justify-center rounded-lg ${
+                      data.status === 'critical'
+                        ? 'bg-rose-100 text-rose-600'
+                        : data.status === 'warning'
+                        ? 'bg-amber-100 text-amber-600'
+                        : 'bg-blue-50 text-blue-600'
+                    }`}
+                  >
+                    <HardDrive size={18} />
+                  </div>
+                  <div>
+                    <h2 className="text-[14px] font-semibold text-[#202124]">Storage Status</h2>
+                    <p className="text-[11px] text-[#5f6368]">Video upload capacity</p>
+                  </div>
+                </div>
+                <div className={`flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-semibold ${getStatusColor()}`}>
+                  {data.status === 'critical' ? (
+                    <>
+                      <AlertTriangle size={12} className="animate-pulse" />
+                      Running Low
+                    </>
+                  ) : data.status === 'warning' ? (
+                    <>
+                      <AlertTriangle size={12} />
+                      Moderate
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle2 size={12} />
+                      Normal
+                    </>
+                  )}
+                </div>
+              </div>
+
+              {/* Progress Bar & Status Section */}
+              <div className="space-y-2.5 pt-1">
+                <div className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-[#5f6368]">Capacity Used</span>
+                  <span className={`font-bold ${data.status === 'critical' ? 'text-rose-600' : data.status === 'warning' ? 'text-amber-600' : 'text-[#202124]'}`}>
+                    {data.percentUsed}%
+                  </span>
+                </div>
+
+                <div className="h-2.5 w-full rounded-full bg-gray-100 overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all duration-500 ${getProgressBarColor()}`}
+                    style={{ width: `${Math.min(100, Math.max(5, data.percentUsed))}%` }}
+                  />
+                </div>
+
+                <p className="text-[12px] text-[#5f6368] leading-relaxed pt-1">
+                  {data.status === 'critical'
+                    ? 'Storage is running low (red). Please notify the administrator so they can manually check and expand capacity.'
+                    : data.status === 'warning'
+                    ? 'Storage usage is approaching high capacity. Keep an eye on storage if planning to upload large video files.'
+                    : 'Storage capacity is normal and healthy. All video lessons will upload and stream smoothly.'}
+                </p>
+              </div>
+            </div>
           )}
         </div>
       )}
     </div>
   );
-}
+};
 
 export default CloudflareR2Widget;

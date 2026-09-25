@@ -173,13 +173,21 @@ const MeetingsAdminPage = () => {
 
   const fetchRoleAndTeachers = useCallback(async () => {
     try {
-      const res = await fetch('/api/teachers');
-      if (res.ok) {
-        const data = await res.json();
-        setIsAdmin(true);
-        setTeachers(data.teachers || []);
-      } else {
+      const meRes = await fetch('/api/auth/me');
+      if (!meRes.ok) {
         setIsAdmin(false);
+        return;
+      }
+      const meData = await meRes.json();
+      const admin = meData.user?.role === 'ADMIN';
+      setIsAdmin(admin);
+
+      if (admin) {
+        const res = await fetch('/api/teachers');
+        if (res.ok) {
+          const data = await res.json();
+          setTeachers(data.teachers || []);
+        }
       }
     } catch {
       setIsAdmin(false);

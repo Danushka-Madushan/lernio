@@ -92,7 +92,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Zoom account not found' }, { status: 404 });
       }
 
-      if (user.role === 'TEACHER' && zoomAccount.userId && zoomAccount.userId !== user.id) {
+      if (user.role === 'TEACHER' && zoomAccount.userId !== user.id) {
         return NextResponse.json({ error: 'Forbidden: Access to this Zoom account is restricted' }, { status: 403 });
       }
 

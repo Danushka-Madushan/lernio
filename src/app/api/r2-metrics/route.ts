@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/jwt';
 
 // Billing data must always be fresh - never let this route be
 // statically cached or served from the Next.js data cache.
@@ -41,6 +43,14 @@ const toDateStr = (d: Date) => d.toISOString().slice(0, 10); // "YYYY-MM-DD"
 const quoteList = (items: string[]) => items.map((item) => `"${item}"`).join(', ');
 
 export async function GET() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('session_token')?.value;
+  const user = token ? await verifyToken(token) : null;
+
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER')) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   const accountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID;
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
 
@@ -158,7 +168,27 @@ export async function GET() {
     const classAOps = sumRequests(accountData.classAOps);
     const classBOps = sumRequests(accountData.classBOps);
 
-    return NextResponse.json({ storageGB, classAOps, classBOps });
+    // Free tier storage baseline is 10GB
+    const percentUsed = Math.min(100, Math.round((storageGB / 10) * 100));
+    const status = percentUsed >= 90 ? 'critical' : percentUsed >= 75 ? 'warning' : 'healthy';
+
+    // For TEACHER role: return sanitized high-level status only (no Cloudflare or ops details)
+    if (user.role === 'TEACHER') {
+      return NextResponse.json({
+        percentUsed,
+        status,
+        role: 'TEACHER',
+      });
+    }
+
+    return NextResponse.json({
+      storageGB,
+      classAOps,
+      classBOps,
+      percentUsed,
+      status,
+      role: 'ADMIN',
+    });
   } catch (err) {
     const message =
       err instanceof Error ? err.message : 'Unknown error contacting Cloudflare.';
