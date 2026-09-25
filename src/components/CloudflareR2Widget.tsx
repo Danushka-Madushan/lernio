@@ -12,9 +12,6 @@ import {
   Loader2,
   AlertTriangle,
   ChevronDown,
-  Copy,
-  Check,
-  Send,
 } from 'lucide-react';
 
 interface StorageMetrics {
@@ -34,7 +31,6 @@ const CloudflareR2Widget = ({ isAdmin = false }: CloudflareR2WidgetProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [isOpen, setIsOpen] = useState(false);
-  const [copied, setCopied] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const [data, setData] = useState<StorageMetrics>({
@@ -126,20 +122,6 @@ const CloudflareR2Widget = ({ isAdmin = false }: CloudflareR2WidgetProps) => {
     return num.toString();
   };
 
-  const ALERT_MESSAGE = `Hey, our platform storage is kinda red (${data.percentUsed}% used). Could you please check the storage capacity?`;
-
-  const handleCopyAlert = async () => {
-    try {
-      await navigator.clipboard.writeText(ALERT_MESSAGE);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 3000);
-    } catch {
-      // Fallback
-      setCopied(true);
-      setTimeout(() => setCopied(false), 3000);
-    }
-  };
-
   // Status color helpers
   const getStatusColor = () => {
     if (data.status === 'critical') return 'text-rose-600 bg-rose-50 border-rose-200';
@@ -226,14 +208,14 @@ const CloudflareR2Widget = ({ isAdmin = false }: CloudflareR2WidgetProps) => {
 
       {/* Floating Widget Popup */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 z-50 flex w-88 sm:w-96 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(0,0,0,0.15)] ring-1 ring-black/5 origin-top-right">
+        <div className="absolute right-0 top-full mt-2 z-50 flex w-84 sm:w-96 flex-col overflow-hidden rounded-2xl bg-white shadow-[0_4px_20px_rgba(0,0,0,0.15)] ring-1 ring-black/5 origin-top-right">
           {loading ? (
-            <div className="flex h-64 flex-col items-center justify-center p-6 text-center">
+            <div className="flex h-56 flex-col items-center justify-center p-6 text-center">
               <Loader2 size={24} className="mb-3 animate-spin text-blue-500" />
               <p className="text-xs text-[#5f6368]">Checking system storage…</p>
             </div>
           ) : error ? (
-            <div className="flex h-64 flex-col items-center justify-center p-6 text-center">
+            <div className="flex h-56 flex-col items-center justify-center p-6 text-center">
               <AlertTriangle size={24} className="mb-3 text-red-500" />
               <p className="mb-1 text-sm font-medium text-[#202124]">Storage check unavailable</p>
               <p className="text-xs text-[#5f6368]">{error}</p>
@@ -322,9 +304,9 @@ const CloudflareR2Widget = ({ isAdmin = false }: CloudflareR2WidgetProps) => {
             </>
           ) : (
             // ── Teacher Minimal View (Sanitized, No Cloudflare exposure) ────
-            <div>
+            <div className="p-5 space-y-4">
               {/* Header */}
-              <div className="flex items-center justify-between border-b border-[#e8eaed] px-5 py-4">
+              <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2.5">
                   <div
                     className={`flex h-8 w-8 items-center justify-center rounded-lg ${
@@ -363,7 +345,7 @@ const CloudflareR2Widget = ({ isAdmin = false }: CloudflareR2WidgetProps) => {
               </div>
 
               {/* Progress Bar & Status Section */}
-              <div className="p-5 space-y-3">
+              <div className="space-y-2.5 pt-1">
                 <div className="flex items-center justify-between text-xs">
                   <span className="font-medium text-[#5f6368]">Capacity Used</span>
                   <span className={`font-bold ${data.status === 'critical' ? 'text-rose-600' : data.status === 'warning' ? 'text-amber-600' : 'text-[#202124]'}`}>
@@ -378,57 +360,12 @@ const CloudflareR2Widget = ({ isAdmin = false }: CloudflareR2WidgetProps) => {
                   />
                 </div>
 
-                <p className="text-[12px] text-[#5f6368] leading-relaxed">
+                <p className="text-[12px] text-[#5f6368] leading-relaxed pt-1">
                   {data.status === 'critical'
                     ? 'Storage is running low (red). Please notify the administrator so they can manually check and expand capacity.'
                     : data.status === 'warning'
                     ? 'Storage usage is approaching high capacity. Keep an eye on storage if planning to upload large video files.'
                     : 'Storage capacity is normal and healthy. All video lessons will upload and stream smoothly.'}
-                </p>
-              </div>
-
-              {/* One-Click Notify Admin Section */}
-              <div className="bg-[#f8f9fa] border-t border-[#e8eaed] p-4 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="text-[11px] font-semibold uppercase tracking-wider text-[#5f6368]">
-                    Notify Administrator
-                  </span>
-                  {data.status === 'critical' && (
-                    <span className="inline-block rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-medium text-rose-700">
-                      Action Recommended
-                    </span>
-                  )}
-                </div>
-
-                <div className="rounded-xl border border-gray-200 bg-white p-2.5 text-[11px] text-gray-600 font-mono select-all">
-                  &ldquo;{ALERT_MESSAGE}&rdquo;
-                </div>
-
-                <button
-                  type="button"
-                  onClick={handleCopyAlert}
-                  className={`w-full flex items-center justify-center gap-2 rounded-xl py-2 px-3 text-xs font-semibold transition-all duration-150 cursor-pointer ${
-                    copied
-                      ? 'bg-emerald-600 text-white'
-                      : data.status === 'critical'
-                      ? 'bg-rose-600 text-white hover:bg-rose-700 shadow-xs'
-                      : 'bg-blue-500 text-white hover:bg-blue-600 shadow-xs'
-                  }`}
-                >
-                  {copied ? (
-                    <>
-                      <Check size={14} />
-                      <span>Copied to Clipboard!</span>
-                    </>
-                  ) : (
-                    <>
-                      <Copy size={13} />
-                      <span>Copy Alert for Admin</span>
-                    </>
-                  )}
-                </button>
-                <p className="text-[10px] text-center text-[#9aa0a6]">
-                  Click to copy and paste to your admin via WhatsApp, Slack, or email.
                 </p>
               </div>
             </div>
