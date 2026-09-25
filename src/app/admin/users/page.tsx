@@ -174,21 +174,29 @@ const UsersAdminPage = () => {
 
   const fetchRoleAndTeachers = useCallback(async () => {
     try {
-      const res = await fetch('/api/teachers');
-      if (res.ok) {
-        const data = await res.json();
-        setIsAdmin(true);
-        const tList: TeacherOption[] = (data.teachers || []).map((t: any) => ({
-          id: t.id,
-          username: t.username,
-          role: t.role,
-        }));
-        setTeachers(tList);
-        // Default to admin teacher
-        const adminT = tList.find((t) => t.role === 'ADMIN') || tList[0];
-        if (adminT) setNewTeacherId(adminT.id);
-      } else {
+      const meRes = await fetch('/api/auth/me');
+      if (!meRes.ok) {
         setIsAdmin(false);
+        return;
+      }
+      const meData = await meRes.json();
+      const admin = meData.user?.role === 'ADMIN';
+      setIsAdmin(admin);
+
+      if (admin) {
+        const res = await fetch('/api/teachers');
+        if (res.ok) {
+          const data = await res.json();
+          const tList: TeacherOption[] = (data.teachers || []).map((t: any) => ({
+            id: t.id,
+            username: t.username,
+            role: t.role,
+          }));
+          setTeachers(tList);
+          // Default to admin teacher
+          const adminT = tList.find((t) => t.role === 'ADMIN') || tList[0];
+          if (adminT) setNewTeacherId(adminT.id);
+        }
       }
     } catch {
       setIsAdmin(false);
@@ -526,14 +534,6 @@ const UsersAdminPage = () => {
       {/* Actions */}
       <td className="py-3.5 text-right">
         <div className="inline-flex items-center gap-1">
-          <button
-            type="button"
-            onClick={() => setEditTarget(student)}
-            title="Edit Student"
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-blue-500 transition-colors hover:bg-blue-100"
-          >
-            <span>Edit</span>
-          </button>
           {student.accessMode === 'CUSTOM' && (
             <button
               type="button"
@@ -545,33 +545,49 @@ const UsersAdminPage = () => {
               <span>Videos</span>
             </button>
           )}
-          <button
-            type="button"
-            onClick={() => handleOpenShareReset(student)}
-            title="Share Credentials"
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-green-700 transition-colors hover:bg-green-100"
-          >
-            <Share2 size={13} />
-            <span>Share</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setResetTarget(student)}
-            title="Reset Password"
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-blue-500 transition-colors hover:bg-blue-100"
-          >
-            <Key size={13} />
-            <span>Reset</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => setDeleteTarget(student)}
-            title="Delete Student"
-            className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-red-100"
-          >
-            <Trash size={13} />
-            <span>Delete</span>
-          </button>
+          {isAdmin ? (
+            <>
+              <button
+                type="button"
+                onClick={() => setEditTarget(student)}
+                title="Edit Student"
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-blue-500 transition-colors hover:bg-blue-100"
+              >
+                <span>Edit</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => handleOpenShareReset(student)}
+                title="Share Credentials"
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-green-700 transition-colors hover:bg-green-100"
+              >
+                <Share2 size={13} />
+                <span>Share</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setResetTarget(student)}
+                title="Reset Password"
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-blue-500 transition-colors hover:bg-blue-100"
+              >
+                <Key size={13} />
+                <span>Reset</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setDeleteTarget(student)}
+                title="Delete Student"
+                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-red-100"
+              >
+                <Trash size={13} />
+                <span>Delete</span>
+              </button>
+            </>
+          ) : (
+            student.accessMode !== 'CUSTOM' && (
+              <span className="text-[11px] text-[#9aa0a6] px-2 py-1">View only</span>
+            )
+          )}
         </div>
       </td>
     </tr>
@@ -670,7 +686,7 @@ const UsersAdminPage = () => {
               <p className="mt-1 text-sm text-[#5f6368]">
                 {isAdmin
                   ? 'Create, manage, and assign student login accounts to teachers'
-                  : 'Manage your assigned students and their access permissions'}
+                  : 'View your assigned students and manage custom video access'}
               </p>
             </div>
             {isAdmin && (
@@ -967,21 +983,27 @@ const UsersAdminPage = () => {
                                 </td>
                                 <td className="py-3.5 text-right">
                                   <div className="inline-flex items-center gap-1">
-                                    <button
-                                      type="button"
-                                      onClick={() => setEditTarget(student)}
-                                      className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1.5 text-xs font-medium text-blue-500 transition-colors hover:bg-[#c2d7fa]"
-                                    >
-                                      <span>Edit / Reactivate</span>
-                                    </button>
-                                    <button
-                                      type="button"
-                                      onClick={() => setDeleteTarget(student)}
-                                      className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-[#fce8e6]"
-                                    >
-                                      <Trash size={13} />
-                                      <span>Delete</span>
-                                    </button>
+                                    {isAdmin ? (
+                                      <>
+                                        <button
+                                          type="button"
+                                          onClick={() => setEditTarget(student)}
+                                          className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1.5 text-xs font-medium text-blue-500 transition-colors hover:bg-[#c2d7fa]"
+                                        >
+                                          <span>Edit / Reactivate</span>
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => setDeleteTarget(student)}
+                                          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-[#fce8e6]"
+                                        >
+                                          <Trash size={13} />
+                                          <span>Delete</span>
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <span className="text-[11px] text-[#9aa0a6] px-2 py-1">View only</span>
+                                    )}
                                   </div>
                                 </td>
                               </tr>

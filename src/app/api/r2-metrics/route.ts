@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server';
+import { cookies } from 'next/headers';
+import { verifyToken } from '@/lib/jwt';
 
 // Billing data must always be fresh - never let this route be
 // statically cached or served from the Next.js data cache.
@@ -41,6 +43,14 @@ const toDateStr = (d: Date) => d.toISOString().slice(0, 10); // "YYYY-MM-DD"
 const quoteList = (items: string[]) => items.map((item) => `"${item}"`).join(', ');
 
 export async function GET() {
+  const cookieStore = await cookies();
+  const token = cookieStore.get('session_token')?.value;
+  const user = token ? await verifyToken(token) : null;
+
+  if (!user || user.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
   const accountId = process.env.CLOUDFLARE_R2_ACCOUNT_ID;
   const apiToken = process.env.CLOUDFLARE_API_TOKEN;
 

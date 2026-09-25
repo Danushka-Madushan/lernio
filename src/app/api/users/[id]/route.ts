@@ -15,8 +15,11 @@ export async function PUT(
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
 
-  if (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER')) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!user || user.role !== 'ADMIN') {
+    return NextResponse.json(
+      { error: 'Forbidden: Only administrators can modify student accounts.' },
+      { status: 403 }
+    );
   }
 
   try {
@@ -27,11 +30,6 @@ export async function PUT(
 
     if (!student || student.role !== 'STUDENT') {
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
-    }
-
-    // Teacher can only update their own students
-    if (user.role === 'TEACHER' && student.teacherId !== user.id) {
-      return NextResponse.json({ error: 'Forbidden: You can only edit your own students.' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -125,8 +123,11 @@ export async function DELETE(
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
 
-  if (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER')) {
-    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  if (!user || user.role !== 'ADMIN') {
+    return NextResponse.json(
+      { error: 'Forbidden: Only administrators can delete student accounts.' },
+      { status: 403 }
+    );
   }
 
   try {
@@ -137,11 +138,6 @@ export async function DELETE(
 
     if (!student || student.role !== 'STUDENT') {
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
-    }
-
-    // Teacher can only delete their own students
-    if (user.role === 'TEACHER' && student.teacherId !== user.id) {
-      return NextResponse.json({ error: 'Forbidden: You can only delete your own students.' }, { status: 403 });
     }
 
     await db.user.delete({
