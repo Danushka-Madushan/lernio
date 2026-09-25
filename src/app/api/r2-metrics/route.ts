@@ -47,7 +47,7 @@ export async function GET() {
   const token = cookieStore.get('session_token')?.value;
   const user = token ? await verifyToken(token) : null;
 
-  if (!user || user.role !== 'ADMIN') {
+  if (!user || (user.role !== 'ADMIN' && user.role !== 'TEACHER')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -168,7 +168,27 @@ export async function GET() {
     const classAOps = sumRequests(accountData.classAOps);
     const classBOps = sumRequests(accountData.classBOps);
 
-    return NextResponse.json({ storageGB, classAOps, classBOps });
+    // Free tier storage baseline is 10GB
+    const percentUsed = Math.min(100, Math.round((storageGB / 10) * 100));
+    const status = percentUsed >= 90 ? 'critical' : percentUsed >= 75 ? 'warning' : 'healthy';
+
+    // For TEACHER role: return sanitized high-level status only (no Cloudflare or ops details)
+    if (user.role === 'TEACHER') {
+      return NextResponse.json({
+        percentUsed,
+        status,
+        role: 'TEACHER',
+      });
+    }
+
+    return NextResponse.json({
+      storageGB,
+      classAOps,
+      classBOps,
+      percentUsed,
+      status,
+      role: 'ADMIN',
+    });
   } catch (err) {
     const message =
       err instanceof Error ? err.message : 'Unknown error contacting Cloudflare.';

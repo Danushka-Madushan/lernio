@@ -293,7 +293,7 @@ const VideosAdminPage = () => {
                 )}
               </div>
 
-              {isAdmin && <CloudflareR2Widget />}
+              <CloudflareR2Widget isAdmin={isAdmin} />
 
               <Link
                 href="/admin/videos/upload"
