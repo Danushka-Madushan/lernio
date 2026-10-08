@@ -5,7 +5,7 @@ import { verifyToken } from '@/lib/jwt';
 import AccountInactiveScreen from '@/components/AccountInactiveScreen';
 import GradeTabs from '@/components/GradeTabs';
 import VideoGrid from '@/components/VideoGrid';
-import { getTeacherGrades } from '@/lib/constants';
+import { ALL_GRADES, getGradeLabel, getTeacherGrades } from '@/lib/constants';
 
 const isAccountActive = (activeFrom: Date | null, activeTo: Date | null): boolean => {
   const now = new Date();
@@ -57,11 +57,23 @@ const DashboardPage = async ({
     }
 
     // Resolve student's teacher grades and aliases
-    const teacherGrades = getTeacherGrades(
+    const baseTeacherGrades = getTeacherGrades(
       studentRecord.teacher?.allowedGrades,
       studentRecord.teacher?.gradeAliases as Record<string, string>
     );
     const teacherAliases = (studentRecord.teacher?.gradeAliases as Record<string, string>) || {};
+
+    // Ensure student's own enrolled grade is included in tabs even if teacher profile removed it
+    let teacherGrades = baseTeacherGrades;
+    if (studentRecord.grade && !baseTeacherGrades.some((g) => g.value === studentRecord.grade)) {
+      teacherGrades = [
+        ...baseTeacherGrades,
+        {
+          value: studentRecord.grade,
+          label: getGradeLabel(studentRecord.grade, teacherAliases),
+        },
+      ].sort((a, b) => ALL_GRADES.indexOf(a.value) - ALL_GRADES.indexOf(b.value));
+    }
 
     // If student has no assigned teacher, return empty feed
     if (!studentRecord.teacherId) {

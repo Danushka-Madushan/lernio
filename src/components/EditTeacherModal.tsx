@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from 'react';
-import { Check, CheckSquare, Loader2, Pencil, RotateCcw, Square, X } from 'lucide-react';
+import { Check, CheckSquare, Info, Loader2, Pencil, RotateCcw, Square, X } from 'lucide-react';
 import { Button } from '@heroui/react';
 import { Grade } from '@/generated/client/enums';
 import { ALL_GRADES, GRADE_COLORS, GRADE_LABELS } from '@/lib/constants';
@@ -148,6 +148,13 @@ const EditTeacherModal = ({
                     </button>
                   );
                 })}
+              </div>
+
+              <div className="mt-2.5 rounded-lg border border-blue-100 bg-blue-50/70 p-2.5 text-[11px] text-blue-700 flex items-start gap-2">
+                <Info size={14} className="shrink-0 mt-0.5 text-blue-500" />
+                <span>
+                  <strong>Note:</strong> If you remove a grade from this teacher, their existing students in that grade will still retain access to previously uploaded lessons. To assign those students to a different teacher, use the <strong>Students</strong> panel.
+                </span>
               </div>
             </div>
 

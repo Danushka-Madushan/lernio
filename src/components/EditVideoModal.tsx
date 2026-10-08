@@ -53,6 +53,8 @@ const EditVideoModal = ({
   const [visibility, setVisibility] = useState<'PUBLIC' | 'GRADE'>(video.visibility);
   const [thumbnailKey, setThumbnailKey] = useState<string | null>(video.cloudflareR2ThumbnailKey);
 
+  const hasCurrentGradeOption = !grade || options.some((opt) => opt.value === grade);
+
   const handleThumbnailSuccess = (url: string) => {
     setThumbnailKey(url || null);
   };
@@ -122,6 +124,11 @@ const EditVideoModal = ({
                         {opt.label}
                       </option>
                     ))}
+                    {!hasCurrentGradeOption && grade && (
+                      <option key={grade} value={grade}>
+                        {GRADE_LABELS[grade as Grade] || grade} (Current)
+                      </option>
+                    )}
                   </select>
                   <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
                 </div>
