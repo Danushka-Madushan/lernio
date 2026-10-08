@@ -1,8 +1,9 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, Grade } from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
+import { ALL_GRADES } from '@/lib/constants';
 
 // GET: List all teachers (Admin only)
 export async function GET(request: Request) {
@@ -34,6 +35,8 @@ export async function GET(request: Request) {
         id: true,
         username: true,
         role: true,
+        allowedGrades: true,
+        gradeAliases: true,
         createdAt: true,
         _count: {
           select: {
@@ -67,7 +70,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { username, password } = await request.json();
+    const body = await request.json();
+    const { username, password, allowedGrades, gradeAliases } = body;
 
     if (!username || !password || username.trim().length < 3 || password.length < 4) {
       return NextResponse.json(
@@ -87,17 +91,46 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Username is already taken' }, { status: 400 });
     }
 
+    // Resolve allowedGrades (default to ALL_GRADES if omitted)
+    let resolvedAllowedGrades: Grade[] = ALL_GRADES;
+    if (Array.isArray(allowedGrades) && allowedGrades.length > 0) {
+      const valid = allowedGrades.filter((g: unknown): g is Grade =>
+        Object.values(Grade).includes(g as Grade)
+      );
+      if (valid.length > 0) {
+        resolvedAllowedGrades = valid;
+      }
+    }
+
+    // Resolve gradeAliases (sanitize keys and trim non-empty string values)
+    const resolvedGradeAliases: Record<string, string> = {};
+    if (gradeAliases && typeof gradeAliases === 'object') {
+      for (const [key, val] of Object.entries(gradeAliases)) {
+        if (
+          Object.values(Grade).includes(key as Grade) &&
+          typeof val === 'string' &&
+          val.trim().length > 0
+        ) {
+          resolvedGradeAliases[key] = val.trim();
+        }
+      }
+    }
+
     const hashedPassword = await bcrypt.hash(password, 10);
     const newTeacher = await db.user.create({
       data: {
         username: trimmedUsername,
         hashedPassword,
         role: 'TEACHER',
+        allowedGrades: resolvedAllowedGrades,
+        gradeAliases: resolvedGradeAliases,
       },
       select: {
         id: true,
         username: true,
         role: true,
+        allowedGrades: true,
+        gradeAliases: true,
         createdAt: true,
         _count: {
           select: {

@@ -20,7 +20,7 @@ import { Grade } from '@/generated/client/enums';
 import { notoSans } from '@/lib/fonts';
 import VideoThumbnail from '@/components/VideoThumbnail';
 import CloudflareR2Widget from '@/components/CloudflareR2Widget';
-import { GRADE_LABELS } from '@/lib/constants';
+import { GRADE_LABELS, getGradeLabel, getTeacherGrades } from '@/lib/constants';
 import EditVideoModal from '@/components/EditVideoModal';
 import VideoDeleteConfirmModal from '@/components/VideoDeleteConfirmModal';
 import { triggerUnauthorized } from '@/lib/utils';
@@ -29,6 +29,8 @@ interface TeacherOption {
   id: string;
   username: string;
   role: string;
+  allowedGrades?: Grade[];
+  gradeAliases?: Record<string, string>;
 }
 
 interface Video {
@@ -57,6 +59,8 @@ const VideosAdminPage = () => {
   // Admin & Teachers state
   const [isAdmin, setIsAdmin] = useState(false);
   const [teachers, setTeachers] = useState<TeacherOption[]>([]);
+  const [currentUserAliases, setCurrentUserAliases] = useState<Record<string, string>>({});
+  const [currentUserAllowedGrades, setCurrentUserAllowedGrades] = useState<Grade[]>([]);
   const [teacherFilter, setTeacherFilter] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -83,6 +87,10 @@ const VideosAdminPage = () => {
       const meData = await meRes.json();
       const admin = meData.user?.role === 'ADMIN';
       setIsAdmin(admin);
+      if (meData.user) {
+        setCurrentUserAliases(meData.user.gradeAliases || {});
+        setCurrentUserAllowedGrades(meData.user.allowedGrades || []);
+      }
 
       if (admin) {
         const res = await fetch('/api/teachers');
@@ -207,14 +215,24 @@ const VideosAdminPage = () => {
   return (
     <>
       {/* Edit Form Modal */}
-      {editTarget && (
-        <EditVideoModal
-          video={editTarget}
-          loading={editLoading}
-          onConfirm={handleEditConfirm}
-          onCancel={() => setEditTarget(null)}
-        />
-      )}
+      {editTarget && (() => {
+        const targetTeacher = editTarget.teacherId
+          ? teachers.find((t) => t.id === editTarget.teacherId)
+          : null;
+        const editGradeOptions = targetTeacher
+          ? getTeacherGrades(targetTeacher.allowedGrades, targetTeacher.gradeAliases)
+          : getTeacherGrades(currentUserAllowedGrades, currentUserAliases);
+
+        return (
+          <EditVideoModal
+            video={editTarget}
+            loading={editLoading}
+            gradeOptions={editGradeOptions}
+            onConfirm={handleEditConfirm}
+            onCancel={() => setEditTarget(null)}
+          />
+        );
+      })()}
 
       {/* Delete Confirmation Modal */}
       {deleteTarget && (
@@ -418,11 +436,17 @@ const VideosAdminPage = () => {
 
                         {/* Grade badge */}
                         <td className="px-4 py-3 whitespace-nowrap">
-                          {video.grade ? (
-                            <span className="rounded-full bg-[#e8f0fe] px-2.5 py-1 text-[11px] font-medium text-blue-500">
-                              {GRADE_LABELS[video.grade]}
-                            </span>
-                          ) : (
+                          {video.grade ? (() => {
+                            const vTeacher = video.teacherId
+                              ? teachers.find((t) => t.id === video.teacherId)
+                              : null;
+                            const vAliases = vTeacher?.gradeAliases || currentUserAliases;
+                            return (
+                              <span className="rounded-full bg-[#e8f0fe] px-2.5 py-1 text-[11px] font-medium text-blue-500">
+                                {getGradeLabel(video.grade, vAliases)}
+                              </span>
+                            );
+                          })() : (
                             <span className="text-[11px] text-[#9aa0a6]">-</span>
                           )}
                         </td>

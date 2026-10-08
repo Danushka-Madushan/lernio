@@ -12,19 +12,25 @@ import {
   Film,
   Video,
   UserCheck,
+  Pencil,
 } from 'lucide-react';
 import { Button } from '@heroui/react';
 import StatCard from '@/components/StatCard';
 import ResetPasswordModal from '@/components/ResetPasswordModal';
 import TeacherDeleteConfirmModal from '@/components/TeacherDeleteConfirmModal';
 import AddTeacherModal from '@/components/AddTeacherModal';
+import EditTeacherModal from '@/components/EditTeacherModal';
 import ShareCredentialsCard from '@/components/ShareCredentialsCard';
 import { triggerUnauthorized } from '@/lib/utils';
+import { Grade } from '@/generated/client/enums';
+import { ALL_GRADES, GRADE_COLORS, GRADE_LABELS } from '@/lib/constants';
 
 interface Teacher {
   id: string;
   username: string;
   role: 'ADMIN' | 'TEACHER';
+  allowedGrades?: Grade[];
+  gradeAliases?: Record<string, string> | null;
   createdAt: string;
   _count: {
     students: number;
@@ -48,8 +54,14 @@ const TeachersAdminPage = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [newUsername, setNewUsername] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [newAllowedGrades, setNewAllowedGrades] = useState<Grade[]>([...ALL_GRADES]);
+  const [newGradeAliases, setNewGradeAliases] = useState<Record<string, string>>({});
   const [creating, setCreating] = useState(false);
   const [shareInfo, setShareInfo] = useState<ShareInfo | null>(null);
+
+  // Edit teacher state (Grades & Aliases)
+  const [editTarget, setEditTarget] = useState<Teacher | null>(null);
+  const [editLoading, setEditLoading] = useState(false);
 
   // Reset password state
   const [resetTarget, setResetTarget] = useState<Teacher | null>(null);
@@ -125,6 +137,11 @@ const TeachersAdminPage = () => {
       return;
     }
 
+    if (newAllowedGrades.length === 0) {
+      setError('At least one grade must be allowed for this teacher');
+      return;
+    }
+
     setCreating(true);
     setError('');
 
@@ -135,6 +152,8 @@ const TeachersAdminPage = () => {
         body: JSON.stringify({
           username: trimmedUsername,
           password: trimmedPassword,
+          allowedGrades: newAllowedGrades,
+          gradeAliases: newGradeAliases,
         }),
       });
 
@@ -144,6 +163,8 @@ const TeachersAdminPage = () => {
         setShareInfo({ username: trimmedUsername, password: trimmedPassword });
         setNewUsername('');
         setNewPassword('');
+        setNewAllowedGrades([...ALL_GRADES]);
+        setNewGradeAliases({});
         setShowAddModal(false);
         fetchTeachers();
       } else if (res.status === 401) {
@@ -155,6 +176,41 @@ const TeachersAdminPage = () => {
       setError('Connection error creating teacher');
     } finally {
       setCreating(false);
+    }
+  };
+
+  const handleEditTeacher = async (
+    allowedGrades: Grade[],
+    gradeAliases: Record<string, string>
+  ) => {
+    if (!editTarget) return;
+    setEditLoading(true);
+    setError('');
+
+    try {
+      const res = await fetch(`/api/teachers/${editTarget.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ allowedGrades, gradeAliases }),
+      });
+
+      if (res.ok) {
+        setSuccess(`Updated grades and aliases for '${editTarget.username}'.`);
+        setEditTarget(null);
+        fetchTeachers();
+      } else if (res.status === 401) {
+        triggerUnauthorized();
+        setEditTarget(null);
+      } else {
+        const data = await res.json();
+        setError(data.error || 'Failed to update teacher');
+        setEditTarget(null);
+      }
+    } catch {
+      setError('Connection error updating teacher');
+      setEditTarget(null);
+    } finally {
+      setEditLoading(false);
     }
   };
 
@@ -228,15 +284,33 @@ const TeachersAdminPage = () => {
         <AddTeacherModal
           username={newUsername}
           password={newPassword}
+          allowedGrades={newAllowedGrades}
+          gradeAliases={newGradeAliases}
           creating={creating}
           error={error}
           success={success}
           shareInfo={shareInfo}
           onUsernameChange={setNewUsername}
           onPasswordChange={setNewPassword}
+          onAllowedGradesChange={setNewAllowedGrades}
+          onGradeAliasesChange={setNewGradeAliases}
           onSubmit={handleCreateTeacher}
-          onCancel={() => setShowAddModal(false)}
+          onCancel={() => {
+            setShowAddModal(false);
+            setNewAllowedGrades([...ALL_GRADES]);
+            setNewGradeAliases({});
+          }}
           onDismissShareInfo={() => setShareInfo(null)}
+        />
+      )}
+
+      {/* Edit Teacher Grades & Aliases Modal */}
+      {editTarget && (
+        <EditTeacherModal
+          teacher={editTarget}
+          loading={editLoading}
+          onConfirm={handleEditTeacher}
+          onCancel={() => setEditTarget(null)}
         />
       )}
 
@@ -269,7 +343,7 @@ const TeachersAdminPage = () => {
                 Teacher Accounts
               </h1>
               <p className="mt-1 text-sm text-[#5f6368]">
-                Create and manage teachers in the multi-tenant system
+                Create and manage teachers with custom allowed grades and class name aliases
               </p>
             </div>
             <Button
@@ -283,12 +357,12 @@ const TeachersAdminPage = () => {
           </div>
 
           {/* Feedback messages */}
-          {error && !showAddModal && (
+          {error && !showAddModal && !editTarget && (
             <div className="rounded-lg border border-[#fad2cf] bg-[#fce8e6] px-3.5 py-2.5 text-[13px] leading-5 text-[#c5221f]">
               {error}
             </div>
           )}
-          {success && !showAddModal && (
+          {success && !showAddModal && !editTarget && (
             <div className="rounded-lg border border-[#ceead6] bg-[#e6f4ea] px-3.5 py-2.5 text-[13px] leading-5 text-[#137333]">
               {success}
             </div>
@@ -385,6 +459,9 @@ const TeachersAdminPage = () => {
                           Role
                         </th>
                         <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                          Allowed Grades & Aliases
+                        </th>
+                        <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
                           Students
                         </th>
                         <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
@@ -402,100 +479,141 @@ const TeachersAdminPage = () => {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-[#f1f3f4]">
-                      {filteredTeachers.map((teacher) => (
-                        <tr
-                          key={teacher.id}
-                          className="transition-colors duration-100 hover:bg-[#f8f9fa]"
-                        >
-                          {/* Username with avatar */}
-                          <td className="py-3.5">
-                            <div className="flex items-center gap-3">
-                              <div
-                                className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
+                      {filteredTeachers.map((teacher) => {
+                        const grades =
+                          teacher.allowedGrades && teacher.allowedGrades.length > 0
+                            ? teacher.allowedGrades
+                            : ALL_GRADES;
+                        const aliases = teacher.gradeAliases || {};
+                        const aliasCount = Object.keys(aliases).length;
+
+                        return (
+                          <tr
+                            key={teacher.id}
+                            className="transition-colors duration-100 hover:bg-[#f8f9fa]"
+                          >
+                            {/* Username with avatar */}
+                            <td className="py-3.5">
+                              <div className="flex items-center gap-3">
+                                <div
+                                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
+                                    teacher.role === 'ADMIN'
+                                      ? 'bg-blue-100 text-blue-600'
+                                      : 'bg-purple-100 text-purple-700'
+                                  }`}
+                                >
+                                  {teacher.username.charAt(0).toUpperCase()}
+                                </div>
+                                <span className="font-mono text-[13px] font-medium text-[#202124]">
+                                  {teacher.username}
+                                </span>
+                              </div>
+                            </td>
+
+                            {/* Role badge */}
+                            <td className="py-3.5">
+                              <span
+                                className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
                                   teacher.role === 'ADMIN'
-                                    ? 'bg-blue-100 text-blue-600'
-                                    : 'bg-purple-100 text-purple-700'
+                                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                    : 'bg-purple-50 text-purple-700 border border-purple-200'
                                 }`}
                               >
-                                {teacher.username.charAt(0).toUpperCase()}
-                              </div>
-                              <span className="font-mono text-[13px] font-medium text-[#202124]">
-                                {teacher.username}
+                                {teacher.role === 'ADMIN' ? 'Admin (Primary)' : 'Teacher'}
                               </span>
-                            </div>
-                          </td>
+                            </td>
 
-                          {/* Role badge */}
-                          <td className="py-3.5">
-                            <span
-                              className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
-                                teacher.role === 'ADMIN'
-                                  ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                  : 'bg-purple-50 text-purple-700 border border-purple-200'
-                              }`}
-                            >
-                              {teacher.role === 'ADMIN' ? 'Admin (Primary)' : 'Teacher'}
-                            </span>
-                          </td>
+                            {/* Allowed Grades & Aliases */}
+                            <td className="py-3.5 max-w-xs">
+                              <div className="flex flex-wrap items-center gap-1">
+                                {grades.map((g) => {
+                                  const alias = aliases[g];
+                                  return (
+                                    <span
+                                      key={g}
+                                      title={alias ? `${GRADE_LABELS[g]} → ${alias}` : GRADE_LABELS[g]}
+                                      className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[10px] font-medium ${GRADE_COLORS[g]}`}
+                                    >
+                                      {alias || GRADE_LABELS[g]}
+                                    </span>
+                                  );
+                                })}
+                                {aliasCount > 0 && (
+                                  <span className="text-[10px] text-purple-600 font-medium ml-1">
+                                    ({aliasCount} {aliasCount === 1 ? 'alias' : 'aliases'})
+                                  </span>
+                                )}
+                              </div>
+                            </td>
 
-                          {/* Counts */}
-                          <td className="py-3.5">
-                            <span className="inline-flex items-center gap-1 text-xs text-[#5f6368]">
-                              <GraduationCap size={13} className="text-[#9aa0a6]" />
-                              {teacher._count?.students ?? 0}
-                            </span>
-                          </td>
+                            {/* Counts */}
+                            <td className="py-3.5">
+                              <span className="inline-flex items-center gap-1 text-xs text-[#5f6368]">
+                                <GraduationCap size={13} className="text-[#9aa0a6]" />
+                                {teacher._count?.students ?? 0}
+                              </span>
+                            </td>
 
-                          <td className="py-3.5">
-                            <span className="inline-flex items-center gap-1 text-xs text-[#5f6368]">
-                              <Film size={13} className="text-[#9aa0a6]" />
-                              {teacher._count?.videos ?? 0}
-                            </span>
-                          </td>
+                            <td className="py-3.5">
+                              <span className="inline-flex items-center gap-1 text-xs text-[#5f6368]">
+                                <Film size={13} className="text-[#9aa0a6]" />
+                                {teacher._count?.videos ?? 0}
+                              </span>
+                            </td>
 
-                          <td className="py-3.5">
-                            <span className="inline-flex items-center gap-1 text-xs text-[#5f6368]">
-                              <Video size={13} className="text-[#9aa0a6]" />
-                              {teacher._count?.meetings ?? 0}
-                            </span>
-                          </td>
+                            <td className="py-3.5">
+                              <span className="inline-flex items-center gap-1 text-xs text-[#5f6368]">
+                                <Video size={13} className="text-[#9aa0a6]" />
+                                {teacher._count?.meetings ?? 0}
+                              </span>
+                            </td>
 
-                          {/* Registered date */}
-                          <td className="py-3.5 text-[#5f6368] text-[12px]">
-                            {new Date(teacher.createdAt).toLocaleDateString('en-GB', {
-                              day: '2-digit',
-                              month: 'short',
-                              year: 'numeric',
-                            })}
-                          </td>
+                            {/* Registered date */}
+                            <td className="py-3.5 text-[#5f6368] text-[12px]">
+                              {new Date(teacher.createdAt).toLocaleDateString('en-GB', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
+                            </td>
 
-                          {/* Actions */}
-                          <td className="py-3.5 text-right">
-                            <div className="inline-flex items-center gap-1">
-                              <button
-                                type="button"
-                                onClick={() => setResetTarget(teacher)}
-                                title="Reset Password"
-                                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-purple-600 transition-colors hover:bg-purple-100"
-                              >
-                                <Key size={13} />
-                                <span>Reset</span>
-                              </button>
-                              {teacher.role !== 'ADMIN' && (
+                            {/* Actions */}
+                            <td className="py-3.5 text-right">
+                              <div className="inline-flex items-center gap-1">
                                 <button
                                   type="button"
-                                  onClick={() => setDeleteTarget(teacher)}
-                                  title="Delete Teacher"
-                                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-red-100"
+                                  onClick={() => setEditTarget(teacher)}
+                                  title="Edit Grades & Aliases"
+                                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-100"
                                 >
-                                  <Trash size={13} />
-                                  <span>Delete</span>
+                                  <Pencil size={13} />
+                                  <span>Edit</span>
                                 </button>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
+                                <button
+                                  type="button"
+                                  onClick={() => setResetTarget(teacher)}
+                                  title="Reset Password"
+                                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-purple-600 transition-colors hover:bg-purple-100"
+                                >
+                                  <Key size={13} />
+                                  <span>Reset</span>
+                                </button>
+                                {teacher.role !== 'ADMIN' && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setDeleteTarget(teacher)}
+                                    title="Delete Teacher"
+                                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-red-100"
+                                  >
+                                    <Trash size={13} />
+                                    <span>Delete</span>
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

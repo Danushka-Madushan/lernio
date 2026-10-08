@@ -1,6 +1,6 @@
 "use client";
 
-import { Grade } from '@/lib/db';
+import { Grade } from '@/generated/client/enums';
 import { generatePassword } from '@/lib/utils';
 import { Button } from '@heroui/react';
 import { Check, Key, Loader2, RefreshCw, X } from 'lucide-react';

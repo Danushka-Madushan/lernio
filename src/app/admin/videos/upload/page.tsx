@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import ResumableUploader from '@/components/ResumableUploader';
 import ThumbnailUploader from '@/components/ThumbnailUploader';
 import { Plus, Loader2, CheckCircle2, Film, ArrowLeft } from 'lucide-react';
@@ -9,6 +9,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { notoSans } from '@/lib/fonts';
 import { Button } from '@heroui/react';
+import { ALL_GRADES, getTeacherGrades } from '@/lib/constants';
 
 const VideoUploadPage = () => {
   const router = useRouter();
@@ -22,6 +23,22 @@ const VideoUploadPage = () => {
   const [visibility, setVisibility] = useState<'PUBLIC' | 'GRADE'>('PUBLIC');
   const [cloudflareR2Key, setCloudflareR2Key] = useState('');
   const [thumbnailKey, setThumbnailKey] = useState('');
+
+  const [gradeOptions, setGradeOptions] = useState<{ value: Grade; label: string }[]>(() =>
+    getTeacherGrades(ALL_GRADES, {})
+  );
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.user) {
+          const options = getTeacherGrades(data.user.allowedGrades, data.user.gradeAliases);
+          setGradeOptions(options);
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   const handleUploadSuccess = useCallback((r2Key: string) => {
     setCloudflareR2Key(r2Key);
@@ -207,9 +224,9 @@ const VideoUploadPage = () => {
                     className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc]  focus:ring-2 focus:ring-blue-500/20"
                   >
                     <option value="">- No grade -</option>
-                    {Object.values(Grade).map((g) => (
-                      <option key={g} value={g}>
-                        {g.replace('GRADE_', 'Grade ')}
+                    {gradeOptions.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
                       </option>
                     ))}
                   </select>

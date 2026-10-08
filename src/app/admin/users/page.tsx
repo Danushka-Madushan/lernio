@@ -19,8 +19,8 @@ import {
   UserCheck,
 } from 'lucide-react';
 import { Button } from '@heroui/react';
-import { Grade } from '@/lib/db';
-import { GRADE_COLORS, GRADE_LABELS } from '@/lib/constants';
+import { Grade } from '@/generated/client/enums';
+import { ALL_GRADES, GRADE_COLORS, GRADE_LABELS, getGradeLabel, getTeacherGrades } from '@/lib/constants';
 import ShareCredentialsCard from '@/components/ShareCredentialsCard';
 import ShareResetModal from '@/components/ShareResetModal';
 import ResetPasswordModal from '@/components/ResetPasswordModal';
@@ -40,6 +40,8 @@ interface TeacherOption {
   id: string;
   username: string;
   role: string;
+  allowedGrades?: Grade[];
+  gradeAliases?: Record<string, string> | null;
 }
 
 interface Student {
@@ -50,7 +52,12 @@ interface Student {
   activeTo: string | null;
   accessMode: AccessMode;
   teacherId?: string | null;
-  teacher?: { id: string; username: string } | null;
+  teacher?: {
+    id: string;
+    username: string;
+    allowedGrades?: Grade[];
+    gradeAliases?: Record<string, string> | null;
+  } | null;
   createdAt: string;
 }
 
@@ -92,6 +99,8 @@ const UsersAdminPage = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [teachers, setTeachers] = useState<TeacherOption[]>([]);
   const [teacherFilter, setTeacherFilter] = useState('');
+  const [currentUserAliases, setCurrentUserAliases] = useState<Record<string, string>>({});
+  const [currentUserAllowedGrades, setCurrentUserAllowedGrades] = useState<Grade[]>(ALL_GRADES);
 
   // Create form
   const [newUsernamePrefix, setNewUsernamePrefix] = useState('');
@@ -136,6 +145,25 @@ const UsersAdminPage = () => {
   const [showExpired, setShowExpired] = useState(false);
 
   // ── Derived ──────────────────────────────────────────────────────────────
+
+  const filterGradeOptions = useMemo(() => {
+    if (isAdmin) {
+      if (teacherFilter) {
+        const t = teachers.find((item) => item.id === teacherFilter);
+        if (t) return getTeacherGrades(t.allowedGrades, t.gradeAliases as Record<string, string>);
+      }
+      return getTeacherGrades(ALL_GRADES, {});
+    }
+    return getTeacherGrades(currentUserAllowedGrades, currentUserAliases);
+  }, [isAdmin, teacherFilter, teachers, currentUserAllowedGrades, currentUserAliases]);
+
+  const handleTeacherChange = (teacherId: string) => {
+    setNewTeacherId(teacherId);
+    const selected = teachers.find((t) => t.id === teacherId);
+    if (selected?.allowedGrades && newGrade && !selected.allowedGrades.includes(newGrade as Grade)) {
+      setNewGrade('');
+    }
+  };
 
   const activeStudents = useMemo(
     () => students.filter((s) => !isExpiredOrInactive(s)),
@@ -182,6 +210,8 @@ const UsersAdminPage = () => {
       const meData = await meRes.json();
       const admin = meData.user?.role === 'ADMIN';
       setIsAdmin(admin);
+      if (meData.user?.gradeAliases) setCurrentUserAliases(meData.user.gradeAliases);
+      if (meData.user?.allowedGrades) setCurrentUserAllowedGrades(meData.user.allowedGrades);
 
       if (admin) {
         const res = await fetch('/api/teachers');
@@ -191,6 +221,8 @@ const UsersAdminPage = () => {
             id: t.id,
             username: t.username,
             role: t.role,
+            allowedGrades: t.allowedGrades,
+            gradeAliases: t.gradeAliases,
           }));
           setTeachers(tList);
           // Default to admin teacher
@@ -507,7 +539,10 @@ const UsersAdminPage = () => {
       <td className="py-3.5">
         {student.grade ? (
           <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${GRADE_COLORS[student.grade]}`}>
-            {GRADE_LABELS[student.grade]}
+            {getGradeLabel(
+              student.grade,
+              (student.teacher?.gradeAliases as Record<string, string>) || currentUserAliases
+            )}
           </span>
         ) : (
           <span className="text-[11px] text-[#9aa0a6]">-</span>
@@ -623,7 +658,7 @@ const UsersAdminPage = () => {
           onAccessModeChange={setNewAccessMode}
           onActiveFromChange={setNewActiveFrom}
           onActiveToChange={setNewActiveTo}
-          onTeacherChange={setNewTeacherId}
+          onTeacherChange={handleTeacherChange}
           onSubmit={handleCreateStudent}
           onCancel={() => setShowAddModal(false)}
           onDismissShareInfo={() => setShareInfo(null)}
@@ -756,7 +791,16 @@ const UsersAdminPage = () => {
                       <div className="relative">
                         <select
                           value={teacherFilter}
-                          onChange={(e) => setTeacherFilter(e.target.value)}
+                          onChange={(e) => {
+                            const newTId = e.target.value;
+                            setTeacherFilter(newTId);
+                            if (newTId) {
+                              const t = teachers.find((item) => item.id === newTId);
+                              if (t?.allowedGrades && gradeFilter && !t.allowedGrades.includes(gradeFilter as Grade)) {
+                                setGradeFilter('');
+                              }
+                            }
+                          }}
                           className="appearance-none rounded-full border border-[#dadce0] bg-white py-2 pl-3 pr-7 text-xs text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
                         >
                           <option value="">All Teachers</option>
@@ -781,8 +825,8 @@ const UsersAdminPage = () => {
                         className="appearance-none rounded-full border border-[#dadce0] bg-white py-2 pl-3 pr-7 text-xs text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
                       >
                         <option value="">All Grades</option>
-                        {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => (
-                          <option key={val} value={val}>
+                        {filterGradeOptions.map(({ value, label }) => (
+                          <option key={value} value={value}>
                             {label}
                           </option>
                         ))}

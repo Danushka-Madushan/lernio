@@ -1,6 +1,6 @@
 // ─── AccountStatusBadge ────────────────────────────────────────────────────────
 
-import { Grade } from '@/lib/db';
+import { Grade } from '@/generated/client/enums';
 import { getAccountStatus } from '@/lib/utils';
 import { Check, Clock, Globe, ShieldAlert } from 'lucide-react';
 

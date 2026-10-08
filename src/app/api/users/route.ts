@@ -66,6 +66,8 @@ export async function GET(request: Request) {
           select: {
             id: true,
             username: true,
+            allowedGrades: true,
+            gradeAliases: true,
           },
         },
         createdAt: true,
@@ -130,12 +132,19 @@ export async function POST(request: Request) {
 
     const teacherUser = await db.user.findUnique({
       where: { id: assignedTeacherId },
-      select: { id: true, role: true },
+      select: { id: true, role: true, allowedGrades: true },
     });
 
     if (!teacherUser || (teacherUser.role !== 'ADMIN' && teacherUser.role !== 'TEACHER')) {
       // Fallback to the creating admin if invalid teacher selected
       assignedTeacherId = user.id;
+    } else if (grade && teacherUser.allowedGrades && teacherUser.allowedGrades.length > 0) {
+      if (!teacherUser.allowedGrades.includes(grade as Grade)) {
+        return NextResponse.json(
+          { error: 'Selected grade is not permitted for the assigned teacher.' },
+          { status: 400 }
+        );
+      }
     }
 
     const hashedPassword = await bcrypt.hash(password, 10);

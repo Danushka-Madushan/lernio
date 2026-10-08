@@ -5,6 +5,7 @@ import { verifyToken } from '@/lib/jwt';
 import AccountInactiveScreen from '@/components/AccountInactiveScreen';
 import GradeTabs from '@/components/GradeTabs';
 import VideoGrid from '@/components/VideoGrid';
+import { getTeacherGrades } from '@/lib/constants';
 
 const isAccountActive = (activeFrom: Date | null, activeTo: Date | null): boolean => {
   const now = new Date();
@@ -36,6 +37,12 @@ const DashboardPage = async ({
         activeTo: true,
         accessMode: true,
         teacherId: true,
+        teacher: {
+          select: {
+            allowedGrades: true,
+            gradeAliases: true,
+          },
+        },
       },
     });
 
@@ -49,13 +56,20 @@ const DashboardPage = async ({
       );
     }
 
+    // Resolve student's teacher grades and aliases
+    const teacherGrades = getTeacherGrades(
+      studentRecord.teacher?.allowedGrades,
+      studentRecord.teacher?.gradeAliases as Record<string, string>
+    );
+    const teacherAliases = (studentRecord.teacher?.gradeAliases as Record<string, string>) || {};
+
     // If student has no assigned teacher, return empty feed
     if (!studentRecord.teacherId) {
       return (
         <div className="min-h-screen bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-6xl space-y-6">
-            <GradeTabs activeGrade={activeGrade} />
-            <VideoGrid videos={[]} />
+            <GradeTabs activeGrade={activeGrade} grades={teacherGrades} />
+            <VideoGrid videos={[]} gradeAliases={teacherAliases} />
           </div>
         </div>
       );
@@ -90,14 +104,13 @@ const DashboardPage = async ({
             <div className="border-b border-[#e8eaed] pb-5">
               <p className="text-sm text-[#5f6368]">Your assigned video library</p>
             </div>
-            <VideoGrid videos={videos} />
+            <VideoGrid videos={videos} gradeAliases={teacherAliases} />
           </div>
         </div>
       );
     }
 
     // GRADE mode: PUBLIC + grade-matched GRADE videos (scoped strictly to assigned teacher)
-
     const whereClause: any = {
       teacherId: studentRecord.teacherId,
       OR: [
@@ -121,8 +134,8 @@ const DashboardPage = async ({
     return (
       <div className="min-h-screen bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl space-y-6">
-          <GradeTabs activeGrade={activeGrade} />
-          <VideoGrid videos={videos} />
+          <GradeTabs activeGrade={activeGrade} grades={teacherGrades} />
+          <VideoGrid videos={videos} gradeAliases={teacherAliases} />
         </div>
       </div>
     );
@@ -130,9 +143,24 @@ const DashboardPage = async ({
 
   // Staff (TEACHER or ADMIN): show their own videos in the preview feed
   const whereClause: any = {};
+  let staffGrades;
+  let staffAliases: Record<string, string> = {};
+
   if (sessionUser && (sessionUser.role === 'TEACHER' || sessionUser.role === 'ADMIN')) {
     whereClause.teacherId = sessionUser.id;
+    const staffUser = await db.user.findUnique({
+      where: { id: sessionUser.id },
+      select: { allowedGrades: true, gradeAliases: true },
+    });
+    if (staffUser) {
+      staffGrades = getTeacherGrades(
+        staffUser.allowedGrades,
+        staffUser.gradeAliases as Record<string, string>
+      );
+      staffAliases = (staffUser.gradeAliases as Record<string, string>) || {};
+    }
   }
+
   if (activeGrade && Object.values(Grade).includes(activeGrade)) {
     whereClause.grade = activeGrade;
   }
@@ -153,8 +181,8 @@ const DashboardPage = async ({
   return (
     <div className="min-h-screen bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-6xl space-y-6">
-        <GradeTabs activeGrade={activeGrade} />
-        <VideoGrid videos={videos} />
+        <GradeTabs activeGrade={activeGrade} grades={staffGrades} />
+        <VideoGrid videos={videos} gradeAliases={staffAliases} />
       </div>
     </div>
   );

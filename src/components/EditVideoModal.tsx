@@ -1,5 +1,5 @@
 import { GRADE_LABELS } from '@/lib/constants';
-import { Grade } from '@/lib/db';
+import { Grade } from '@/generated/client/enums';
 import { Check, ChevronDown, Loader2, Pencil, X } from 'lucide-react';
 import { useState } from 'react';
 import ThumbnailUploader from './ThumbnailUploader';
@@ -24,11 +24,13 @@ interface Video {
 const EditVideoModal = ({
   video,
   loading,
+  gradeOptions,
   onConfirm,
   onCancel,
 }: {
   video: Video;
   loading: boolean;
+  gradeOptions?: { value: Grade; label: string }[];
   onConfirm: (data: {
     title: string;
     description: string | null;
@@ -38,6 +40,13 @@ const EditVideoModal = ({
   }) => void;
   onCancel: () => void;
 }) => {
+  const options =
+    gradeOptions && gradeOptions.length > 0
+      ? gradeOptions
+      : (Object.entries(GRADE_LABELS) as [Grade, string][]).map(([value, label]) => ({
+          value,
+          label,
+        }));
   const [title, setTitle] = useState(video.title);
   const [description, setDescription] = useState(video.description ?? '');
   const [grade, setGrade] = useState<Grade | ''>(video.grade ?? '');
@@ -108,8 +117,10 @@ const EditVideoModal = ({
                   <select value={grade} onChange={(e) => setGrade(e.target.value as Grade | '')} disabled={loading}
                     className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2 pr-7 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
                     <option value="">- No grade -</option>
-                    {Object.entries(GRADE_LABELS).map(([val, label]) => (
-                      <option key={val} value={val}>{label}</option>
+                    {options.map((opt) => (
+                      <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </option>
                     ))}
                   </select>
                   <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />

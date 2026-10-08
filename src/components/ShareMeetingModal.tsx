@@ -5,7 +5,7 @@ import { Video, X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import CopyButton from './CopyButton';
 import WhatsAppButton from './WhatsAppButton';
-import { Grade } from '@/lib/db';
+import { Grade } from '@/generated/client/enums';
 
 // ─── ShareMeetingModal ──────────────────────────────────────────────────────────
 interface Meeting {

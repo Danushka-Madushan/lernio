@@ -22,12 +22,12 @@ import { Button } from '@heroui/react';
 import { notoSans } from '@/lib/fonts';
 import ShareMeetingModal from '@/components/ShareMeetingModal';
 import AddMeetingModal from '@/components/AddMeetingModal';
-import { Grade } from '@/lib/db';
+import { Grade } from '@/generated/client/enums';
 import EditMeetingModal from '@/components/EditMeetingModal';
 import ZoomAccountmDeleteConfirmModal from '@/components/ZoomAccountmDeleteConfirmModal';
 import ManageZoomAccountsModal from '@/components/ManageZoomAccountsModal';
 import StatCard from '@/components/StatCard';
-import { GRADE_COLORS, GRADE_LABELS } from '@/lib/constants';
+import { ALL_GRADES, GRADE_COLORS, GRADE_LABELS, getGradeLabel, getTeacherGrades } from '@/lib/constants';
 import { triggerUnauthorized } from '@/lib/utils';
 
 // 1=Daily, 2=Weekly, 3=Monthly
@@ -53,6 +53,8 @@ interface TeacherOption {
   id: string;
   username: string;
   role?: string;
+  allowedGrades?: Grade[];
+  gradeAliases?: Record<string, string>;
 }
 
 interface Meeting {
@@ -71,7 +73,12 @@ interface Meeting {
   waitingRoom?: boolean;
   zoomAccount?: { name: string; email: string } | null;
   teacherId?: string | null;
-  teacher?: { id: string; username: string } | null;
+  teacher?: {
+    id: string;
+    username: string;
+    allowedGrades?: Grade[];
+    gradeAliases?: Record<string, string>;
+  } | null;
   createdAt: string;
 }
 
@@ -119,6 +126,8 @@ const MeetingsAdminPage = () => {
 
   const [isAdmin, setIsAdmin] = useState(false);
   const [teachers, setTeachers] = useState<TeacherOption[]>([]);
+  const [currentUserAliases, setCurrentUserAliases] = useState<Record<string, string>>({});
+  const [currentUserAllowedGrades, setCurrentUserAllowedGrades] = useState<Grade[]>([]);
   const [teacherFilter, setTeacherFilter] = useState('');
 
   const [showManageAccountsModal, setShowManageAccountsModal] = useState(false);
@@ -181,6 +190,10 @@ const MeetingsAdminPage = () => {
       const meData = await meRes.json();
       const admin = meData.user?.role === 'ADMIN';
       setIsAdmin(admin);
+      if (meData.user) {
+        setCurrentUserAliases(meData.user.gradeAliases || {});
+        setCurrentUserAllowedGrades(meData.user.allowedGrades || []);
+      }
 
       if (admin) {
         const res = await fetch('/api/teachers');
@@ -342,9 +355,17 @@ const MeetingsAdminPage = () => {
         </td>
       )}
       <td className="py-3.5">
-        {meeting.grade ? (
-          <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${GRADE_COLORS[meeting.grade]}`}>{GRADE_LABELS[meeting.grade]}</span>
-        ) : (
+        {meeting.grade ? (() => {
+          const mTeacher = meeting.teacherId
+            ? teachers.find((t) => t.id === meeting.teacherId)
+            : null;
+          const mAliases = mTeacher?.gradeAliases || currentUserAliases;
+          return (
+            <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${GRADE_COLORS[meeting.grade]}`}>
+              {getGradeLabel(meeting.grade, mAliases)}
+            </span>
+          );
+        })() : (
           <span className="inline-flex items-center gap-1 rounded-full bg-gray-100 px-2 py-0.5 text-[10px] font-medium text-gray-700"><Globe size={9} /> All</span>
         )}
       </td>
@@ -422,6 +443,7 @@ const MeetingsAdminPage = () => {
           isRecurring={newIsRecurring} hostVideo={newHostVideo} participantVideo={newParticipantVideo}
           waitingRoom={newWaitingRoom} recurrenceConfig={newRecurrenceConfig}
           zoomAccounts={zoomAccounts} creating={creating} error={error} success={success}
+          gradeOptions={getTeacherGrades(currentUserAllowedGrades, currentUserAliases)}
           onTitleChange={setNewTitle} onLinkChange={setNewLink}
           onScheduledAtChange={setNewScheduledAt} onGradeChange={setNewGrade}
           onZoomAccountIdChange={setNewZoomAccountId} onDurationMinutesChange={setNewDurationMinutes}
@@ -434,10 +456,24 @@ const MeetingsAdminPage = () => {
         <ZoomAccountmDeleteConfirmModal targetName={deleteTarget.title} zoomAccountLinked={!!deleteTarget.zoomAccountId}
           loading={deleteLoading} onConfirm={handleDeleteMeeting} onCancel={() => setDeleteTarget(null)} />
       )}
-      {editTarget && (
-        <EditMeetingModal meeting={editTarget} loading={editLoading}
-          onConfirm={handleEditMeeting} onCancel={() => setEditTarget(null)} />
-      )}
+      {editTarget && (() => {
+        const mTeacher = editTarget.teacherId
+          ? teachers.find((t) => t.id === editTarget.teacherId)
+          : null;
+        const mGradeOptions = mTeacher
+          ? getTeacherGrades(mTeacher.allowedGrades, mTeacher.gradeAliases)
+          : getTeacherGrades(currentUserAllowedGrades, currentUserAliases);
+
+        return (
+          <EditMeetingModal
+            meeting={editTarget}
+            loading={editLoading}
+            gradeOptions={mGradeOptions}
+            onConfirm={handleEditMeeting}
+            onCancel={() => setEditTarget(null)}
+          />
+        );
+      })()}
 
       <div className="min-h-screen bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-7xl space-y-6">
@@ -505,7 +541,12 @@ const MeetingsAdminPage = () => {
                   <select value={gradeFilter} onChange={(e) => setGradeFilter(e.target.value as Grade | '')}
                     className="appearance-none rounded-full border border-[#dadce0] bg-white py-2 pl-3 pr-7 text-xs text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
                     <option value="">All Grades</option>
-                    {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+                    {(isAdmin
+                      ? getTeacherGrades(ALL_GRADES, {})
+                      : getTeacherGrades(currentUserAllowedGrades, currentUserAliases)
+                    ).map((opt) => (
+                      <option key={opt.value} value={opt.value}>{opt.label}</option>
+                    ))}
                   </select>
                   <ChevronDown size={12} className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-[#5f6368]" />
                 </div>

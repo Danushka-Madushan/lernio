@@ -1,11 +1,11 @@
 "use client";
 
-import { Grade } from '@/lib/db';
+import { Grade } from '@/generated/client/enums';
 import { BookOpen, ChevronDown, Clock, Loader2, Lock, Plus, RefreshCw, UserPlus, X } from 'lucide-react';
 import CopyButton from './CopyButton';
 import UsernameInput from './UsernameInput';
 import { generatePassword } from '@/lib/utils';
-import { GRADE_LABELS } from '@/lib/constants';
+import { getTeacherGrades } from '@/lib/constants';
 import DateTimePicker from './DateTimePicker';
 import ShareCredentialsCard from './ShareCredentialsCard';
 import { Button } from '@heroui/react';
@@ -21,6 +21,8 @@ interface TeacherOption {
   id: string;
   username: string;
   role: string;
+  allowedGrades?: Grade[];
+  gradeAliases?: Record<string, string> | null;
 }
 
 const AddStudentModal = ({
@@ -53,6 +55,11 @@ const AddStudentModal = ({
     usernamePrefix && usernameSuffix.every((d) => d)
       ? `${usernamePrefix}-${usernameSuffix.join('')}`
       : '';
+
+  const selectedTeacher = teachers.find((t) => t.id === teacherId);
+  const teacherGradeOptions = selectedTeacher
+    ? getTeacherGrades(selectedTeacher.allowedGrades, selectedTeacher.gradeAliases as Record<string, string>)
+    : getTeacherGrades();
 
   return (
     <div role="dialog" aria-modal="true"
@@ -142,8 +149,8 @@ const AddStudentModal = ({
                   <select value={grade} onChange={(e) => onGradeChange(e.target.value as Grade | '')} disabled={creating}
                     className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc]  focus:ring-2 focus:ring-blue-500/20 ">
                     <option value="">- Select grade -</option>
-                    {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => (
-                      <option key={val} value={val}>{label}</option>
+                    {teacherGradeOptions.map(({ value, label }) => (
+                      <option key={value} value={value}>{label}</option>
                     ))}
                   </select>
                   <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />

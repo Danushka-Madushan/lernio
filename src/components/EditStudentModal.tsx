@@ -1,7 +1,7 @@
 "use client";
 
-import { GRADE_LABELS } from '@/lib/constants';
-import { Grade } from '@/lib/db';
+import { GRADE_LABELS, getTeacherGrades } from '@/lib/constants';
+import { Grade } from '@/generated/client/enums';
 import { BookOpen, Check, ChevronDown, Clock, Loader2, Lock, UserCheck, X } from 'lucide-react';
 import { useState } from 'react';
 import DateTimePicker from './DateTimePicker';
@@ -13,6 +13,8 @@ interface TeacherOption {
   id: string;
   username: string;
   role: string;
+  allowedGrades?: Grade[];
+  gradeAliases?: Record<string, string> | null;
 }
 
 interface Student {
@@ -23,7 +25,12 @@ interface Student {
   activeTo: string | null;
   accessMode: AccessMode;
   teacherId?: string | null;
-  teacher?: { id: string; username: string } | null;
+  teacher?: {
+    id: string;
+    username: string;
+    allowedGrades?: Grade[];
+    gradeAliases?: Record<string, string> | null;
+  } | null;
   createdAt: string;
 }
 
@@ -66,6 +73,16 @@ const EditStudentModal = ({
   const [grade, setGrade] = useState<Grade | ''>(student.grade || '');
   const [teacherId, setTeacherId] = useState<string>(student.teacherId || student.teacher?.id || '');
 
+  const activeTeacher = isAdmin
+    ? teachers.find((t) => t.id === teacherId) || student.teacher
+    : student.teacher;
+
+  const gradeOptions = activeTeacher
+    ? getTeacherGrades(activeTeacher.allowedGrades, activeTeacher.gradeAliases as Record<string, string>)
+    : getTeacherGrades();
+
+  const hasCurrentGradeOption = !grade || gradeOptions.some((g) => g.value === grade);
+
   return (
     <div
       role="dialog"
@@ -104,7 +121,14 @@ const EditStudentModal = ({
               <div className="relative">
                 <select
                   value={teacherId}
-                  onChange={(e) => setTeacherId(e.target.value)}
+                  onChange={(e) => {
+                    const newTId = e.target.value;
+                    setTeacherId(newTId);
+                    const selected = teachers.find((t) => t.id === newTId);
+                    if (selected && grade && selected.allowedGrades && !selected.allowedGrades.includes(grade as Grade)) {
+                      setGrade('');
+                    }
+                  }}
                   disabled={loading}
                   className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
                 >
@@ -145,11 +169,16 @@ const EditStudentModal = ({
                 className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
               >
                 <option value="">- Select grade -</option>
-                {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => (
-                  <option key={val} value={val}>
+                {gradeOptions.map(({ value, label }) => (
+                  <option key={value} value={value}>
                     {label}
                   </option>
                 ))}
+                {!hasCurrentGradeOption && grade && (
+                  <option key={grade} value={grade}>
+                    {GRADE_LABELS[grade as Grade] || grade} (Current)
+                  </option>
+                )}
               </select>
               <ChevronDown
                 size={13}

@@ -5,7 +5,7 @@ import DateTimePicker from './DateTimePicker';
 import MeetingSettingsPanel from './MeetingSettingsPanel';
 import { Button } from '@heroui/react';
 import { notoSans } from '@/lib/fonts';
-import { Grade } from '@/lib/db';
+import { Grade } from '@/generated/client/enums';
 import { GRADE_LABELS } from '@/lib/constants';
 
 // 1=Daily, 2=Weekly, 3=Monthly
@@ -30,7 +30,7 @@ interface ZoomAccount {
 const AddMeetingModal = ({
   title, link, scheduledAt, grade, zoomAccountId,
   durationMinutes, isRecurring, hostVideo, participantVideo, waitingRoom,
-  recurrenceConfig, zoomAccounts, creating, error, success,
+  recurrenceConfig, zoomAccounts, creating, error, success, gradeOptions,
   onTitleChange, onLinkChange, onScheduledAtChange, onGradeChange, onZoomAccountIdChange,
   onDurationMinutesChange, onIsRecurringChange, onHostVideoChange, onParticipantVideoChange,
   onWaitingRoomChange, onRecurrenceConfigChange, onSubmit, onCancel,
@@ -39,6 +39,7 @@ const AddMeetingModal = ({
   durationMinutes: number; isRecurring: boolean; hostVideo: boolean; participantVideo: boolean;
   waitingRoom: boolean; recurrenceConfig: RecurrenceConfig; zoomAccounts: ZoomAccount[];
   creating: boolean; error: string; success: string;
+  gradeOptions?: { value: Grade; label: string }[];
   onTitleChange: (v: string) => void; onLinkChange: (v: string) => void;
   onScheduledAtChange: (v: string) => void; onGradeChange: (v: Grade | '') => void;
   onZoomAccountIdChange: (v: string) => void; onDurationMinutesChange: (v: number) => void;
@@ -108,7 +109,14 @@ const AddMeetingModal = ({
                     <select value={grade} onChange={(e) => onGradeChange(e.target.value as Grade | '')} disabled={creating}
                       className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
                       <option value="">- All Grades -</option>
-                      {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+                      {(gradeOptions && gradeOptions.length > 0
+                        ? gradeOptions
+                        : (Object.entries(GRADE_LABELS) as [Grade, string][]).map(([value, label]) => ({ value, label }))
+                      ).map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
                     </select>
                     <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
                   </div>
