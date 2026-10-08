@@ -76,6 +76,15 @@ const EditMeetingModal = ({
   const [waitingRoom, setWaitingRoom] = useState(meeting.waitingRoom !== false);
   const [recurrenceConfig, setRecurrenceConfig] = useState<RecurrenceConfig>({ type: 2, repeat_interval: 1, weekly_days: String(new Date(meeting.scheduledAt).getDay() + 1), end_times: 50 });
 
+  const options =
+    gradeOptions && gradeOptions.length > 0
+      ? gradeOptions
+      : (Object.entries(GRADE_LABELS) as [Grade, string][]).map(([value, label]) => ({
+          value,
+          label,
+        }));
+  const hasCurrentGradeOption = !grade || options.some((opt) => opt.value === grade);
+
   const isZoomApi = !!meeting.zoomAccountId;
 
   return (
@@ -124,14 +133,16 @@ const EditMeetingModal = ({
                     <select value={grade} onChange={(e) => setGrade(e.target.value as Grade | '')} disabled={loading}
                       className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
                       <option value="">- All Grades -</option>
-                      {(gradeOptions && gradeOptions.length > 0
-                        ? gradeOptions
-                        : (Object.entries(GRADE_LABELS) as [Grade, string][]).map(([value, label]) => ({ value, label }))
-                      ).map((opt) => (
+                      {options.map((opt) => (
                         <option key={opt.value} value={opt.value}>
                           {opt.label}
                         </option>
                       ))}
+                      {!hasCurrentGradeOption && grade && (
+                        <option key={grade} value={grade}>
+                          {GRADE_LABELS[grade as Grade] || grade} (Current)
+                        </option>
+                      )}
                     </select>
                     <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
                   </div>
