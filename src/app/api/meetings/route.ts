@@ -78,8 +78,27 @@ export async function POST(request: Request) {
       );
     }
 
-    if (grade && !Object.values(Grade).includes(grade as Grade)) {
-      return NextResponse.json({ error: 'Invalid grade value' }, { status: 400 });
+    if (grade) {
+      if (!Object.values(Grade).includes(grade as Grade)) {
+        return NextResponse.json({ error: 'Invalid grade value' }, { status: 400 });
+      }
+
+      if (user.role === 'TEACHER') {
+        const teacherUser = await db.user.findUnique({
+          where: { id: user.id },
+          select: { allowedGrades: true },
+        });
+        if (
+          teacherUser?.allowedGrades &&
+          teacherUser.allowedGrades.length > 0 &&
+          !teacherUser.allowedGrades.includes(grade as Grade)
+        ) {
+          return NextResponse.json(
+            { error: 'Selected grade is not permitted for your account.' },
+            { status: 400 }
+          );
+        }
+      }
     }
 
     let meetingLink = link?.trim();

@@ -13,9 +13,17 @@ type VideoThumbnailProps = {
   grade: Grade | null;
   hasThumbnail: boolean;
   showGrade?: boolean;
+  gradeLabel?: string;
 };
 
-const VideoThumbnail = ({ videoId, title, grade, hasThumbnail, showGrade }: VideoThumbnailProps) => {
+const VideoThumbnail = ({
+  videoId,
+  title,
+  grade,
+  hasThumbnail,
+  showGrade,
+  gradeLabel,
+}: VideoThumbnailProps) => {
   // No thumbnail key at all -> skip straight to the fallback, no need to fake a loading state.
   const [status, setStatus] = useState<ThumbnailStatus>(hasThumbnail ? 'loading' : 'error');
 
@@ -76,11 +84,11 @@ const VideoThumbnail = ({ videoId, title, grade, hasThumbnail, showGrade }: Vide
 
       {grade && showGrade && (
         <span className="absolute bottom-2 right-2 z-10 rounded-full bg-black/70 px-2 py-0.5 text-[10px] font-medium text-white">
-          {grade.replace('GRADE_', 'Grade ')}
+          {gradeLabel || grade.replace('GRADE_', 'Grade ')}
         </span>
       )}
     </Link>
   );
-}
+};
 
 export default VideoThumbnail;

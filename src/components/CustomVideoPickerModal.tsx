@@ -1,7 +1,7 @@
 "use client";
 
 import { GRADE_COLORS, GRADE_LABELS } from '@/lib/constants';
-import { Grade } from '@/lib/db';
+import { Grade } from '@/generated/client/enums';
 import { notoSans } from '@/lib/fonts';
 import { Button } from '@heroui/react';
 import { Check, Film, Globe, Loader2, Lock, Search, X } from 'lucide-react';

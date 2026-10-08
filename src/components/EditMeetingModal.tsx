@@ -1,6 +1,6 @@
 "use client";
 
-import { Grade } from '@/lib/db';
+import { Grade } from '@/generated/client/enums';
 import { Check, ChevronDown, Loader2, Video, X } from 'lucide-react';
 import { useState } from 'react';
 import DateTimePicker from './DateTimePicker';
@@ -37,9 +37,28 @@ interface RecurrenceConfig {
   end_times?: number;
 }
 
-const EditMeetingModal = ({ meeting, loading, onConfirm, onCancel }: {
-  meeting: Meeting; loading: boolean;
-  onConfirm: (title: string, link: string, scheduledAt: string, grade: Grade | '', durationMinutes: number, isRecurring: boolean, hostVideo: boolean, participantVideo: boolean, waitingRoom: boolean, recurrenceConfig: RecurrenceConfig) => void;
+const EditMeetingModal = ({
+  meeting,
+  loading,
+  gradeOptions,
+  onConfirm,
+  onCancel,
+}: {
+  meeting: Meeting;
+  loading: boolean;
+  gradeOptions?: { value: Grade; label: string }[];
+  onConfirm: (
+    title: string,
+    link: string,
+    scheduledAt: string,
+    grade: Grade | '',
+    durationMinutes: number,
+    isRecurring: boolean,
+    hostVideo: boolean,
+    participantVideo: boolean,
+    waitingRoom: boolean,
+    recurrenceConfig: RecurrenceConfig
+  ) => void;
   onCancel: () => void;
 }) => {
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -105,7 +124,14 @@ const EditMeetingModal = ({ meeting, loading, onConfirm, onCancel }: {
                     <select value={grade} onChange={(e) => setGrade(e.target.value as Grade | '')} disabled={loading}
                       className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20">
                       <option value="">- All Grades -</option>
-                      {(Object.entries(GRADE_LABELS) as [Grade, string][]).map(([val, label]) => <option key={val} value={val}>{label}</option>)}
+                      {(gradeOptions && gradeOptions.length > 0
+                        ? gradeOptions
+                        : (Object.entries(GRADE_LABELS) as [Grade, string][]).map(([value, label]) => ({ value, label }))
+                      ).map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
                     </select>
                     <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
                   </div>

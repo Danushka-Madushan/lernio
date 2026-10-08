@@ -7,6 +7,7 @@ import { s3, bucketName } from '@/lib/r2';
 import { GetObjectCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { VideoVisibility } from '@/generated/client/enums';
+import { getGradeLabel } from '@/lib/constants';
 
 const VideoPage = async ({
   params,
@@ -31,6 +32,11 @@ const VideoPage = async ({
           user: { select: { username: true } },
         },
         orderBy: { createdAt: 'desc' },
+      },
+      teacher: {
+        select: {
+          gradeAliases: true,
+        },
       },
       _count: {
         select: { likes: true },
@@ -135,6 +141,10 @@ const VideoPage = async ({
     createdAt: c.createdAt.toISOString(),
   }));
 
+  const gradeLabel = video.grade
+    ? getGradeLabel(video.grade, video.teacher?.gradeAliases as Record<string, string>)
+    : undefined;
+
   return (
     <div className="max-w-4xl mx-auto space-y-space-4">
       <VideoDetails
@@ -143,6 +153,7 @@ const VideoPage = async ({
         initialHasLiked={!!userHasLiked}
         currentUsername={user!.username}
         presignedUrl={presignedUrl}
+        gradeLabel={gradeLabel}
       />
     </div>
   );

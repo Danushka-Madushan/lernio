@@ -1,9 +1,14 @@
 // ── Grade Tabs ──────────────────────────────────────────────────────────────────
 
-import { Grade } from '@/lib/db';
+import { Grade } from '@/generated/client/enums';
 import Link from 'next/link';
 
-const gradeMapping = [
+export interface GradeTabItem {
+  label: string;
+  value: Grade;
+}
+
+const defaultGradeMapping: GradeTabItem[] = [
   { label: 'Grade 6', value: Grade.GRADE_6 },
   { label: 'Grade 7', value: Grade.GRADE_7 },
   { label: 'Grade 8', value: Grade.GRADE_8 },
@@ -12,7 +17,15 @@ const gradeMapping = [
   { label: 'Grade 11', value: Grade.GRADE_11 },
 ];
 
-const GradeTabs = ({ activeGrade }: { activeGrade?: Grade }) => {
+const GradeTabs = ({
+  activeGrade,
+  grades,
+}: {
+  activeGrade?: Grade;
+  grades?: GradeTabItem[];
+}) => {
+  const displayGrades = grades && grades.length > 0 ? grades : defaultGradeMapping;
+
   return (
     <div className="flex flex-wrap gap-2 border-b border-[#e8eaed] pb-5">
       <Link
@@ -25,7 +38,7 @@ const GradeTabs = ({ activeGrade }: { activeGrade?: Grade }) => {
       >
         All Grades
       </Link>
-      {gradeMapping.map((g) => (
+      {displayGrades.map((g) => (
         <Link
           key={g.value}
           href={`/?grade=${g.value}`}
@@ -40,6 +53,6 @@ const GradeTabs = ({ activeGrade }: { activeGrade?: Grade }) => {
       ))}
     </div>
   );
-}
+};
 
 export default GradeTabs;

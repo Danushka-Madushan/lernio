@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { db } from '@/lib/db';
+import { db, Grade } from '@/lib/db';
 import { verifyToken } from '@/lib/jwt';
 import { cookies } from 'next/headers';
 import bcrypt from 'bcryptjs';
@@ -11,7 +11,7 @@ import { deleteZoomMeeting } from '@/lib/zoom';
 // Track in-progress deletions to prevent race conditions or duplicate runs
 const activeTeacherDeletions = new Set<string>();
 
-// PUT: Update teacher (reset password)
+// PUT: Update teacher (reset password, allowedGrades, gradeAliases)
 export async function PUT(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -27,7 +27,7 @@ export async function PUT(
 
   try {
     const body = await request.json();
-    const { password } = body;
+    const { password, allowedGrades, gradeAliases } = body;
 
     const updateData: any = {};
 
@@ -39,6 +39,41 @@ export async function PUT(
         );
       }
       updateData.hashedPassword = await bcrypt.hash(password, 10);
+    }
+
+    if (allowedGrades !== undefined) {
+      if (!Array.isArray(allowedGrades) || allowedGrades.length === 0) {
+        return NextResponse.json(
+          { error: 'At least one allowed grade must be selected.' },
+          { status: 400 }
+        );
+      }
+      const valid = allowedGrades.filter((g: unknown): g is Grade =>
+        Object.values(Grade).includes(g as Grade)
+      );
+      if (valid.length === 0) {
+        return NextResponse.json(
+          { error: 'Invalid allowed grades provided.' },
+          { status: 400 }
+        );
+      }
+      updateData.allowedGrades = valid;
+    }
+
+    if (gradeAliases !== undefined) {
+      const resolvedGradeAliases: Record<string, string> = {};
+      if (gradeAliases && typeof gradeAliases === 'object') {
+        for (const [key, val] of Object.entries(gradeAliases)) {
+          if (
+            Object.values(Grade).includes(key as Grade) &&
+            typeof val === 'string' &&
+            val.trim().length > 0
+          ) {
+            resolvedGradeAliases[key] = val.trim();
+          }
+        }
+      }
+      updateData.gradeAliases = resolvedGradeAliases;
     }
 
     const targetTeacher = await db.user.findUnique({
@@ -57,6 +92,8 @@ export async function PUT(
         id: true,
         username: true,
         role: true,
+        allowedGrades: true,
+        gradeAliases: true,
       },
     });
 

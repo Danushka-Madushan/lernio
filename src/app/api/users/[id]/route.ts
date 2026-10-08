@@ -86,6 +86,26 @@ export async function PUT(
       }
     }
 
+    // Validate that student's final grade is within the assigned teacher's allowedGrades
+    const resolvedTeacherId = updateData.teacherId ?? student.teacherId;
+    const resolvedGrade = updateData.grade !== undefined ? updateData.grade : undefined;
+    if (resolvedGrade && resolvedTeacherId) {
+      const teacherUser = await db.user.findUnique({
+        where: { id: resolvedTeacherId },
+        select: { allowedGrades: true },
+      });
+      if (
+        teacherUser?.allowedGrades &&
+        teacherUser.allowedGrades.length > 0 &&
+        !teacherUser.allowedGrades.includes(resolvedGrade)
+      ) {
+        return NextResponse.json(
+          { error: 'Selected grade is not permitted for the assigned teacher.' },
+          { status: 400 }
+        );
+      }
+    }
+
     const updated = await db.user.update({
       where: { id },
       data: updateData,

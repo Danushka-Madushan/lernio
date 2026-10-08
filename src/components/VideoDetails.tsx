@@ -31,6 +31,7 @@ interface VideoDetailsProps {
   currentUsername: string;
   /** Short-lived presigned R2 URL for the video, generated server-side. */
   presignedUrl: string;
+  gradeLabel?: string;
 }
 
 const VideoDetails = ({
@@ -39,6 +40,7 @@ const VideoDetails = ({
   initialHasLiked,
   currentUsername,
   presignedUrl,
+  gradeLabel,
 }: VideoDetailsProps) => {
   // Likes State
   const [likesCount, setLikesCount] = useState(video.likesCount);
@@ -149,7 +151,7 @@ const VideoDetails = ({
           <div className="space-y-1.5 w-full sm:flex-1 sm:pr-4">
             {video.grade && (
               <span className="inline-block rounded-full bg-[#e8f0fe] px-2.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-500">
-                {video.grade.replace('GRADE_', 'Grade ')}
+                {gradeLabel || video.grade.replace('GRADE_', 'Grade ')}
               </span>
             )}
             <h1 className={`text-lg sm:text-xl font-medium leading-tight tracking-tight text-[#202124] wrap-break-word ${notoSans.className}`}>

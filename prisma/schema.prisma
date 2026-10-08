@@ -38,6 +38,8 @@ model User {
   hashedPassword String
   role           Role       @default(STUDENT)
   grade          Grade?
+  allowedGrades  Grade[]    @default([GRADE_6, GRADE_7, GRADE_8, GRADE_9, GRADE_10, GRADE_11])
+  gradeAliases   Json?      @default("{}")
   activeFrom     DateTime?
   activeTo       DateTime?
   accessMode     AccessMode @default(GRADE)
