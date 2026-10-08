@@ -25,7 +25,7 @@ export async function PUT(
   try {
     const student = await db.user.findUnique({
       where: { id },
-      select: { id: true, role: true, teacherId: true },
+      select: { id: true, role: true, teacherId: true, grade: true },
     });
 
     if (!student || student.role !== 'STUDENT') {
@@ -88,7 +88,7 @@ export async function PUT(
 
     // Validate that student's final grade is within the assigned teacher's allowedGrades
     const resolvedTeacherId = updateData.teacherId ?? student.teacherId;
-    const resolvedGrade = updateData.grade !== undefined ? updateData.grade : undefined;
+    const resolvedGrade = updateData.grade !== undefined ? updateData.grade : student.grade;
     if (resolvedGrade && resolvedTeacherId) {
       const teacherUser = await db.user.findUnique({
         where: { id: resolvedTeacherId },
