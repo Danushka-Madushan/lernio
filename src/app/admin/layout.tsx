@@ -6,7 +6,7 @@ import { redirect } from 'next/navigation';
 import LogoutButton from '@/components/LogoutButton';
 import RepoVersionBadge from '@/components/RepoVersionBadge';
 import { AdminContent } from '@/components/AdminContent';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, Award } from 'lucide-react';
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const cookieStore = await cookies();
@@ -81,6 +81,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
                   Teachers
                 </Link>
               )}
+              <Link
+                href="/exams-portal"
+                className="text-blue-600 hover:text-blue-700 bg-blue-50/70 hover:bg-blue-100/60 font-semibold transition-all duration-150 rounded-lg px-3 py-2 focus-visible:outline-none flex items-center gap-1.5"
+              >
+                <Award size={15} />
+                <span>Exams</span>
+              </Link>
             </nav>
           </div>
 

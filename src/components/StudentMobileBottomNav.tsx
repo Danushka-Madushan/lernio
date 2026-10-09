@@ -16,6 +16,7 @@ import {
   ChevronRight,
   FileText,
   GraduationCap,
+  Award,
 } from 'lucide-react';
 import { Button } from '@heroui/react';
 import { createPortal } from 'react-dom';
@@ -30,9 +31,8 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { id: 'home', label: 'Home', icon: House, href: '/' },
-  { id: 'papers', label: 'Papers', icon: FileText, href: '/papers' },
-  // Future items (papers, classes, etc.) added here
+  { id: 'home', label: 'Home (Videos)', icon: House, href: '/' },
+  { id: 'exams', label: 'Exams Portal', icon: Award, href: '/exams-portal' },
 ];
 
 /* ─── Types & Helpers ────────────────────────────────────────────────────────── */

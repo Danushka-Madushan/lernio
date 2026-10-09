@@ -55,6 +55,15 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  // ---- Staff sub-routes in exams portal (/exams-portal/groups, /exams-portal/exams/[id]/marks) ----
+  if (
+    (pathname.startsWith('/exams-portal/groups') || pathname.endsWith('/marks')) &&
+    user.role !== 'ADMIN' &&
+    user.role !== 'TEACHER'
+  ) {
+    return NextResponse.redirect(new URL('/exams-portal', request.url));
+  }
+
   return NextResponse.next();
 }
 
