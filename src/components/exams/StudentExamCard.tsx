@@ -113,11 +113,11 @@ export default function StudentExamCard({ exam }: StudentExamCardProps) {
               >
                 {myResult.isAboveThreshold ? (
                   <>
-                    <CheckCircle2 size={13} /> Above Cutoff (+{myResult.diffFromThreshold} marks)
+                    <CheckCircle2 size={13} /> Passed (+{myResult.diffFromThreshold} marks)
                   </>
                 ) : (
                   <>
-                    <AlertCircle size={13} /> Below Cutoff ({myResult.diffFromThreshold} marks)
+                    <AlertCircle size={13} /> Needs Improvement ({myResult.diffFromThreshold} marks)
                   </>
                 )}
               </span>

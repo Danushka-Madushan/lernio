@@ -220,7 +220,7 @@ export default function CreateExamModal({
 
             <div>
               <label className="block text-xs font-semibold text-gray-700 mb-1">
-                Threshold Cutoff
+                Pass Mark (Cutoff)
               </label>
               <input
                 type="number"

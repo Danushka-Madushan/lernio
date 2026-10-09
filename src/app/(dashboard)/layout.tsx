@@ -4,7 +4,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import LogoutButton from '@/components/LogoutButton';
 import StudentMeetingsNav from '@/components/StudentMeetingsNav';
-import StudentMobileBottomNav from '@/components/StudentMobileBottomNav';
+import MobileDrawerNav from '@/components/MobileDrawerNav';
 import { GraduationCap, Award } from 'lucide-react';
 
 const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
@@ -81,7 +81,7 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
                 {(user.role === 'ADMIN' || user.role === 'TEACHER') && (
                   <Link
                     href="/admin"
-                    className="flex items-center px-3 py-1.5 bg-[#e8f0fe] text-blue-500 font-medium text-xs rounded-full hover:bg-[#d2e3fc] transition-colors focus-visible:ring-2 focus-visible:ring-blue-500/40 outline-none"
+                    className="hidden sm:flex items-center px-3 py-1.5 bg-[#e8f0fe] text-blue-500 font-medium text-xs rounded-full hover:bg-[#d2e3fc] transition-colors focus-visible:ring-2 focus-visible:ring-blue-500/40 outline-none"
                   >
                     {user.role === 'ADMIN' ? 'Admin Panel' : 'Teacher Panel'}
                   </Link>
@@ -90,8 +90,8 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
                 {/* Vertical Divider */}
                 <div className="hidden sm:block w-px h-6 bg-gray-300"></div>
 
-                {/* Logout button: hidden on mobile for students (logout lives in bottom nav) */}
-                <span className={isStudent ? 'hidden md:flex' : ''}>
+                {/* Logout button: hidden on mobile (logout lives in mobile drawer) */}
+                <span className="hidden md:flex">
                   <LogoutButton />
                 </span>
               </>
@@ -104,8 +104,8 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
         {children}
       </main>
 
-      {/* Student-only mobile bottom navigation bar */}
-      {isStudent && <StudentMobileBottomNav username={user.username} />}
+      {/* Universal mobile drawer navigation for all authenticated roles */}
+      {user && <MobileDrawerNav username={user.username} role={user.role} />}
     </div>
   );
 }

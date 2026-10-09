@@ -73,7 +73,7 @@ export default function ExamStatsOverview({
       {/* Threshold Cutoff */}
       <div className="bg-white p-3.5 sm:p-4 rounded-xl border border-gray-200 shadow-2xs flex flex-col justify-between">
         <div className="flex items-center justify-between text-gray-500 mb-2">
-          <span className="text-xs font-medium">Pass Cutoff</span>
+          <span className="text-xs font-medium">Pass Mark</span>
           <span className="p-1 rounded-lg bg-rose-50 text-rose-600">
             <BarChart2 size={15} />
           </span>

@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { getStudentColor } from '@/lib/exams';
-import { Award, ChevronRight, Sparkles, TrendingUp, AlertCircle, CheckCircle2, User } from 'lucide-react';
+import { Award, ChevronRight, Sparkles, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@heroui/react';
 
 export interface ChartMarkItem {
@@ -57,7 +57,7 @@ export default function ExamPerformanceChart({
   const paddingLeft = 52;
   const paddingRight = 48;
   const paddingTop = 60;
-  const paddingBottom = 110; // Extra room for vertical rotated labels
+  const paddingBottom = 125; // Breathable room for vertical rotated labels and gap
   const chartHeight = 240;
   const totalSvgHeight = paddingTop + chartHeight + paddingBottom;
 
@@ -80,6 +80,8 @@ export default function ExamPerformanceChart({
   };
 
   const thresholdY = getY(thresholdMarks);
+  const baselineY = getY(0);
+  const labelStartY = paddingTop + chartHeight + 26; // Clean vertical separation from baseline
 
   // Polyline points
   const linePoints = gradedStudents
@@ -135,9 +137,19 @@ export default function ExamPerformanceChart({
 
         {/* Legend & Quick Actions */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-medium">
-            <span className="w-2 h-0.5 border-t-2 border-dashed border-rose-500 inline-block"></span>
-            <span>Threshold ({thresholdMarks})</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-semibold shadow-2xs">
+            <span className="w-2.5 h-0.5 border-t-2 border-dashed border-rose-500 inline-block"></span>
+            <span>Pass Mark: {thresholdMarks} / {maxMarks}</span>
+          </div>
+
+          <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
+            <span>Pass Zone</span>
+          </div>
+
+          <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50/70 text-rose-600 border border-rose-100 font-medium">
+            <span className="w-2 h-2 rounded-full bg-rose-400 inline-block"></span>
+            <span>Needs Improvement</span>
           </div>
 
           {currentUserStudent && !currentUserStudent.isAbsent && (
@@ -163,7 +175,7 @@ export default function ExamPerformanceChart({
       {/* SVG Canvas Scroll Area */}
       <div
         ref={containerRef}
-        className="w-full overflow-x-auto overflow-y-hidden select-none bg-linear-to-b from-gray-50/40 via-white to-gray-50/20"
+        className="w-full overflow-x-auto overflow-y-hidden select-none bg-white"
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
         <svg
@@ -173,26 +185,43 @@ export default function ExamPerformanceChart({
           style={{ minWidth: '100%' }}
         >
           <defs>
-            {/* Gradients */}
+            {/* Score Curve Gradient */}
             <linearGradient id="scoreLineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#60a5fa" />
-              <stop offset="50%" stopColor="#3b82f6" />
-              <stop offset="100%" stopColor="#2563eb" />
+              <stop offset="0%" stopColor="#3b82f6" />
+              <stop offset="50%" stopColor="#2563eb" />
+              <stop offset="100%" stopColor="#1d4ed8" />
             </linearGradient>
 
-            {/* Above Threshold Safe Area Tint */}
+            {/* Pass Zone Soft Mint Tint */}
             <linearGradient id="passZoneGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#ecfdf5" stopOpacity="0.5" />
-              <stop offset="100%" stopColor="#ecfdf5" stopOpacity="0.05" />
+              <stop offset="0%" stopColor="#ecfdf5" stopOpacity="0.8" />
+              <stop offset="100%" stopColor="#f0fdf4" stopOpacity="0.35" />
             </linearGradient>
 
-            {/* Shadow for You badge */}
+            {/* Needs Improvement Soft Blush Tint */}
+            <linearGradient id="improvementZoneGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+              <stop offset="0%" stopColor="#fff1f2" stopOpacity="0.3" />
+              <stop offset="100%" stopColor="#ffe4e6" stopOpacity="0.6" />
+            </linearGradient>
+
+            {/* Curve Line Lift Shadow */}
+            <filter id="lineGlow" x="-10%" y="-10%" width="120%" height="120%">
+              <feDropShadow dx="0" dy="2.5" stdDeviation="2" floodOpacity="0.22" floodColor="#1e40af" />
+            </filter>
+
+            {/* Dot Drop Shadow for high contrast on white */}
+            <filter id="dotShadow" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" floodOpacity="0.2" floodColor="#0f172a" />
+            </filter>
+
+            {/* Shadow for You badge and pass mark badge */}
             <filter id="badgeShadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.18" floodColor="#1e3a8a" />
+              <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.16" floodColor="#0f172a" />
             </filter>
           </defs>
 
-          {/* Pass Zone Tint */}
+          {/* ── Dual Zone High-Contrast Tinting (White theme compliant) ──── */}
+          {/* 1. Pass Zone (Above threshold) */}
           <rect
             x={paddingLeft}
             y={getY(maxMarks)}
@@ -201,8 +230,17 @@ export default function ExamPerformanceChart({
             fill="url(#passZoneGrad)"
           />
 
-          {/* Horizontal Grid lines (0, 25, 50, 75, 100) */}
-          {[0, 25, 50, 75, 100].map((tick) => {
+          {/* 2. Needs Improvement Zone (Below threshold) */}
+          <rect
+            x={paddingLeft}
+            y={thresholdY}
+            width={innerWidth}
+            height={baselineY - thresholdY}
+            fill="url(#improvementZoneGrad)"
+          />
+
+          {/* Horizontal Grid lines (25, 50, 75, 100) */}
+          {[25, 50, 75, 100].map((tick) => {
             const y = getY(tick);
             return (
               <g key={`grid-${tick}`}>
@@ -211,17 +249,17 @@ export default function ExamPerformanceChart({
                   y1={y}
                   x2={paddingLeft + innerWidth}
                   y2={y}
-                  stroke="#e5e7eb"
-                  strokeWidth="1"
-                  strokeDasharray="3 3"
+                  stroke="#cbd5e1"
+                  strokeWidth="1.2"
+                  strokeDasharray="4 4"
                 />
                 <text
                   x={paddingLeft - 8}
                   y={y + 4}
                   textAnchor="end"
                   fontSize="11"
-                  fontWeight="500"
-                  fill="#9ca3af"
+                  fontWeight="600"
+                  fill="#475569"
                   fontFamily="system-ui, sans-serif"
                 >
                   {tick}
@@ -230,6 +268,37 @@ export default function ExamPerformanceChart({
             );
           })}
 
+          {/* Left Y-axis line */}
+          <line
+            x1={paddingLeft}
+            y1={getY(maxMarks)}
+            x2={paddingLeft}
+            y2={baselineY}
+            stroke="#94a3b8"
+            strokeWidth="1.5"
+          />
+
+          {/* Bottom X-axis baseline (0 mark) */}
+          <line
+            x1={paddingLeft}
+            y1={baselineY}
+            x2={paddingLeft + innerWidth}
+            y2={baselineY}
+            stroke="#64748b"
+            strokeWidth="1.5"
+          />
+          <text
+            x={paddingLeft - 8}
+            y={baselineY + 4}
+            textAnchor="end"
+            fontSize="11"
+            fontWeight="600"
+            fill="#475569"
+            fontFamily="system-ui, sans-serif"
+          >
+            0
+          </text>
+
           {/* Threshold Dashed Marker Line */}
           <g>
             <line
@@ -237,32 +306,34 @@ export default function ExamPerformanceChart({
               y1={thresholdY}
               x2={paddingLeft + innerWidth}
               y2={thresholdY}
-              stroke="#f43f5e"
-              strokeWidth="2"
+              stroke="#e11d48"
+              strokeWidth="2.5"
               strokeDasharray="6 4"
             />
-            {/* Threshold Label Tag at right */}
-            <rect
-              x={paddingLeft + innerWidth - 92}
-              y={thresholdY - 18}
-              width="90"
-              height="18"
-              rx="4"
-              fill="#ffe4e6"
-              stroke="#fda4af"
-              strokeWidth="1"
-            />
-            <text
-              x={paddingLeft + innerWidth - 47}
-              y={thresholdY - 5}
-              textAnchor="middle"
-              fontSize="10"
-              fontWeight="600"
-              fill="#e11d48"
-              fontFamily="system-ui, sans-serif"
-            >
-              Cutoff: {thresholdMarks}
-            </text>
+            {/* Friendly Pass Mark Pill Tag at right */}
+            <g filter="url(#badgeShadow)">
+              <rect
+                x={paddingLeft + innerWidth - 146}
+                y={thresholdY - 13}
+                width="142"
+                height="26"
+                rx="13"
+                fill="#ffffff"
+                stroke="#e11d48"
+                strokeWidth="1.5"
+              />
+              <text
+                x={paddingLeft + innerWidth - 75}
+                y={thresholdY + 4}
+                textAnchor="middle"
+                fontSize="11"
+                fontWeight="700"
+                fill="#e11d48"
+                fontFamily="system-ui, sans-serif"
+              >
+                🎯 Pass Mark: {thresholdMarks} / {maxMarks}
+              </text>
+            </g>
           </g>
 
           {/* The Single Ascending Score Curve Line */}
@@ -274,10 +345,11 @@ export default function ExamPerformanceChart({
               strokeWidth="3.5"
               strokeLinecap="round"
               strokeLinejoin="round"
+              filter="url(#lineGlow)"
             />
           )}
 
-          {/* Vertical Grid Drop Lines from points to axis */}
+          {/* Vertical Grid Drop Lines from points to baseline */}
           {gradedStudents.map((s, idx) => {
             const x = getX(idx);
             const y = getY(s.score);
@@ -286,12 +358,12 @@ export default function ExamPerformanceChart({
               <line
                 key={`dropline-${s.id}`}
                 x1={x}
-                y1={y}
+                y1={y + 8}
                 x2={x}
-                y2={paddingTop + chartHeight + 10}
-                stroke={isUser ? '#3b82f6' : '#f1f5f9'}
+                y2={baselineY}
+                stroke={isUser ? '#3b82f6' : '#cbd5e1'}
                 strokeWidth={isUser ? '1.5' : '1'}
-                strokeDasharray={isUser ? '3 2' : 'none'}
+                strokeDasharray={isUser ? '3 2' : '2 2'}
               />
             );
           })}
@@ -335,14 +407,15 @@ export default function ExamPerformanceChart({
                   </>
                 )}
 
-                {/* Main Dot */}
+                {/* Main Dot with High-Contrast White Rim & Shadow */}
                 <circle
                   cx={x}
                   cy={y}
-                  r={isUser ? 8 : 5.5}
+                  r={isUser ? 8 : 6}
                   fill={isUser ? '#2563eb' : colors.color}
                   stroke="#ffffff"
-                  strokeWidth={isUser ? 3 : 2}
+                  strokeWidth={isUser ? 3 : 2.5}
+                  filter="url(#dotShadow)"
                   className="transition-transform duration-200 group-hover:scale-125"
                   style={{ transformOrigin: `${x}px ${y}px` }}
                 />
@@ -378,17 +451,17 @@ export default function ExamPerformanceChart({
                   </g>
                 )}
 
-                {/* Vertical Label (Rotated 90 degrees) */}
-                <g transform={`translate(${x}, ${paddingTop + chartHeight + 20})`}>
+                {/* Vertical Label (Rotated 90 degrees) with generous breathable gap */}
+                <g transform={`translate(${x}, ${labelStartY})`}>
                   {/* Rotated text group */}
                   <text
                     transform="rotate(-90)"
-                    x="-80"
+                    x="-90"
                     y="4"
                     textAnchor="start"
                     fontSize={isUser ? '12' : '11'}
-                    fontWeight={isUser ? '700' : '500'}
-                    fill={isUser ? '#1d4ed8' : '#4b5563'}
+                    fontWeight={isUser ? '700' : '600'}
+                    fill={isUser ? '#1d4ed8' : '#334155'}
                     fontFamily="system-ui, sans-serif"
                     letterSpacing="0.02em"
                   >
@@ -398,7 +471,7 @@ export default function ExamPerformanceChart({
                   {/* Indicator Dot at the bottom */}
                   <circle
                     cx="0"
-                    cy="82"
+                    cy="92"
                     r={isUser ? 4 : 3}
                     fill={colors.color}
                   />
@@ -447,7 +520,7 @@ export default function ExamPerformanceChart({
               >
                 {selectedStudent.marks >= thresholdMarks ? (
                   <>
-                    <CheckCircle2 size={13} /> Above Cutoff (+{selectedStudent.marks - thresholdMarks})
+                    <CheckCircle2 size={13} /> Above Pass Mark (+{selectedStudent.marks - thresholdMarks})
                   </>
                 ) : (
                   <>

@@ -189,11 +189,11 @@ export default function ExamViewClient({ examId, isStudent }: ExamViewClientProp
                 >
                   {mySummary.isAboveThreshold ? (
                     <>
-                      <CheckCircle2 size={14} /> Above Cutoff (+{mySummary.diffFromThreshold})
+                      <CheckCircle2 size={14} /> Passed (+{mySummary.diffFromThreshold})
                     </>
                   ) : (
                     <>
-                      <AlertCircle size={14} /> Below Cutoff ({mySummary.diffFromThreshold})
+                      <AlertCircle size={14} /> Needs Improvement ({mySummary.diffFromThreshold})
                     </>
                   )}
                 </span>

@@ -179,7 +179,7 @@ export default function TeacherExamsPortalClient({
         <div className="col-span-2 sm:col-span-1 bg-white p-4 rounded-2xl border border-gray-200 shadow-2xs">
           <span className="text-xs font-medium text-gray-500 block">Average Pass Rate</span>
           <span className="text-2xl font-bold text-emerald-600 mt-1 block">{overallAvgPassRate}%</span>
-          <span className="text-[11px] text-gray-400 mt-0.5 block">Above teacher cutoff</span>
+          <span className="text-[11px] text-gray-400 mt-0.5 block">Above pass mark</span>
         </div>
       </div>
 
@@ -311,7 +311,7 @@ export default function TeacherExamsPortalClient({
                       </span>
                     </div>
                     <div>
-                      <span className="text-[10px] text-gray-500 uppercase block">Cutoff</span>
+                      <span className="text-[10px] text-gray-500 uppercase block">Pass Mark</span>
                       <span className="text-sm font-bold text-rose-600">
                         {exam.thresholdMarks}
                       </span>
