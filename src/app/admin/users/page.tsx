@@ -538,7 +538,13 @@ const UsersAdminPage = () => {
       {/* Grade */}
       <td className="py-3.5">
         {student.grade ? (
-          <span className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${GRADE_COLORS[student.grade]}`}>
+          <span
+            className={`inline-block max-w-[130px] sm:max-w-[160px] truncate align-middle rounded-full px-2.5 py-1 text-[11px] font-medium ${GRADE_COLORS[student.grade]}`}
+            title={getGradeLabel(
+              student.grade,
+              (student.teacher?.gradeAliases as Record<string, string>) || currentUserAliases
+            )}
+          >
             {getGradeLabel(
               student.grade,
               (student.teacher?.gradeAliases as Record<string, string>) || currentUserAliases
@@ -898,7 +904,7 @@ const UsersAdminPage = () => {
                               Assigned Teacher
                             </th>
                           )}
-                          <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                          <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368] min-w-[120px]">
                             Grade
                           </th>
                           <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
@@ -967,7 +973,7 @@ const UsersAdminPage = () => {
                                   Teacher
                                 </th>
                               )}
-                              <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                              <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368] min-w-[120px]">
                                 Grade
                               </th>
                               <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
@@ -1011,9 +1017,16 @@ const UsersAdminPage = () => {
                                 <td className="py-3.5">
                                   {student.grade ? (
                                     <span
-                                      className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${GRADE_COLORS[student.grade]}`}
+                                      className={`inline-block max-w-[130px] sm:max-w-[160px] truncate align-middle rounded-full px-2.5 py-1 text-[11px] font-medium ${GRADE_COLORS[student.grade]}`}
+                                      title={getGradeLabel(
+                                        student.grade,
+                                        (student.teacher?.gradeAliases as Record<string, string>) || currentUserAliases
+                                      )}
                                     >
-                                      {GRADE_LABELS[student.grade]}
+                                      {getGradeLabel(
+                                        student.grade,
+                                        (student.teacher?.gradeAliases as Record<string, string>) || currentUserAliases
+                                      )}
                                     </span>
                                   ) : (
                                     <span className="text-[11px] text-[#9aa0a6]">-</span>

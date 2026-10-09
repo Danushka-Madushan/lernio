@@ -56,6 +56,9 @@ model User {
   videos         Video[]    @relation("TeacherVideos")
   meetings       ZoomLink[] @relation("TeacherMeetings")
   zoomAccounts   ZoomAccount[] @relation("TeacherZoomAccounts")
+  examGroups     ExamGroup[] @relation("TeacherExamGroups")
+  exams          Exam[]      @relation("TeacherExams")
+  examMarks      ExamMark[]  @relation("StudentExamMarks")
 }
 
 model Video {
@@ -160,4 +163,50 @@ model View {
 
   user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
   video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+}
+
+model ExamGroup {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  teacherId   String
+  teacher     User     @relation("TeacherExamGroups", fields: [teacherId], references: [id], onDelete: Cascade)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  exams       Exam[]
+}
+
+model Exam {
+  id             String      @id @default(uuid())
+  title          String
+  description    String?
+  subject        String
+  grade          Grade
+  examGroupId    String?
+  examGroup      ExamGroup?  @relation(fields: [examGroupId], references: [id], onDelete: SetNull)
+  teacherId      String
+  teacher        User        @relation("TeacherExams", fields: [teacherId], references: [id], onDelete: Cascade)
+  thresholdMarks Float       @default(50)
+  maxMarks       Float       @default(100)
+  examDate       DateTime
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+
+  marks          ExamMark[]
+}
+
+model ExamMark {
+  id        String   @id @default(uuid())
+  examId    String
+  exam      Exam     @relation(fields: [examId], references: [id], onDelete: Cascade)
+  studentId String
+  student   User     @relation("StudentExamMarks", fields: [studentId], references: [id], onDelete: Cascade)
+  marks     Float?
+  isAbsent  Boolean  @default(false)
+  remarks   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([examId, studentId])
 }
