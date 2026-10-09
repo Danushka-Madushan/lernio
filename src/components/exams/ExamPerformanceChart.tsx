@@ -32,6 +32,7 @@ export default function ExamPerformanceChart({
 }: ExamPerformanceChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedStudent, setSelectedStudent] = useState<ChartMarkItem | null>(null);
+  const [showNames, setShowNames] = useState(false);
 
   // Filter & sort graded students low to high along the single line
   const gradedStudents = useMemo(() => {
@@ -56,7 +57,7 @@ export default function ExamPerformanceChart({
   const paddingLeft = 52;
   const paddingRight = 48;
   const paddingTop = 50;
-  const paddingBottom = 125; // Breathable room for vertical rotated labels and gap
+  const paddingBottom = 36; // Compact padding now that names below X-axis are removed
   const chartHeight = 240;
   const totalSvgHeight = paddingTop + chartHeight + paddingBottom;
 
@@ -82,7 +83,6 @@ export default function ExamPerformanceChart({
   const baselineY = getY(0);
   const cautionMark = Math.max(0, Math.min(Math.round(thresholdMarks * 0.75), Math.round(maxMarks * 0.35)));
   const cautionY = getY(cautionMark);
-  const labelStartY = paddingTop + chartHeight + 26; // Clean vertical separation from baseline
 
   // Polyline points
   const linePoints = gradedStudents
@@ -141,12 +141,24 @@ export default function ExamPerformanceChart({
           </p>
         </div>
 
-        {/* Minimal, Professional Legend */}
+        {/* Encouraging Legend & Chart Controls */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
-          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 text-red-700 border border-red-200 font-medium">
-            <span className="w-2.5 h-0.5 border-t-2 border-dashed border-red-500 inline-block"></span>
+          {/* Green Tick Pass Mark Indicator */}
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold shadow-2xs">
+            <CheckCircle2 size={13.5} className="text-emerald-600 shrink-0" />
             <span>Pass Mark: {thresholdMarks}</span>
           </div>
+
+          {/* Show / Hide Names Option */}
+          <label className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium cursor-pointer transition-colors select-none ${showNames ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'}`}>
+            <input
+              type="checkbox"
+              checked={showNames}
+              onChange={(e) => setShowNames(e.target.checked)}
+              className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
+            />
+            <span>Names</span>
+          </label>
 
           {currentUserStudent && !currentUserStudent.isAbsent && (
             <Button
@@ -184,6 +196,11 @@ export default function ExamPerformanceChart({
             {/* Subtle shadow for "You" callout badge */}
             <filter id="badgeShadow" x="-20%" y="-20%" width="140%" height="140%">
               <feDropShadow dx="0" dy="1.5" stdDeviation="2" floodOpacity="0.15" floodColor="#0f172a" />
+            </filter>
+
+            {/* Subtle shadow for price tags */}
+            <filter id="tagShadow" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" floodOpacity="0.12" floodColor="#0f172a" />
             </filter>
 
             {/* Three Soft Pastel Zone Gradients for Authentic, Subtle Tinting */}
@@ -295,34 +312,34 @@ export default function ExamPerformanceChart({
             0
           </text>
 
-          {/* ── Threshold Indicator: Red Dot on Y-axis + Mark Number Only ── */}
+          {/* ── Threshold Indicator: Encouraging Green Dot on Y-axis + Mark Number Only ── */}
           <g>
-            {/* Refined horizontal dashed line from Y-axis across chart */}
+            {/* Horizontal dashed pass line from Y-axis across chart */}
             <line
               x1={paddingLeft}
               y1={thresholdY}
               x2={paddingLeft + innerWidth}
               y2={thresholdY}
-              stroke="#ea4335"
+              stroke="#10b981"
               strokeWidth="1.2"
               strokeDasharray="4 4"
               strokeOpacity="0.85"
             />
-            {/* Red dot at the Y-axis intersection */}
+            {/* Green dot at the Y-axis intersection */}
             <circle
               cx={paddingLeft}
               cy={thresholdY}
               r="3.5"
-              fill="#ea4335"
+              fill="#10b981"
             />
-            {/* Threshold mark number only on the Y-axis, in bold red */}
+            {/* Threshold mark number only on the Y-axis, in bold emerald */}
             <text
               x={paddingLeft - 8}
               y={thresholdY + 4}
               textAnchor="end"
               fontSize="11"
               fontWeight="700"
-              fill="#ea4335"
+              fill="#059669"
               fontFamily="system-ui, sans-serif"
             >
               {thresholdMarks}
@@ -411,58 +428,102 @@ export default function ExamPerformanceChart({
                 />
 
                 {/* "You" Minimal Callout Badge */}
-                {isUser && (
-                  <g filter="url(#badgeShadow)">
-                    <rect
-                      x={x - 28}
-                      y={y - 34}
-                      width="56"
-                      height="22"
-                      rx="11"
-                      fill="#1a73e8"
-                    />
-                    <polygon
-                      points={`${x - 3},${y - 12} ${x + 3},${y - 12} ${x},${y - 8}`}
-                      fill="#1a73e8"
-                    />
-                    <text
-                      x={x}
-                      y={y - 20}
-                      textAnchor="middle"
-                      fontSize="10"
-                      fontWeight="bold"
-                      fill="#ffffff"
-                      fontFamily="system-ui, sans-serif"
-                    >
-                      You ({s.score})
-                    </text>
-                  </g>
-                )}
+                {isUser && (() => {
+                  const isDown = y < 130;
+                  const youBadgeY = showNames && !isDown ? y - 10 - 54 - 24 : y - 34;
+                  const pointerBaseY = youBadgeY + 22;
 
-                {/* Vertical Label (Rotated 90 degrees) with comfortable breathing room */}
-                <g transform={`translate(${x}, ${labelStartY})`}>
-                  <text
-                    transform="rotate(-90)"
-                    x="-90"
-                    y="4"
-                    textAnchor="start"
-                    fontSize={isUser ? '12' : '11'}
-                    fontWeight={isUser ? '700' : '500'}
-                    fill={isUser ? '#1a73e8' : '#5f6368'}
-                    fontFamily="system-ui, sans-serif"
-                    letterSpacing="0.01em"
-                  >
-                    {s.username} • {s.score}
-                  </text>
+                  return (
+                    <g filter="url(#badgeShadow)">
+                      <rect
+                        x={x - 28}
+                        y={youBadgeY}
+                        width="56"
+                        height="22"
+                        rx="11"
+                        fill="#1a73e8"
+                      />
+                      <polygon
+                        points={`${x - 3},${pointerBaseY} ${x + 3},${pointerBaseY} ${x},${pointerBaseY + 4}`}
+                        fill="#1a73e8"
+                      />
+                      <text
+                        x={x}
+                        y={youBadgeY + 14}
+                        textAnchor="middle"
+                        fontSize="10"
+                        fontWeight="bold"
+                        fill="#ffffff"
+                        fontFamily="system-ui, sans-serif"
+                      >
+                        You ({s.score})
+                      </text>
+                    </g>
+                  );
+                })()}
 
-                  {/* Indicator Dot at the bottom */}
-                  <circle
-                    cx="0"
-                    cy="92"
-                    r={isUser ? 3.5 : 2.5}
-                    fill={colors.color}
-                  />
-                </g>
+                {/* Vertical Price-Tag Name Label (shown when "Names" is ticked) */}
+                {showNames && (() => {
+                  const tagW = 18;
+                  const tagH = 54;
+                  const isDown = y < 130;
+                  const tagX = x - tagW / 2;
+                  const tagY = isDown ? y + 10 : y - 10 - tagH;
+                  const isSelected = selectedStudent?.id === s.id;
+
+                  return (
+                    <g filter="url(#tagShadow)" className="transition-all duration-150">
+                      {/* Price tag connecting thread */}
+                      <line
+                        x1={x}
+                        y1={isDown ? y + 6 : y - 6}
+                        x2={x}
+                        y2={isDown ? tagY : tagY + tagH}
+                        stroke={isSelected ? '#1a73e8' : colors.color}
+                        strokeWidth="1"
+                        strokeDasharray="1.5 1.5"
+                      />
+
+                      {/* Price tag body */}
+                      <rect
+                        x={tagX}
+                        y={tagY}
+                        width={tagW}
+                        height={tagH}
+                        rx="4"
+                        fill="#ffffff"
+                        stroke={isSelected ? '#1a73e8' : colors.color}
+                        strokeWidth={isSelected ? '1.8' : '1.2'}
+                      />
+
+                      {/* Price tag eyelet hole */}
+                      <circle
+                        cx={x}
+                        cy={isDown ? tagY + 5 : tagY + tagH - 5}
+                        r="1.5"
+                        fill="#ffffff"
+                        stroke={isSelected ? '#1a73e8' : colors.color}
+                        strokeWidth="1"
+                      />
+
+                      {/* Vertical Rotated Student Name */}
+                      <g transform={`rotate(-90, ${x}, ${tagY + tagH / 2})`}>
+                        <text
+                          x={x}
+                          y={tagY + tagH / 2 + 3.5}
+                          textAnchor="middle"
+                          fontSize="9.5"
+                          fontWeight={isUser || isSelected ? '700' : '500'}
+                          fill={isUser || isSelected ? '#1a73e8' : '#374151'}
+                          fontFamily="system-ui, sans-serif"
+                          letterSpacing="0.01em"
+                        >
+                          {s.username.length > 9 ? `${s.username.slice(0, 8)}…` : s.username}
+                        </text>
+                      </g>
+                    </g>
+                  );
+                })()}
               </g>
             );
           })}
