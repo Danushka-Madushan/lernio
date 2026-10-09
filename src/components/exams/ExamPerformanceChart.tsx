@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { getStudentColor, evaluateStudentMark } from '@/lib/exams';
+import { getStudentColor, evaluateStudentMark, getStudentDisplayNumber } from '@/lib/exams';
 import { Sparkles, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@heroui/react';
 
@@ -149,7 +149,7 @@ export default function ExamPerformanceChart({
             <span>Pass Mark: {thresholdMarks}</span>
           </div>
 
-          {/* Show / Hide Names Option */}
+          {/* Show / Hide Student Numbers Option */}
           <label className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium cursor-pointer transition-colors select-none ${showNames ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'}`}>
             <input
               type="checkbox"
@@ -157,7 +157,7 @@ export default function ExamPerformanceChart({
               onChange={(e) => setShowNames(e.target.checked)}
               className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
             />
-            <span>Names</span>
+            <span>Student No.</span>
           </label>
 
           {currentUserStudent && !currentUserStudent.isAbsent && (
@@ -429,8 +429,9 @@ export default function ExamPerformanceChart({
 
                 {/* "You" Minimal Callout Badge */}
                 {isUser && (() => {
+                  const tagH = 48;
                   const isDown = y < 130;
-                  const youBadgeY = showNames && !isDown ? y - 10 - 54 - 24 : y - 34;
+                  const youBadgeY = showNames && !isDown ? y - 10 - tagH - 24 : y - 34;
                   const pointerBaseY = youBadgeY + 22;
 
                   return (
@@ -462,14 +463,16 @@ export default function ExamPerformanceChart({
                   );
                 })()}
 
-                {/* Vertical Price-Tag Name Label (shown when "Names" is ticked) */}
+                {/* Vertical Price-Tag Label (shown when "Student No." is ticked) */}
                 {showNames && (() => {
-                  const tagW = 18;
-                  const tagH = 54;
+                  const tagW = 19;
+                  const tagH = 48;
                   const isDown = y < 130;
                   const tagX = x - tagW / 2;
                   const tagY = isDown ? y + 10 : y - 10 - tagH;
                   const isSelected = selectedStudent?.id === s.id;
+                  const displayNumber = getStudentDisplayNumber(s.username);
+                  const textCenterY = tagY + tagH / 2 + (isDown ? 2 : -2);
 
                   return (
                     <g filter="url(#tagShadow)" className="transition-all duration-150">
@@ -506,19 +509,20 @@ export default function ExamPerformanceChart({
                         strokeWidth="1"
                       />
 
-                      {/* Vertical Rotated Student Name */}
-                      <g transform={`rotate(-90, ${x}, ${tagY + tagH / 2})`}>
+                      {/* Vertical Rotated 4-Digit Student Number */}
+                      <g transform={`rotate(-90, ${x}, ${textCenterY})`}>
                         <text
                           x={x}
-                          y={tagY + tagH / 2 + 3.5}
+                          y={textCenterY}
                           textAnchor="middle"
-                          fontSize="9.5"
-                          fontWeight={isUser || isSelected ? '700' : '500'}
+                          dominantBaseline="central"
+                          fontSize="10"
+                          fontWeight={isUser || isSelected ? '700' : '600'}
                           fill={isUser || isSelected ? '#1a73e8' : '#374151'}
-                          fontFamily="system-ui, sans-serif"
-                          letterSpacing="0.01em"
+                          fontFamily="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+                          letterSpacing="0.04em"
                         >
-                          {s.username.length > 9 ? `${s.username.slice(0, 8)}…` : s.username}
+                          {displayNumber}
                         </text>
                       </g>
                     </g>

@@ -234,3 +234,25 @@ export function evaluateStudentMark(
     isPass: false,
   };
 }
+
+/**
+ * Extracts the 4-digit student number from a username (standard Lernio format: "username-XXXX").
+ * Guarantees a clean, fixed-length display for dense chart price tags.
+ */
+export function getStudentDisplayNumber(username: string | null | undefined): string {
+  if (!username) return '----';
+
+  // 1. Match trailing 4 digits or any 4-digit sequence (e.g. "math-2345" -> "2345")
+  const match = username.match(/\d{4}$/) || username.match(/\d{4}/);
+  if (match) return match[0];
+
+  // 2. Extract digits if fewer or more than 4
+  const digits = username.replace(/\D/g, '');
+  if (digits.length >= 4) return digits.slice(-4);
+  if (digits.length > 0) return digits.padStart(4, '0');
+
+  // 3. Fallback for accounts without digits (first 4 characters)
+  const clean = username.replace(/[^a-zA-Z0-9]/g, '');
+  return clean.slice(0, 4).toUpperCase() || '----';
+}
+
