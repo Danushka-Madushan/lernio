@@ -80,6 +80,8 @@ export default function ExamPerformanceChart({
 
   const thresholdY = getY(thresholdMarks);
   const baselineY = getY(0);
+  const cautionMark = Math.max(0, Math.min(Math.round(thresholdMarks * 0.75), Math.round(maxMarks * 0.35)));
+  const cautionY = getY(cautionMark);
   const labelStartY = paddingTop + chartHeight + 26; // Clean vertical separation from baseline
 
   // Polyline points
@@ -183,7 +185,55 @@ export default function ExamPerformanceChart({
             <filter id="badgeShadow" x="-20%" y="-20%" width="140%" height="140%">
               <feDropShadow dx="0" dy="1.5" stdDeviation="2" floodOpacity="0.15" floodColor="#0f172a" />
             </filter>
+
+            {/* Three Soft Pastel Zone Gradients for Authentic, Subtle Tinting */}
+            <linearGradient id="zoneGreenGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#10b981" stopOpacity="0.08" />
+              <stop offset="100%" stopColor="#10b981" stopOpacity="0.03" />
+            </linearGradient>
+            <linearGradient id="zoneYellowGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#f59e0b" stopOpacity="0.06" />
+              <stop offset="100%" stopColor="#f59e0b" stopOpacity="0.02" />
+            </linearGradient>
+            <linearGradient id="zoneRedGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#ef4444" stopOpacity="0.02" />
+              <stop offset="100%" stopColor="#ef4444" stopOpacity="0.07" />
+            </linearGradient>
           </defs>
+
+          {/* ── Soft Pastel Performance Zones (Green / Yellow / Red) ── */}
+          {/* Green Zone (Pass & Above) */}
+          {thresholdY > getY(maxMarks) && (
+            <rect
+              x={paddingLeft}
+              y={getY(maxMarks)}
+              width={innerWidth}
+              height={Math.max(0, thresholdY - getY(maxMarks))}
+              fill="url(#zoneGreenGrad)"
+            />
+          )}
+
+          {/* Yellow Zone (Approaching / Moderate) */}
+          {cautionY > thresholdY && (
+            <rect
+              x={paddingLeft}
+              y={thresholdY}
+              width={innerWidth}
+              height={Math.max(0, cautionY - thresholdY)}
+              fill="url(#zoneYellowGrad)"
+            />
+          )}
+
+          {/* Red Zone (Needs Support) */}
+          {baselineY > cautionY && (
+            <rect
+              x={paddingLeft}
+              y={cautionY}
+              width={innerWidth}
+              height={Math.max(0, baselineY - cautionY)}
+              fill="url(#zoneRedGrad)"
+            />
+          )}
 
           {/* Horizontal Grid lines (25, 50, 75, 100) */}
           {[25, 50, 75, 100].map((tick) => {
