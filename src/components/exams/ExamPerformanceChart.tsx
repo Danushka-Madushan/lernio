@@ -32,7 +32,7 @@ export default function ExamPerformanceChart({
 }: ExamPerformanceChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [selectedStudent, setSelectedStudent] = useState<ChartMarkItem | null>(null);
-  const [showNames, setShowNames] = useState(false);
+  const [showNames, setShowNames] = useState(true);
 
   // Filter & sort graded students low to high along the single line
   const gradedStudents = useMemo(() => {
@@ -157,7 +157,7 @@ export default function ExamPerformanceChart({
               onChange={(e) => setShowNames(e.target.checked)}
               className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
             />
-            <span>Student No.</span>
+            <span>Student ID</span>
           </label>
 
           {currentUserStudent && !currentUserStudent.isAbsent && (

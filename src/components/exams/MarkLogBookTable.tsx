@@ -267,6 +267,19 @@ export default function MarkLogBookTable({
                     <span className="text-xs text-gray-400 font-medium">/{maxMarks}</span>
                   </div>
 
+                  {/* Absent Toggle Button */}
+                  <button
+                    type="button"
+                    onClick={() => handleAbsentToggle(idx)}
+                    className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors ${
+                      student.isAbsent
+                        ? 'bg-amber-500 text-white border-amber-600'
+                        : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'
+                    }`}
+                  >
+                    {student.isAbsent ? 'Absent ✓' : 'Mark Absent'}
+                  </button>
+
                   {/* Status Tag */}
                   <div className="min-w-24">
                     {student.isAbsent ? (
@@ -288,19 +301,6 @@ export default function MarkLogBookTable({
                       <span className="text-xs text-gray-400 italic">Not graded</span>
                     )}
                   </div>
-
-                  {/* Absent Toggle Button */}
-                  <button
-                    type="button"
-                    onClick={() => handleAbsentToggle(idx)}
-                    className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors ${
-                      student.isAbsent
-                        ? 'bg-amber-500 text-white border-amber-600'
-                        : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'
-                    }`}
-                  >
-                    {student.isAbsent ? 'Absent ✓' : 'Mark Absent'}
-                  </button>
                 </div>
 
                 {/* Optional Teacher Remarks */}
