@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { Grade } from '@/generated/client/enums';
 import { getGradeLabel } from '@/lib/constants';
+import { evaluateStudentMark } from '@/lib/exams';
 import { ChevronRight, Calendar, User, CheckCircle2, AlertCircle, Layers } from 'lucide-react';
 import { Button } from '@heroui/react';
 
@@ -34,6 +35,9 @@ interface StudentExamCardProps {
 export default function StudentExamCard({ exam }: StudentExamCardProps) {
   const { myResult } = exam;
   const gradeLabel = getGradeLabel(exam.grade, exam.teacher?.gradeAliases);
+  const evaluation = myResult.isGraded
+    ? evaluateStudentMark(myResult.marks, exam.thresholdMarks, exam.maxMarks)
+    : null;
 
   const formattedDate = new Date(exam.examDate).toLocaleDateString('en-GB', {
     day: 'numeric',
@@ -101,25 +105,25 @@ export default function StudentExamCard({ exam }: StudentExamCardProps) {
             )}
           </div>
 
-          {/* Threshold Pill */}
-          {myResult.isGraded && (
+          {/* Performance Evaluation Badge */}
+          {myResult.isGraded && evaluation && (
             <div className="mt-2.5 flex items-center">
               <span
-                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                  myResult.isAboveThreshold
-                    ? 'bg-emerald-100/80 text-emerald-800'
-                    : 'bg-rose-100/80 text-rose-800'
-                }`}
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold border ${evaluation.badgeClass}`}
               >
-                {myResult.isAboveThreshold ? (
-                  <>
-                    <CheckCircle2 size={13} /> Passed (+{myResult.diffFromThreshold} marks)
-                  </>
+                {evaluation.variant === 'excellent' || evaluation.variant === 'good' ? (
+                  <CheckCircle2 size={13} />
                 ) : (
-                  <>
-                    <AlertCircle size={13} /> Needs Improvement ({myResult.diffFromThreshold} marks)
-                  </>
+                  <AlertCircle size={13} />
                 )}
+                <span>
+                  {evaluation.label}
+                  {myResult.diffFromThreshold !== null && (
+                    <span className="font-normal opacity-85 ml-1">
+                      ({myResult.isAboveThreshold ? `+${myResult.diffFromThreshold}` : myResult.diffFromThreshold})
+                    </span>
+                  )}
+                </span>
               </span>
             </div>
           )}

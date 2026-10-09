@@ -140,3 +140,97 @@ export function calculateStudentRank(
     totalGraded: graded.length,
   };
 }
+
+export interface MarkEvaluation {
+  label: string;
+  shortLabel: string;
+  variant: 'excellent' | 'good' | 'encouraging' | 'support';
+  badgeClass: string;
+  isPass: boolean;
+}
+
+/**
+ * Provides human, encouraging, grade-aware evaluations for student marks.
+ * Prevents harsh red 'Needs Improvement' for students who scored reasonably (e.g. 60/100).
+ * Reserves 'Needs Support' only for very low scores (<35% and far below pass mark).
+ */
+export function evaluateStudentMark(
+  marks: number | null | undefined,
+  thresholdMarks: number,
+  maxMarks: number = 100
+): MarkEvaluation | null {
+  if (marks === null || marks === undefined || isNaN(marks)) return null;
+
+  const validMax = maxMarks > 0 ? maxMarks : 100;
+  const pct = Math.round((marks / validMax) * 100);
+  const isAboveThreshold = marks >= thresholdMarks;
+
+  // 1. Distinction / High Achiever (>= 75%)
+  if (pct >= 75) {
+    return {
+      label: 'Excellent',
+      shortLabel: 'Excellent',
+      variant: 'excellent',
+      badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+      isPass: true,
+    };
+  }
+
+  // 2. Very Good (65% - 74%)
+  if (pct >= 65) {
+    return {
+      label: 'Very Good',
+      shortLabel: 'Very Good',
+      variant: 'good',
+      badgeClass: 'bg-blue-50 text-blue-800 border-blue-200',
+      isPass: true,
+    };
+  }
+
+  // 3. Good / Credit (50% - 64%)
+  if (pct >= 50) {
+    return {
+      label: isAboveThreshold ? 'Good' : 'Good Effort',
+      shortLabel: 'Good',
+      variant: isAboveThreshold ? 'good' : 'encouraging',
+      badgeClass: isAboveThreshold
+        ? 'bg-sky-50 text-sky-800 border-sky-200'
+        : 'bg-amber-50 text-amber-800 border-amber-200',
+      isPass: isAboveThreshold,
+    };
+  }
+
+  // 4. Above or equal to threshold (< 50% but >= threshold, e.g. threshold = 40, marks = 45)
+  if (isAboveThreshold) {
+    return {
+      label: 'Passed',
+      shortLabel: 'Passed',
+      variant: 'good',
+      badgeClass: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+      isPass: true,
+    };
+  }
+
+  // 5. Below threshold:
+  // If score is decent (>= 35%) OR within 12 marks of pass threshold:
+  // Show encouraging, supportive feedback in warm amber (NOT red!)
+  const diffFromThreshold = thresholdMarks - marks;
+  if (pct >= 35 || diffFromThreshold <= 12) {
+    return {
+      label: 'Almost There',
+      shortLabel: 'Keep Going',
+      variant: 'encouraging',
+      badgeClass: 'bg-amber-50 text-amber-800 border-amber-200',
+      isPass: false,
+    };
+  }
+
+  // 6. Only if very low (< 35% AND far below threshold):
+  return {
+    label: 'Needs Support',
+    shortLabel: 'Needs Help',
+    variant: 'support',
+    badgeClass: 'bg-rose-50 text-rose-800 border-rose-200',
+    isPass: false,
+  };
+}

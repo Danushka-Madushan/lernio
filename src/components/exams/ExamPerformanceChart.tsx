@@ -1,8 +1,8 @@
 'use client';
 
 import { useState, useRef, useEffect, useMemo } from 'react';
-import { getStudentColor } from '@/lib/exams';
-import { Award, ChevronRight, Sparkles, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { getStudentColor, evaluateStudentMark } from '@/lib/exams';
+import { Sparkles, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { Button } from '@heroui/react';
 
 export interface ChartMarkItem {
@@ -53,10 +53,9 @@ export default function ExamPerformanceChart({
   }, [marks]);
 
   // Chart Dimensions & Spacing
-  // Spacing per student is kept at 56px so labels & dots never overlap on small screens
   const paddingLeft = 52;
   const paddingRight = 48;
-  const paddingTop = 60;
+  const paddingTop = 50;
   const paddingBottom = 125; // Breathable room for vertical rotated labels and gap
   const chartHeight = 240;
   const totalSvgHeight = paddingTop + chartHeight + paddingBottom;
@@ -117,6 +116,11 @@ export default function ExamPerformanceChart({
     }
   };
 
+  // Evaluation for selected student drawer
+  const selectedEvaluation = selectedStudent && selectedStudent.marks !== null
+    ? evaluateStudentMark(selectedStudent.marks, thresholdMarks, maxMarks)
+    : null;
+
   return (
     <div className="w-full bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
       {/* Chart Header */}
@@ -135,21 +139,11 @@ export default function ExamPerformanceChart({
           </p>
         </div>
 
-        {/* Legend & Quick Actions */}
+        {/* Minimal, Professional Legend */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200 font-semibold shadow-2xs">
-            <span className="w-2.5 h-0.5 border-t-2 border-dashed border-rose-500 inline-block"></span>
-            <span>Pass Mark: {thresholdMarks} / {maxMarks}</span>
-          </div>
-
-          <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block"></span>
-            <span>Pass Zone</span>
-          </div>
-
-          <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-50/70 text-rose-600 border border-rose-100 font-medium">
-            <span className="w-2 h-2 rounded-full bg-rose-400 inline-block"></span>
-            <span>Needs Improvement</span>
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-red-50 text-red-700 border border-red-200 font-medium">
+            <span className="w-2.5 h-0.5 border-t-2 border-dashed border-red-500 inline-block"></span>
+            <span>Pass Mark: {thresholdMarks}</span>
           </div>
 
           {currentUserStudent && !currentUserStudent.isAbsent && (
@@ -172,7 +166,7 @@ export default function ExamPerformanceChart({
         <span className="font-medium text-gray-600">{gradedStudents.length} students</span>
       </div>
 
-      {/* SVG Canvas Scroll Area */}
+      {/* SVG Canvas Scroll Area - Pure Authentic White Surface */}
       <div
         ref={containerRef}
         className="w-full overflow-x-auto overflow-y-hidden select-none bg-white"
@@ -185,59 +179,11 @@ export default function ExamPerformanceChart({
           style={{ minWidth: '100%' }}
         >
           <defs>
-            {/* Score Curve Gradient */}
-            <linearGradient id="scoreLineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-              <stop offset="0%" stopColor="#3b82f6" />
-              <stop offset="50%" stopColor="#2563eb" />
-              <stop offset="100%" stopColor="#1d4ed8" />
-            </linearGradient>
-
-            {/* Pass Zone Soft Mint Tint */}
-            <linearGradient id="passZoneGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#ecfdf5" stopOpacity="0.8" />
-              <stop offset="100%" stopColor="#f0fdf4" stopOpacity="0.35" />
-            </linearGradient>
-
-            {/* Needs Improvement Soft Blush Tint */}
-            <linearGradient id="improvementZoneGrad" x1="0%" y1="0%" x2="0%" y2="100%">
-              <stop offset="0%" stopColor="#fff1f2" stopOpacity="0.3" />
-              <stop offset="100%" stopColor="#ffe4e6" stopOpacity="0.6" />
-            </linearGradient>
-
-            {/* Curve Line Lift Shadow */}
-            <filter id="lineGlow" x="-10%" y="-10%" width="120%" height="120%">
-              <feDropShadow dx="0" dy="2.5" stdDeviation="2" floodOpacity="0.22" floodColor="#1e40af" />
-            </filter>
-
-            {/* Dot Drop Shadow for high contrast on white */}
-            <filter id="dotShadow" x="-30%" y="-30%" width="160%" height="160%">
-              <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" floodOpacity="0.2" floodColor="#0f172a" />
-            </filter>
-
-            {/* Shadow for You badge and pass mark badge */}
+            {/* Subtle shadow for "You" callout badge */}
             <filter id="badgeShadow" x="-20%" y="-20%" width="140%" height="140%">
-              <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.16" floodColor="#0f172a" />
+              <feDropShadow dx="0" dy="1.5" stdDeviation="2" floodOpacity="0.15" floodColor="#0f172a" />
             </filter>
           </defs>
-
-          {/* ── Dual Zone High-Contrast Tinting (White theme compliant) ──── */}
-          {/* 1. Pass Zone (Above threshold) */}
-          <rect
-            x={paddingLeft}
-            y={getY(maxMarks)}
-            width={innerWidth}
-            height={thresholdY - getY(maxMarks)}
-            fill="url(#passZoneGrad)"
-          />
-
-          {/* 2. Needs Improvement Zone (Below threshold) */}
-          <rect
-            x={paddingLeft}
-            y={thresholdY}
-            width={innerWidth}
-            height={baselineY - thresholdY}
-            fill="url(#improvementZoneGrad)"
-          />
 
           {/* Horizontal Grid lines (25, 50, 75, 100) */}
           {[25, 50, 75, 100].map((tick) => {
@@ -249,17 +195,17 @@ export default function ExamPerformanceChart({
                   y1={y}
                   x2={paddingLeft + innerWidth}
                   y2={y}
-                  stroke="#cbd5e1"
-                  strokeWidth="1.2"
-                  strokeDasharray="4 4"
+                  stroke="#e8eaed"
+                  strokeWidth="1"
+                  strokeDasharray="3 3"
                 />
                 <text
                   x={paddingLeft - 8}
                   y={y + 4}
                   textAnchor="end"
                   fontSize="11"
-                  fontWeight="600"
-                  fill="#475569"
+                  fontWeight="500"
+                  fill="#5f6368"
                   fontFamily="system-ui, sans-serif"
                 >
                   {tick}
@@ -274,8 +220,8 @@ export default function ExamPerformanceChart({
             y1={getY(maxMarks)}
             x2={paddingLeft}
             y2={baselineY}
-            stroke="#94a3b8"
-            strokeWidth="1.5"
+            stroke="#dadce0"
+            strokeWidth="1"
           />
 
           {/* Bottom X-axis baseline (0 mark) */}
@@ -284,68 +230,64 @@ export default function ExamPerformanceChart({
             y1={baselineY}
             x2={paddingLeft + innerWidth}
             y2={baselineY}
-            stroke="#64748b"
-            strokeWidth="1.5"
+            stroke="#dadce0"
+            strokeWidth="1"
           />
           <text
             x={paddingLeft - 8}
             y={baselineY + 4}
             textAnchor="end"
             fontSize="11"
-            fontWeight="600"
-            fill="#475569"
+            fontWeight="500"
+            fill="#5f6368"
             fontFamily="system-ui, sans-serif"
           >
             0
           </text>
 
-          {/* Threshold Dashed Marker Line */}
+          {/* ── Threshold Indicator: Red Dot on Y-axis + Mark Number Only ── */}
           <g>
+            {/* Refined horizontal dashed line from Y-axis across chart */}
             <line
               x1={paddingLeft}
               y1={thresholdY}
               x2={paddingLeft + innerWidth}
               y2={thresholdY}
-              stroke="#e11d48"
-              strokeWidth="2.5"
-              strokeDasharray="6 4"
+              stroke="#ea4335"
+              strokeWidth="1.2"
+              strokeDasharray="4 4"
+              strokeOpacity="0.85"
             />
-            {/* Friendly Pass Mark Pill Tag at right */}
-            <g filter="url(#badgeShadow)">
-              <rect
-                x={paddingLeft + innerWidth - 146}
-                y={thresholdY - 13}
-                width="142"
-                height="26"
-                rx="13"
-                fill="#ffffff"
-                stroke="#e11d48"
-                strokeWidth="1.5"
-              />
-              <text
-                x={paddingLeft + innerWidth - 75}
-                y={thresholdY + 4}
-                textAnchor="middle"
-                fontSize="11"
-                fontWeight="700"
-                fill="#e11d48"
-                fontFamily="system-ui, sans-serif"
-              >
-                🎯 Pass Mark: {thresholdMarks} / {maxMarks}
-              </text>
-            </g>
+            {/* Red dot at the Y-axis intersection */}
+            <circle
+              cx={paddingLeft}
+              cy={thresholdY}
+              r="3.5"
+              fill="#ea4335"
+            />
+            {/* Threshold mark number only on the Y-axis, in bold red */}
+            <text
+              x={paddingLeft - 8}
+              y={thresholdY + 4}
+              textAnchor="end"
+              fontSize="11"
+              fontWeight="700"
+              fill="#ea4335"
+              fontFamily="system-ui, sans-serif"
+            >
+              {thresholdMarks}
+            </text>
           </g>
 
-          {/* The Single Ascending Score Curve Line */}
+          {/* ── Ascending Score Curve Line (Sleek, Authentic Blue) ── */}
           {gradedStudents.length > 1 && (
             <polyline
               points={linePoints}
               fill="none"
-              stroke="url(#scoreLineGrad)"
-              strokeWidth="3.5"
+              stroke="#1a73e8"
+              strokeWidth="2.5"
               strokeLinecap="round"
               strokeLinejoin="round"
-              filter="url(#lineGlow)"
             />
           )}
 
@@ -358,23 +300,22 @@ export default function ExamPerformanceChart({
               <line
                 key={`dropline-${s.id}`}
                 x1={x}
-                y1={y + 8}
+                y1={y + 6}
                 x2={x}
                 y2={baselineY}
-                stroke={isUser ? '#3b82f6' : '#cbd5e1'}
+                stroke={isUser ? '#1a73e8' : '#e8eaed'}
                 strokeWidth={isUser ? '1.5' : '1'}
-                strokeDasharray={isUser ? '3 2' : '2 2'}
+                strokeDasharray={isUser ? '3 2' : 'none'}
               />
             );
           })}
 
-          {/* Student Dots and Vertical Labels */}
+          {/* ── Student Dots and Vertical Labels ── */}
           {gradedStudents.map((s, idx) => {
             const x = getX(idx);
             const y = getY(s.score);
             const colors = getStudentColor(s.username);
             const isUser = s.isCurrentUser;
-            const isAbove = s.score >= thresholdMarks;
 
             return (
               <g
@@ -391,57 +332,54 @@ export default function ExamPerformanceChart({
                     <circle
                       cx={x}
                       cy={y}
-                      r="16"
-                      fill="#3b82f6"
-                      fillOpacity="0.2"
+                      r="14"
+                      fill="#1a73e8"
+                      fillOpacity="0.15"
                       className="animate-ping"
                       style={{ transformOrigin: `${x}px ${y}px`, animationDuration: '2s' }}
                     />
                     <circle
                       cx={x}
                       cy={y}
-                      r="13"
-                      fill="#3b82f6"
-                      fillOpacity="0.25"
+                      r="11"
+                      fill="#1a73e8"
+                      fillOpacity="0.2"
                     />
                   </>
                 )}
 
-                {/* Main Dot with High-Contrast White Rim & Shadow */}
+                {/* Main Student Dot */}
                 <circle
                   cx={x}
                   cy={y}
-                  r={isUser ? 8 : 6}
-                  fill={isUser ? '#2563eb' : colors.color}
+                  r={isUser ? 7.5 : 5.5}
+                  fill={isUser ? '#1a73e8' : colors.color}
                   stroke="#ffffff"
-                  strokeWidth={isUser ? 3 : 2.5}
-                  filter="url(#dotShadow)"
-                  className="transition-transform duration-200 group-hover:scale-125"
+                  strokeWidth="2"
+                  className="transition-transform duration-150 group-hover:scale-125"
                   style={{ transformOrigin: `${x}px ${y}px` }}
                 />
 
-                {/* "You" Floating Callout Badge */}
+                {/* "You" Minimal Callout Badge */}
                 {isUser && (
                   <g filter="url(#badgeShadow)">
-                    {/* Callout box */}
                     <rect
-                      x={x - 38}
-                      y={y - 44}
-                      width="76"
-                      height="26"
-                      rx="13"
-                      fill={isAbove ? '#15803d' : '#be123c'}
+                      x={x - 28}
+                      y={y - 34}
+                      width="56"
+                      height="22"
+                      rx="11"
+                      fill="#1a73e8"
                     />
-                    {/* Downward triangle pointer */}
                     <polygon
-                      points={`${x - 4},${y - 18} ${x + 4},${y - 18} ${x},${y - 13}`}
-                      fill={isAbove ? '#15803d' : '#be123c'}
+                      points={`${x - 3},${y - 12} ${x + 3},${y - 12} ${x},${y - 8}`}
+                      fill="#1a73e8"
                     />
                     <text
                       x={x}
-                      y={y - 27}
+                      y={y - 20}
                       textAnchor="middle"
-                      fontSize="11"
+                      fontSize="10"
                       fontWeight="bold"
                       fill="#ffffff"
                       fontFamily="system-ui, sans-serif"
@@ -451,19 +389,18 @@ export default function ExamPerformanceChart({
                   </g>
                 )}
 
-                {/* Vertical Label (Rotated 90 degrees) with generous breathable gap */}
+                {/* Vertical Label (Rotated 90 degrees) with comfortable breathing room */}
                 <g transform={`translate(${x}, ${labelStartY})`}>
-                  {/* Rotated text group */}
                   <text
                     transform="rotate(-90)"
                     x="-90"
                     y="4"
                     textAnchor="start"
                     fontSize={isUser ? '12' : '11'}
-                    fontWeight={isUser ? '700' : '600'}
-                    fill={isUser ? '#1d4ed8' : '#334155'}
+                    fontWeight={isUser ? '700' : '500'}
+                    fill={isUser ? '#1a73e8' : '#5f6368'}
                     fontFamily="system-ui, sans-serif"
-                    letterSpacing="0.02em"
+                    letterSpacing="0.01em"
                   >
                     {s.username} • {s.score}
                   </text>
@@ -472,7 +409,7 @@ export default function ExamPerformanceChart({
                   <circle
                     cx="0"
                     cy="92"
-                    r={isUser ? 4 : 3}
+                    r={isUser ? 3.5 : 2.5}
                     fill={colors.color}
                   />
                 </g>
@@ -484,7 +421,7 @@ export default function ExamPerformanceChart({
 
       {/* Selected Student Mobile Detail Drawer / Bottom Card */}
       {selectedStudent && (
-        <div className="p-4 bg-linear-to-r from-blue-50/80 via-white to-indigo-50/80 border-t border-blue-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2 duration-200">
+        <div className="p-4 bg-white border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2 duration-150">
           <div className="flex items-center gap-3">
             <div
               className="w-10 h-10 rounded-full flex items-center justify-center font-bold text-white text-sm shadow-xs shrink-0"
@@ -503,30 +440,28 @@ export default function ExamPerformanceChart({
                   </span>
                 )}
               </div>
-              <p className="text-xs text-gray-600">
+              <p className="text-xs text-gray-500">
                 Score: <span className="font-bold text-gray-900">{selectedStudent.marks}</span> / {maxMarks} marks
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
-            {selectedStudent.marks !== null && (
+            {selectedStudent.marks !== null && selectedEvaluation && (
               <span
-                className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold ${
-                  selectedStudent.marks >= thresholdMarks
-                    ? 'bg-emerald-100 text-emerald-800'
-                    : 'bg-rose-100 text-rose-800'
-                }`}
+                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${selectedEvaluation.badgeClass}`}
               >
-                {selectedStudent.marks >= thresholdMarks ? (
-                  <>
-                    <CheckCircle2 size={13} /> Above Pass Mark (+{selectedStudent.marks - thresholdMarks})
-                  </>
+                {selectedEvaluation.variant === 'excellent' || selectedEvaluation.variant === 'good' ? (
+                  <CheckCircle2 size={13} />
                 ) : (
-                  <>
-                    <AlertCircle size={13} /> Needs Improvement (-{thresholdMarks - selectedStudent.marks})
-                  </>
+                  <AlertCircle size={13} />
                 )}
+                <span>
+                  {selectedEvaluation.label}
+                  <span className="font-normal opacity-85 ml-1">
+                    ({selectedStudent.marks >= thresholdMarks ? `+${selectedStudent.marks - thresholdMarks}` : selectedStudent.marks - thresholdMarks})
+                  </span>
+                </span>
               </span>
             )}
 
@@ -544,7 +479,7 @@ export default function ExamPerformanceChart({
 
       {/* Absent Students Section (if any) */}
       {absentStudents.length > 0 && (
-        <div className="p-3 bg-amber-50/60 border-t border-amber-100 flex flex-wrap items-center gap-2 text-xs text-amber-800">
+        <div className="p-3 bg-amber-50/50 border-t border-amber-100 flex flex-wrap items-center gap-2 text-xs text-amber-800">
           <span className="font-semibold">Absent ({absentStudents.length}):</span>
           {absentStudents.map((abs) => (
             <span

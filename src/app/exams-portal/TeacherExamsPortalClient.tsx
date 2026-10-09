@@ -6,6 +6,7 @@ import { Grade } from '@/generated/client/enums';
 import { getGradeLabel } from '@/lib/constants';
 import CreateExamModal from '@/components/exams/CreateExamModal';
 import CreateExamGroupModal from '@/components/exams/CreateExamGroupModal';
+import ExamDeleteConfirmModal from '@/components/exams/ExamDeleteConfirmModal';
 import { Button } from '@heroui/react';
 import {
   Award,
@@ -46,7 +47,8 @@ export default function TeacherExamsPortalClient({
 
   const [isCreateExamOpen, setIsCreateExamOpen] = useState(false);
   const [isCreateGroupOpen, setIsCreateGroupOpen] = useState(false);
-  const [deletingExamId, setDeletingExamId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const loadData = async () => {
     setIsLoading(true);
@@ -77,22 +79,23 @@ export default function TeacherExamsPortalClient({
     loadData();
   }, []);
 
-  const handleDeleteExam = async (examId: string) => {
-    if (!window.confirm('Are you sure you want to delete this exam? All logged marks will be permanently removed.')) {
-      return;
-    }
-
-    setDeletingExamId(examId);
+  const handleConfirmDeleteExam = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    setError(null);
     try {
-      const res = await fetch(`/api/exams/${examId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/exams/${deleteTarget.id}`, { method: 'DELETE' });
       if (!res.ok) {
-        throw new Error('Failed to delete exam');
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete exam');
       }
-      setExams((prev) => prev.filter((e) => e.id !== examId));
+      setExams((prev) => prev.filter((e) => e.id !== deleteTarget.id));
+      setDeleteTarget(null);
     } catch (err: any) {
-      alert(err.message || 'Error deleting exam');
+      setError(err.message || 'Error deleting exam');
+      setDeleteTarget(null);
     } finally {
-      setDeletingExamId(null);
+      setDeleteLoading(false);
     }
   };
 
@@ -345,8 +348,9 @@ export default function TeacherExamsPortalClient({
                   </div>
 
                   <button
-                    onClick={() => handleDeleteExam(exam.id)}
-                    disabled={deletingExamId === exam.id}
+                    type="button"
+                    onClick={() => setDeleteTarget(exam)}
+                    disabled={deleteLoading && deleteTarget?.id === exam.id}
                     title="Delete Exam"
                     className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
                   >
@@ -360,6 +364,15 @@ export default function TeacherExamsPortalClient({
       )}
 
       {/* Modals */}
+      {deleteTarget && (
+        <ExamDeleteConfirmModal
+          target={deleteTarget}
+          loading={deleteLoading}
+          onConfirm={handleConfirmDeleteExam}
+          onCancel={() => setDeleteTarget(null)}
+        />
+      )}
+
       <CreateExamModal
         isOpen={isCreateExamOpen}
         onClose={() => setIsCreateExamOpen(false)}

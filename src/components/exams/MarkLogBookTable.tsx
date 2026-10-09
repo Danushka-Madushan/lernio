@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { Button } from '@heroui/react';
 import { Check, Loader2, Save, UserX, AlertCircle, CheckCircle2, RotateCcw } from 'lucide-react';
-import { getStudentColor } from '@/lib/exams';
+import { getStudentColor, evaluateStudentMark } from '@/lib/exams';
 
 export interface RosterStudent {
   studentId: string;
@@ -209,7 +209,7 @@ export default function MarkLogBookTable({
           {roster.map((student, idx) => {
             const colors = getStudentColor(student.username);
             const isGraded = !student.isAbsent && student.marks !== null;
-            const isAbove = isGraded && (student.marks as number) >= thresholdMarks;
+            const evaluation = isGraded ? evaluateStudentMark(student.marks, thresholdMarks, maxMarks) : null;
 
             return (
               <div
@@ -255,10 +255,12 @@ export default function MarkLogBookTable({
                       className={`w-20 px-3 py-2 text-center font-bold text-base rounded-xl border focus:outline-none focus:ring-2 transition-all ${
                         student.isAbsent
                           ? 'bg-gray-100 text-gray-400 border-gray-200 cursor-not-allowed'
-                          : isAbove
-                          ? 'bg-emerald-50/60 border-emerald-300 text-emerald-800 focus:ring-emerald-400'
-                          : isGraded
-                          ? 'bg-rose-50/60 border-rose-300 text-rose-800 focus:ring-rose-400'
+                          : evaluation?.isPass
+                          ? 'bg-emerald-50/40 border-emerald-300 text-emerald-800 focus:ring-emerald-400'
+                          : evaluation?.variant === 'encouraging'
+                          ? 'bg-amber-50/40 border-amber-300 text-amber-800 focus:ring-amber-400'
+                          : evaluation?.variant === 'support'
+                          ? 'bg-rose-50/40 border-rose-300 text-rose-800 focus:ring-rose-400'
                           : 'bg-white border-gray-300 text-gray-900 focus:ring-blue-500'
                       }`}
                     />
@@ -268,26 +270,19 @@ export default function MarkLogBookTable({
                   {/* Status Tag */}
                   <div className="min-w-24">
                     {student.isAbsent ? (
-                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">
+                      <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-50 text-amber-800 border border-amber-200">
                         Absent
                       </span>
-                    ) : isGraded ? (
+                    ) : isGraded && evaluation ? (
                       <span
-                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${
-                          isAbove
-                            ? 'bg-emerald-100 text-emerald-800'
-                            : 'bg-rose-100 text-rose-800'
-                        }`}
+                        className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold border ${evaluation.badgeClass}`}
                       >
-                        {isAbove ? (
-                          <>
-                            <CheckCircle2 size={12} /> Good
-                          </>
+                        {evaluation.variant === 'excellent' || evaluation.variant === 'good' ? (
+                          <CheckCircle2 size={12} />
                         ) : (
-                          <>
-                            <AlertCircle size={12} /> Needs Imp.
-                          </>
+                          <AlertCircle size={12} />
                         )}
+                        {evaluation.shortLabel}
                       </span>
                     ) : (
                       <span className="text-xs text-gray-400 italic">Not graded</span>

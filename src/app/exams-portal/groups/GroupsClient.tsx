@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import CreateExamGroupModal from '@/components/exams/CreateExamGroupModal';
+import ExamGroupDeleteConfirmModal from '@/components/exams/ExamGroupDeleteConfirmModal';
 import { Button } from '@heroui/react';
 import {
   Layers,
@@ -21,7 +22,8 @@ export default function GroupsClient() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<any | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const loadGroups = async () => {
     setIsLoading(true);
@@ -44,21 +46,23 @@ export default function GroupsClient() {
     loadGroups();
   }, []);
 
-  const handleDeleteGroup = async (groupId: string) => {
-    if (!window.confirm('Delete this exam group? The child exams will remain as standalone exams.')) {
-      return;
-    }
-    setDeletingId(groupId);
+  const handleConfirmDeleteGroup = async () => {
+    if (!deleteTarget) return;
+    setDeleteLoading(true);
+    setError(null);
     try {
-      const res = await fetch(`/api/exam-groups/${groupId}`, { method: 'DELETE' });
+      const res = await fetch(`/api/exam-groups/${deleteTarget.id}`, { method: 'DELETE' });
       if (!res.ok) {
-        throw new Error('Failed to delete group');
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to delete group');
       }
-      setGroups((prev) => prev.filter((g) => g.id !== groupId));
+      setGroups((prev) => prev.filter((g) => g.id !== deleteTarget.id));
+      setDeleteTarget(null);
     } catch (err: any) {
-      alert(err.message || 'Error deleting group');
+      setError(err.message || 'Error deleting group');
+      setDeleteTarget(null);
     } finally {
-      setDeletingId(null);
+      setDeleteLoading(false);
     }
   };
 
@@ -192,8 +196,9 @@ export default function GroupsClient() {
                 </Link>
 
                 <button
-                  onClick={() => handleDeleteGroup(group.id)}
-                  disabled={deletingId === group.id}
+                  type="button"
+                  onClick={() => setDeleteTarget(group)}
+                  disabled={deleteLoading && deleteTarget?.id === group.id}
                   title="Delete Group"
                   className="p-1.5 rounded-lg text-gray-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
                 >
@@ -203,6 +208,15 @@ export default function GroupsClient() {
             </div>
           ))}
         </div>
+      )}
+
+      {deleteTarget && (
+        <ExamGroupDeleteConfirmModal
+          target={deleteTarget}
+          loading={deleteLoading}
+          onConfirm={handleConfirmDeleteGroup}
+          onCancel={() => setDeleteTarget(null)}
+        />
       )}
 
       <CreateExamGroupModal

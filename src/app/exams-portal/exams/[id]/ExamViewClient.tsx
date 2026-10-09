@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import ExamPerformanceChart from '@/components/exams/ExamPerformanceChart';
 import ExamStatsOverview from '@/components/exams/ExamStatsOverview';
 import { getGradeLabel } from '@/lib/constants';
+import { evaluateStudentMark } from '@/lib/exams';
 import { Button } from '@heroui/react';
 import {
   Award,
@@ -77,6 +78,10 @@ export default function ExamViewClient({ examId, isStudent }: ExamViewClientProp
 
   const { exam, stats, marks } = data;
   const mySummary = isStudent ? data.mySummary : null;
+  const evaluation =
+    isStudent && mySummary?.isGraded
+      ? evaluateStudentMark(mySummary.marks, exam.thresholdMarks, exam.maxMarks)
+      : null;
   const gradeLabel = getGradeLabel(exam.grade, exam.teacher?.gradeAliases);
   const formattedDate = new Date(exam.examDate).toLocaleDateString('en-GB', {
     day: 'numeric',
@@ -178,24 +183,32 @@ export default function ExamViewClient({ examId, isStudent }: ExamViewClientProp
               )}
             </div>
 
-            {mySummary.isGraded && (
+            {mySummary.isGraded && evaluation && (
               <div className="flex items-center gap-2">
                 <span
                   className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-bold ${
-                    mySummary.isAboveThreshold
+                    evaluation.variant === 'excellent'
                       ? 'bg-emerald-400 text-emerald-950'
-                      : 'bg-rose-400 text-rose-950'
+                      : evaluation.variant === 'good'
+                      ? 'bg-blue-300 text-blue-950'
+                      : evaluation.variant === 'encouraging'
+                      ? 'bg-amber-300 text-amber-950'
+                      : 'bg-rose-300 text-rose-950'
                   }`}
                 >
-                  {mySummary.isAboveThreshold ? (
-                    <>
-                      <CheckCircle2 size={14} /> Passed (+{mySummary.diffFromThreshold})
-                    </>
+                  {evaluation.variant === 'excellent' || evaluation.variant === 'good' ? (
+                    <CheckCircle2 size={14} />
                   ) : (
-                    <>
-                      <AlertCircle size={14} /> Needs Improvement ({mySummary.diffFromThreshold})
-                    </>
+                    <AlertCircle size={14} />
                   )}
+                  <span>
+                    {evaluation.label}
+                    {mySummary.diffFromThreshold !== null && (
+                      <span className="font-normal opacity-90 ml-1">
+                        ({mySummary.isAboveThreshold ? `+${mySummary.diffFromThreshold}` : mySummary.diffFromThreshold})
+                      </span>
+                    )}
+                  </span>
                 </span>
               </div>
             )}

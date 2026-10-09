@@ -129,7 +129,7 @@ export default function GroupDetailClient({ groupId }: GroupDetailClientProps) {
                     <span className="font-bold text-blue-600">{exam.stats?.averageMark || 0}</span>
                   </div>
                   <div>
-                    <span className="text-gray-400 block text-[10px] uppercase">Cutoff</span>
+                    <span className="text-gray-400 block text-[10px] uppercase">Pass Mark</span>
                     <span className="font-bold text-rose-600">{exam.thresholdMarks}</span>
                   </div>
                 </div>
