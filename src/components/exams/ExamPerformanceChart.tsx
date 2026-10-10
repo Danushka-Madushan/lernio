@@ -397,12 +397,14 @@ export default function ExamPerformanceChart({
               fill="#10b981"
             />
             {/* Threshold mark number only on the Y-axis, in bold emerald */}
+            <rect x={paddingLeft - 65} y={thresholdY - 12} width="60" height="20" fill="#D9FFE7"/>
             <text
-              x={paddingLeft - 8}
+              x={paddingLeft - 6}
               y={thresholdY + 4}
               textAnchor="end"
-              fontSize="11"
+              fontSize="15"
               fontWeight="700"
+              
               fill="#059669"
               fontFamily="system-ui, sans-serif"
             >
