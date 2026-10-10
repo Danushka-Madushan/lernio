@@ -257,6 +257,19 @@ export async function DELETE(
         data: { teacherId: adminUser.id },
       });
 
+      // Reassign exams and exam groups to current admin so student exam history and marks remain intact
+      await tx.exam.updateMany({
+        where: { teacherId: id },
+        data: { teacherId: adminUser.id },
+      });
+      await tx.examGroup.updateMany({
+        where: { teacherId: id },
+        data: { teacherId: adminUser.id },
+      });
+
+      // Purge any marks where this teacher was recorded as a student
+      await tx.examMark.deleteMany({ where: { studentId: id } });
+
       if (videoIds.length > 0) {
         // Delete dependencies on teacher's videos
         await tx.customVideoAccess.deleteMany({ where: { videoId: { in: videoIds } } });

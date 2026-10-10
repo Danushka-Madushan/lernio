@@ -7,6 +7,7 @@ import ExamPerformanceChart from '@/components/exams/ExamPerformanceChart';
 import ExamStatsOverview from '@/components/exams/ExamStatsOverview';
 import { getGradeLabel } from '@/lib/constants';
 import { evaluateStudentMark } from '@/lib/exams';
+import LoadingScreen from '@/components/LoadingScreen';
 import { Button } from '@heroui/react';
 import {
   Award,
@@ -53,12 +54,7 @@ export default function ExamViewClient({ examId, isStudent }: ExamViewClientProp
   }, [examId, isStudent]);
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-        <Loader2 size={32} className="animate-spin text-blue-600" />
-        <p className="text-sm font-medium text-gray-500">Loading exam analytics...</p>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (error || !data) {

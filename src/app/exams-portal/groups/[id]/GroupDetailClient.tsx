@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { getStudentColor } from '@/lib/exams';
+import LoadingScreen from '@/components/LoadingScreen';
 import { Button } from '@heroui/react';
 import {
   Layers,
@@ -44,12 +45,7 @@ export default function GroupDetailClient({ groupId }: GroupDetailClientProps) {
   }, [groupId]);
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-        <Loader2 size={32} className="animate-spin text-purple-600" />
-        <p className="text-sm font-medium text-gray-500">Loading group analytics...</p>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (error || !data) {

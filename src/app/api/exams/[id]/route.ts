@@ -210,8 +210,15 @@ export async function DELETE(request: Request, { params }: Params) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    await db.exam.delete({
-      where: { id },
+    await db.$transaction(async (tx) => {
+      // Explicitly wipe out all marks associated with this exam
+      await tx.examMark.deleteMany({
+        where: { examId: id },
+      });
+      // Delete the exam
+      await tx.exam.delete({
+        where: { id },
+      });
     });
 
     return NextResponse.json({ message: 'Exam deleted successfully' });

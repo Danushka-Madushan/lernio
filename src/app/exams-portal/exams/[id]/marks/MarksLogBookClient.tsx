@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import MarkLogBookTable, { RosterStudent } from '@/components/exams/MarkLogBookTable';
+import LoadingScreen from '@/components/LoadingScreen';
 import { ArrowLeft, TrendingUp, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@heroui/react';
 
@@ -48,12 +49,7 @@ export default function MarksLogBookClient({ examId }: MarksLogBookClientProps) 
   }, [examId]);
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-        <Loader2 size={32} className="animate-spin text-blue-600" />
-        <p className="text-sm font-medium text-gray-500">Loading student roster...</p>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (error || !data) {
@@ -62,9 +58,9 @@ export default function MarksLogBookClient({ examId }: MarksLogBookClientProps) 
         <AlertCircle size={40} className="text-rose-500 mx-auto" />
         <h3 className="font-bold text-gray-900 text-lg">Unable to load roster</h3>
         <p className="text-xs text-gray-500 max-w-sm mx-auto">{error}</p>
-        <Link href={`/exams-portal/exams/${examId}`}>
+        <Link href="/exams-portal">
           <Button size="sm" variant="outline" className="mt-2 text-xs">
-            Back to Exam
+            Back to All Exams
           </Button>
         </Link>
       </div>
@@ -76,10 +72,10 @@ export default function MarksLogBookClient({ examId }: MarksLogBookClientProps) 
       {/* Top Navigation */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <Link
-          href={`/exams-portal/exams/${examId}`}
+          href="/exams-portal"
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-blue-600 transition-colors"
         >
-          <ArrowLeft size={16} /> Back to Exam & Chart
+          <ArrowLeft size={16} /> Back to All Exams
         </Link>
 
         <Link href={`/exams-portal/exams/${examId}`}>

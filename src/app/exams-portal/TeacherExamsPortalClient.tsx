@@ -7,6 +7,7 @@ import { getGradeLabel } from '@/lib/constants';
 import CreateExamModal from '@/components/exams/CreateExamModal';
 import CreateExamGroupModal from '@/components/exams/CreateExamGroupModal';
 import ExamDeleteConfirmModal from '@/components/exams/ExamDeleteConfirmModal';
+import LoadingScreen from '@/components/LoadingScreen';
 import { Button } from '@heroui/react';
 import {
   Award,
@@ -119,12 +120,7 @@ export default function TeacherExamsPortalClient({
       : 0;
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-        <Loader2 size={32} className="animate-spin text-blue-600" />
-        <p className="text-sm font-medium text-gray-500">Loading exams portal...</p>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (
