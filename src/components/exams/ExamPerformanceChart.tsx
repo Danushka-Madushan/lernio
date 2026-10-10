@@ -24,15 +24,33 @@ interface ExamPerformanceChartProps {
 }
 
 export default function ExamPerformanceChart({
-  examTitle,
+  examTitle: _examTitle,
   maxMarks,
   thresholdMarks,
   marks,
-  isStudentView = false,
+  isStudentView: _isStudentView = false,
 }: ExamPerformanceChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(800);
   const [selectedStudent, setSelectedStudent] = useState<ChartMarkItem | null>(null);
-  const [showNames, setShowNames] = useState(true);
+  const [hoveredStudent, setHoveredStudent] = useState<ChartMarkItem | null>(null);
+
+  // Measure container width via ResizeObserver for fixed responsive X-axis
+  useEffect(() => {
+    if (!containerRef.current) return;
+    const updateWidth = () => {
+      if (containerRef.current) {
+        const w = containerRef.current.clientWidth;
+        if (w > 0) {
+          setContainerWidth(w);
+        }
+      }
+    };
+    updateWidth();
+    const ro = new ResizeObserver(updateWidth);
+    ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
 
   // Filter & sort graded students low to high along the single line
   const gradedStudents = useMemo(() => {
@@ -55,15 +73,15 @@ export default function ExamPerformanceChart({
 
   // Chart Dimensions & Spacing
   const paddingLeft = 52;
-  const paddingRight = 48;
-  const paddingTop = 50;
-  const paddingBottom = 36; // Compact padding now that names below X-axis are removed
-  const chartHeight = 240;
+  const paddingRight = 36;
+  const paddingTop = 44;
+  const paddingBottom = 36;
+  const chartHeight = 350; // Increased height for clear 10 and 5 intervals
   const totalSvgHeight = paddingTop + chartHeight + paddingBottom;
 
-  const pointSpacing = 56;
-  const innerWidth = Math.max(gradedStudents.length * pointSpacing, 340);
-  const totalSvgWidth = paddingLeft + innerWidth + paddingRight;
+  // Fixed length X-axis: spans container width, does not expand with student count
+  const totalSvgWidth = Math.max(containerWidth, 320);
+  const innerWidth = Math.max(totalSvgWidth - paddingLeft - paddingRight, 200);
 
   // Coordinate mappings
   const getY = (score: number) => {
@@ -89,32 +107,37 @@ export default function ExamPerformanceChart({
     .map((s, idx) => `${getX(idx)},${getY(s.score)}`)
     .join(' ');
 
-  // Auto-scroll to "You" on mount for mobile screens
-  useEffect(() => {
-    if (currentUserStudent && containerRef.current && !currentUserStudent.isAbsent && currentUserStudent.marks !== null) {
-      const userIndex = gradedStudents.findIndex((s) => s.studentId === currentUserStudent.studentId);
-      if (userIndex >= 0) {
-        const xPos = getX(userIndex);
-        const containerWidth = containerRef.current.clientWidth;
-        containerRef.current.scrollTo({
-          left: Math.max(0, xPos - containerWidth / 2),
-          behavior: 'smooth',
-        });
+  // Major Grid Ticks: 0, 10, 20, 30... up to maxMarks
+  const majorTicks = useMemo(() => {
+    const ticks: number[] = [];
+    for (let m = 0; m <= maxMarks; m += 10) {
+      ticks.push(m);
+    }
+    if (ticks[ticks.length - 1] !== maxMarks) {
+      ticks.push(maxMarks);
+    }
+    return ticks;
+  }, [maxMarks]);
+
+  // Minor Grid Ticks: 5, 15, 25, 35... faded in between
+  const minorTicks = useMemo(() => {
+    const ticks: number[] = [];
+    for (let m = 5; m < maxMarks; m += 10) {
+      if (!majorTicks.includes(m)) {
+        ticks.push(m);
       }
     }
-  }, [currentUserStudent, gradedStudents]);
+    return ticks;
+  }, [maxMarks, majorTicks]);
 
-  const scrollToUser = () => {
-    if (currentUserStudent && containerRef.current && !currentUserStudent.isAbsent && currentUserStudent.marks !== null) {
-      const userIndex = gradedStudents.findIndex((s) => s.studentId === currentUserStudent.studentId);
-      if (userIndex >= 0) {
-        const xPos = getX(userIndex);
-        const containerWidth = containerRef.current.clientWidth;
-        containerRef.current.scrollTo({
-          left: Math.max(0, xPos - containerWidth / 2),
-          behavior: 'smooth',
-        });
-      }
+  // Active student for on-hover price tag
+  const activeStudent = hoveredStudent || selectedStudent;
+
+  // Highlight Current User
+  const highlightCurrentUser = () => {
+    if (currentUserStudent && !currentUserStudent.isAbsent && currentUserStudent.marks !== null) {
+      setSelectedStudent(currentUserStudent);
+      setHoveredStudent(currentUserStudent);
     }
   };
 
@@ -122,6 +145,34 @@ export default function ExamPerformanceChart({
   const selectedEvaluation = selectedStudent && selectedStudent.marks !== null
     ? evaluateStudentMark(selectedStudent.marks, thresholdMarks, maxMarks)
     : null;
+
+  // Interactive scrubbing handler across the SVG
+  const handlePointerMove = (e: React.PointerEvent<SVGSVGElement>) => {
+    if (gradedStudents.length === 0) return;
+    const rect = e.currentTarget.getBoundingClientRect();
+    const mouseX = e.clientX - rect.left;
+    if (mouseX < paddingLeft - 10 || mouseX > paddingLeft + innerWidth + 10) {
+      return;
+    }
+    let closest = gradedStudents[0];
+    let minDiff = Infinity;
+    gradedStudents.forEach((s, idx) => {
+      const sx = getX(idx);
+      const diff = Math.abs(mouseX - sx);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = s;
+      }
+    });
+    const thresholdDist = Math.max(innerWidth / Math.max(gradedStudents.length - 1, 1), 28);
+    if (minDiff < thresholdDist) {
+      setHoveredStudent(closest);
+    }
+  };
+
+  const handlePointerLeave = () => {
+    setHoveredStudent(null);
+  };
 
   return (
     <div className="w-full bg-white rounded-2xl border border-gray-200 shadow-xs overflow-hidden">
@@ -141,7 +192,7 @@ export default function ExamPerformanceChart({
           </p>
         </div>
 
-        {/* Encouraging Legend & Chart Controls */}
+        {/* Legend & Chart Controls */}
         <div className="flex flex-wrap items-center gap-2 sm:gap-3 text-xs">
           {/* Green Tick Pass Mark Indicator */}
           <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-semibold shadow-2xs">
@@ -149,22 +200,16 @@ export default function ExamPerformanceChart({
             <span>Pass Mark: {thresholdMarks}</span>
           </div>
 
-          {/* Show / Hide Student Numbers Option */}
-          <label className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-xs font-medium cursor-pointer transition-colors select-none ${showNames ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100'}`}>
-            <input
-              type="checkbox"
-              checked={showNames}
-              onChange={(e) => setShowNames(e.target.checked)}
-              className="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer accent-blue-600"
-            />
-            <span>Student ID</span>
-          </label>
+          {/* Interactive Hint */}
+          <div className="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gray-50 border border-gray-200 text-gray-500 text-xs">
+            <span>Hover / tap dot for ID</span>
+          </div>
 
           {currentUserStudent && !currentUserStudent.isAbsent && (
             <Button
               size="sm"
               variant="outline"
-              onPress={scrollToUser}
+              onPress={highlightCurrentUser}
               className="text-xs font-semibold px-3 py-1 h-7 rounded-full bg-blue-50 text-blue-600 hover:bg-blue-100 border-blue-200"
             >
               <Sparkles size={13} className="mr-1 text-blue-500" />
@@ -174,23 +219,17 @@ export default function ExamPerformanceChart({
         </div>
       </div>
 
-      {/* Mobile Swipe Hint */}
-      <div className="px-4 py-1.5 bg-gray-50 border-b border-gray-100 text-[11px] text-gray-500 flex items-center justify-between sm:hidden">
-        <span>↔ Swipe sideways to view all students</span>
-        <span className="font-medium text-gray-600">{gradedStudents.length} students</span>
-      </div>
-
-      {/* SVG Canvas Scroll Area - Pure Authentic White Surface */}
+      {/* SVG Canvas Area - Fixed Width, No Horizontal Scroll Overflows */}
       <div
         ref={containerRef}
-        className="w-full overflow-x-auto overflow-y-hidden select-none bg-white"
-        style={{ WebkitOverflowScrolling: 'touch' }}
+        className="w-full overflow-hidden select-none bg-white relative"
       >
         <svg
           width={totalSvgWidth}
           height={totalSvgHeight}
-          className="block"
-          style={{ minWidth: '100%' }}
+          className="block w-full touch-none"
+          onPointerMove={handlePointerMove}
+          onPointerLeave={handlePointerLeave}
         >
           <defs>
             {/* Subtle shadow for "You" callout badge */}
@@ -198,12 +237,12 @@ export default function ExamPerformanceChart({
               <feDropShadow dx="0" dy="1.5" stdDeviation="2" floodOpacity="0.15" floodColor="#0f172a" />
             </filter>
 
-            {/* Subtle shadow for price tags */}
-            <filter id="tagShadow" x="-30%" y="-30%" width="160%" height="160%">
-              <feDropShadow dx="0" dy="1.5" stdDeviation="1.5" floodOpacity="0.12" floodColor="#0f172a" />
+            {/* Subtle shadow for enlarged price tag */}
+            <filter id="tagShadow" x="-25%" y="-25%" width="150%" height="150%">
+              <feDropShadow dx="0" dy="2" stdDeviation="3" floodOpacity="0.12" floodColor="#0f172a" />
             </filter>
 
-            {/* Three Soft Pastel Zone Gradients for Authentic, Subtle Tinting */}
+            {/* Three Soft Pastel Zone Gradients for Subtle Visual Guidance */}
             <linearGradient id="zoneGreenGrad" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#10b981" stopOpacity="0.08" />
               <stop offset="100%" stopColor="#10b981" stopOpacity="0.03" />
@@ -252,19 +291,65 @@ export default function ExamPerformanceChart({
             />
           )}
 
-          {/* Horizontal Grid lines (25, 50, 75, 100) */}
-          {[25, 50, 75, 100].map((tick) => {
+          {/* Minor Grid Lines: Faded 5s (5, 15, 25, 35...) */}
+          {minorTicks.map((tick) => {
             const y = getY(tick);
             return (
-              <g key={`grid-${tick}`}>
+              <g key={`minor-grid-${tick}`}>
                 <line
                   x1={paddingLeft}
                   y1={y}
                   x2={paddingLeft + innerWidth}
                   y2={y}
-                  stroke="#e8eaed"
+                  stroke="#f1f3f4"
                   strokeWidth="1"
-                  strokeDasharray="3 3"
+                  strokeDasharray="2 4"
+                />
+                <line
+                  x1={paddingLeft - 3}
+                  y1={y}
+                  x2={paddingLeft}
+                  y2={y}
+                  stroke="#dadce0"
+                  strokeWidth="1"
+                />
+                <text
+                  x={paddingLeft - 6}
+                  y={y + 3}
+                  textAnchor="end"
+                  fontSize="9"
+                  fontWeight="400"
+                  fill="#9aa0a6"
+                  fontFamily="system-ui, sans-serif"
+                >
+                  {tick}
+                </text>
+              </g>
+            );
+          })}
+
+          {/* Major Grid Lines: 10 by 10 (0, 10, 20, 30... 100) */}
+          {majorTicks.map((tick) => {
+            const y = getY(tick);
+            const isBaseline = tick === 0;
+            return (
+              <g key={`major-grid-${tick}`}>
+                <line
+                  x1={paddingLeft}
+                  y1={y}
+                  x2={paddingLeft + innerWidth}
+                  y2={y}
+                  stroke={isBaseline ? '#dadce0' : '#e8eaed'}
+                  strokeWidth="1"
+                  strokeDasharray={isBaseline ? 'none' : '3 3'}
+                />
+                <line
+                  x1={paddingLeft - 5}
+                  y1={y}
+                  x2={paddingLeft}
+                  y2={y}
+                  stroke="#dadce0"
+                  strokeWidth="1"
                 />
                 <text
                   x={paddingLeft - 8}
@@ -281,7 +366,7 @@ export default function ExamPerformanceChart({
             );
           })}
 
-          {/* Left Y-axis line */}
+          {/* Left Y-axis baseline */}
           <line
             x1={paddingLeft}
             y1={getY(maxMarks)}
@@ -290,27 +375,6 @@ export default function ExamPerformanceChart({
             stroke="#dadce0"
             strokeWidth="1"
           />
-
-          {/* Bottom X-axis baseline (0 mark) */}
-          <line
-            x1={paddingLeft}
-            y1={baselineY}
-            x2={paddingLeft + innerWidth}
-            y2={baselineY}
-            stroke="#dadce0"
-            strokeWidth="1"
-          />
-          <text
-            x={paddingLeft - 8}
-            y={baselineY + 4}
-            textAnchor="end"
-            fontSize="11"
-            fontWeight="500"
-            fill="#5f6368"
-            fontFamily="system-ui, sans-serif"
-          >
-            0
-          </text>
 
           {/* ── Threshold Indicator: Encouraging Green Dot on Y-axis + Mark Number Only ── */}
           <g>
@@ -363,34 +427,44 @@ export default function ExamPerformanceChart({
             const x = getX(idx);
             const y = getY(s.score);
             const isUser = s.isCurrentUser;
+            const isActive = activeStudent?.id === s.id;
+            // Clean view: if class is large, only show dropline for active or current user
+            if (gradedStudents.length > 50 && !isUser && !isActive) return null;
+
             return (
               <line
                 key={`dropline-${s.id}`}
                 x1={x}
-                y1={y + 6}
+                y1={y + (isActive ? 7 : 5)}
                 x2={x}
                 y2={baselineY}
-                stroke={isUser ? '#1a73e8' : '#e8eaed'}
-                strokeWidth={isUser ? '1.5' : '1'}
-                strokeDasharray={isUser ? '3 2' : 'none'}
+                stroke={isActive || isUser ? '#1a73e8' : '#e8eaed'}
+                strokeWidth={isActive ? '1.5' : isUser ? '1.2' : '0.8'}
+                strokeDasharray={isActive || isUser ? '3 2' : 'none'}
+                strokeOpacity={isActive ? 1 : isUser ? 0.9 : 0.6}
               />
             );
           })}
 
-          {/* ── Student Dots and Vertical Labels ── */}
+          {/* ── Student Dots ── */}
           {gradedStudents.map((s, idx) => {
             const x = getX(idx);
             const y = getY(s.score);
             const colors = getStudentColor(s.username);
             const isUser = s.isCurrentUser;
+            const isActive = activeStudent?.id === s.id;
 
             return (
               <g
                 key={`dot-group-${s.id}`}
                 className="cursor-pointer group"
-                onClick={() => setSelectedStudent(s)}
+                onPointerEnter={() => setHoveredStudent(s)}
+                onClick={() => {
+                  setSelectedStudent(s);
+                  setHoveredStudent(s);
+                }}
               >
-                {/* Large Invisible Hit Area for Touch Devices (minimum 44x44px target) */}
+                {/* Generous Hit Area for Touch Devices (minimum 44x44px target) */}
                 <circle cx={x} cy={y} r="22" fill="transparent" />
 
                 {/* Pulse Ring for "You" dot */}
@@ -408,133 +482,163 @@ export default function ExamPerformanceChart({
                     <circle
                       cx={x}
                       cy={y}
-                      r="11"
+                      r="10"
                       fill="#1a73e8"
                       fillOpacity="0.2"
                     />
                   </>
                 )}
 
+                {/* Halo for active/hovered dot */}
+                {isActive && !isUser && (
+                  <circle
+                    cx={x}
+                    cy={y}
+                    r="12"
+                    fill={colors.color}
+                    fillOpacity="0.2"
+                  />
+                )}
+
                 {/* Main Student Dot */}
                 <circle
                   cx={x}
                   cy={y}
-                  r={isUser ? 7.5 : 5.5}
+                  r={isActive ? 7.5 : isUser ? 6.5 : 5}
                   fill={isUser ? '#1a73e8' : colors.color}
                   stroke="#ffffff"
                   strokeWidth="2"
-                  className="transition-transform duration-150 group-hover:scale-125"
+                  className="transition-transform duration-150"
                   style={{ transformOrigin: `${x}px ${y}px` }}
                 />
 
-                {/* "You" Minimal Callout Badge */}
-                {isUser && (() => {
-                  const tagH = 48;
-                  const isDown = y < 130;
-                  const youBadgeY = showNames && !isDown ? y - 10 - tagH - 24 : y - 34;
-                  const pointerBaseY = youBadgeY + 22;
-
-                  return (
-                    <g filter="url(#badgeShadow)">
-                      <rect
-                        x={x - 28}
-                        y={youBadgeY}
-                        width="56"
-                        height="22"
-                        rx="11"
-                        fill="#1a73e8"
-                      />
-                      <polygon
-                        points={`${x - 3},${pointerBaseY} ${x + 3},${pointerBaseY} ${x},${pointerBaseY + 4}`}
-                        fill="#1a73e8"
-                      />
-                      <text
-                        x={x}
-                        y={youBadgeY + 14}
-                        textAnchor="middle"
-                        fontSize="10"
-                        fontWeight="bold"
-                        fill="#ffffff"
-                        fontFamily="system-ui, sans-serif"
-                      >
-                        You ({s.score})
-                      </text>
-                    </g>
-                  );
-                })()}
-
-                {/* Vertical Price-Tag Label (shown when "Student No." is ticked) */}
-                {showNames && (() => {
-                  const tagW = 19;
-                  const tagH = 48;
-                  const isDown = y < 130;
-                  const tagX = x - tagW / 2;
-                  const tagY = isDown ? y + 10 : y - 10 - tagH;
-                  const isSelected = selectedStudent?.id === s.id;
-                  const displayNumber = getStudentDisplayNumber(s.username);
-                  const textCenterY = tagY + tagH / 2 + (isDown ? 2 : -2);
-
-                  return (
-                    <g filter="url(#tagShadow)" className="transition-all duration-150">
-                      {/* Price tag connecting thread */}
-                      <line
-                        x1={x}
-                        y1={isDown ? y + 6 : y - 6}
-                        x2={x}
-                        y2={isDown ? tagY : tagY + tagH}
-                        stroke={isSelected ? '#1a73e8' : colors.color}
-                        strokeWidth="1"
-                        strokeDasharray="1.5 1.5"
-                      />
-
-                      {/* Price tag body */}
-                      <rect
-                        x={tagX}
-                        y={tagY}
-                        width={tagW}
-                        height={tagH}
-                        rx="4"
-                        fill="#ffffff"
-                        stroke={isSelected ? '#1a73e8' : colors.color}
-                        strokeWidth={isSelected ? '1.8' : '1.2'}
-                      />
-
-                      {/* Price tag eyelet hole */}
-                      <circle
-                        cx={x}
-                        cy={isDown ? tagY + 5 : tagY + tagH - 5}
-                        r="1.5"
-                        fill="#ffffff"
-                        stroke={isSelected ? '#1a73e8' : colors.color}
-                        strokeWidth="1"
-                      />
-
-                      {/* Vertical Rotated 4-Digit Student Number */}
-                      <g transform={`rotate(-90, ${x}, ${textCenterY})`}>
-                        <text
-                          x={x}
-                          y={textCenterY}
-                          textAnchor="middle"
-                          dominantBaseline="central"
-                          fontSize="10"
-                          fontWeight={isUser || isSelected ? '700' : '600'}
-                          fill={isUser || isSelected ? '#1a73e8' : '#374151'}
-                          fontFamily="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
-                          letterSpacing="0.04em"
-                        >
-                          {displayNumber}
-                        </text>
-                      </g>
-                    </g>
-                  );
-                })()}
+                {/* Default "You" Callout Pill (visible when not hovering another dot) */}
+                {isUser && !activeStudent && (
+                  <g filter="url(#badgeShadow)">
+                    <rect
+                      x={x - 22}
+                      y={y < 100 ? y + 12 : y - 28}
+                      width="44"
+                      height="18"
+                      rx="9"
+                      fill="#1a73e8"
+                    />
+                    <text
+                      x={x}
+                      y={y < 100 ? y + 24 : y - 16}
+                      textAnchor="middle"
+                      fontSize="9"
+                      fontWeight="700"
+                      fill="#ffffff"
+                      fontFamily="system-ui, sans-serif"
+                    >
+                      You
+                    </text>
+                  </g>
+                )}
               </g>
             );
           })}
+
+          {/* ── Single Enlarged Horizontal Price Tag (shown only on hover / active) ── */}
+          {activeStudent && (() => {
+            const activeIdx = gradedStudents.findIndex((s) => s.id === activeStudent.id);
+            if (activeIdx < 0) return null;
+
+            const studentItem = gradedStudents[activeIdx];
+            const x = getX(activeIdx);
+            const y = getY(studentItem.score);
+            const isUser = activeStudent.isCurrentUser;
+            const colors = getStudentColor(activeStudent.username);
+            const displayNumber = getStudentDisplayNumber(activeStudent.username);
+
+            // Generous card dimensions for comfortable viewing
+            const cardW = 76;
+            const cardH = 46;
+            const isDown = y < 110;
+
+            // Clamp card within chart horizontal boundaries
+            const cardX = Math.max(
+              paddingLeft + 4,
+              Math.min(x - cardW / 2, totalSvgWidth - paddingRight - cardW - 4)
+            );
+            const cardY = isDown ? y + 16 : y - 16 - cardH;
+            const eyeletY = isDown ? cardY + 6 : cardY + cardH - 6;
+            const clampedEyeletX = Math.max(cardX + 10, Math.min(x, cardX + cardW - 10));
+
+            return (
+              <g
+                key={`active-tag-${activeStudent.id}`}
+                className="pointer-events-none transition-all duration-150"
+              >
+                {/* Connecting Thread from Dot to Price Tag */}
+                <line
+                  x1={x}
+                  y1={isDown ? y + 6 : y - 6}
+                  x2={clampedEyeletX}
+                  y2={isDown ? cardY : cardY + cardH}
+                  stroke={isUser ? '#1a73e8' : colors.color}
+                  strokeWidth="1.2"
+                  strokeDasharray="2 2"
+                />
+
+                <g filter="url(#tagShadow)">
+                  {/* Price Tag Body */}
+                  <rect
+                    x={cardX}
+                    y={cardY}
+                    width={cardW}
+                    height={cardH}
+                    rx="8"
+                    fill="#ffffff"
+                    stroke={isUser ? '#1a73e8' : colors.color}
+                    strokeWidth="1.8"
+                  />
+
+                  {/* Price Tag Eyelet Hole */}
+                  <circle
+                    cx={clampedEyeletX}
+                    cy={eyeletY}
+                    r="2.5"
+                    fill="#f8f9fa"
+                    stroke={isUser ? '#1a73e8' : colors.color}
+                    strokeWidth="1"
+                  />
+
+                  {/* 4-Digit Student ID (Large & Clear) */}
+                  <text
+                    x={cardX + cardW / 2}
+                    y={cardY + (isDown ? 24 : 19)}
+                    textAnchor="middle"
+                    fontSize="13"
+                    fontWeight="700"
+                    fill={isUser ? '#1a73e8' : '#111827'}
+                    fontFamily="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+                    letterSpacing="0.04em"
+                  >
+                    #{displayNumber}
+                  </text>
+
+                  {/* Student Score */}
+                  <text
+                    x={cardX + cardW / 2}
+                    y={cardY + (isDown ? 38 : 34)}
+                    textAnchor="middle"
+                    fontSize="11"
+                    fontWeight="600"
+                    fill={studentItem.score >= thresholdMarks ? '#059669' : '#d97706'}
+                    fontFamily="system-ui, sans-serif"
+                  >
+                    {studentItem.score} marks {isUser ? '(You)' : ''}
+                  </text>
+                </g>
+              </g>
+            );
+          })()}
         </svg>
       </div>
 
-      {/* Selected Student Mobile Detail Drawer / Bottom Card */}
+      {/* Selected Student Detail Drawer / Bottom Card */}
       {selectedStudent && (
         <div className="p-4 bg-white border-t border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2 duration-150">
           <div className="flex items-center gap-3">
@@ -548,6 +652,9 @@ export default function ExamPerformanceChart({
               <div className="flex items-center gap-2">
                 <span className="font-semibold text-gray-900 text-sm">
                   {selectedStudent.username}
+                </span>
+                <span className="font-mono text-xs text-gray-500">
+                  (ID: #{getStudentDisplayNumber(selectedStudent.username)})
                 </span>
                 {selectedStudent.isCurrentUser && (
                   <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-600 text-white shadow-xs">
@@ -601,7 +708,7 @@ export default function ExamPerformanceChart({
               key={`absent-${abs.id}`}
               className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-amber-100 text-amber-900 font-mono text-[11px]"
             >
-              {abs.username}
+              {abs.username} (#{getStudentDisplayNumber(abs.username)})
               {abs.isCurrentUser && ' (You)'}
             </span>
           ))}
