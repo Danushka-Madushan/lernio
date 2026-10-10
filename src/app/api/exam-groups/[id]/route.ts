@@ -190,7 +190,15 @@ export async function DELETE(request: Request, { params }: Params) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    await db.examGroup.delete({ where: { id } });
+    await db.$transaction(async (tx) => {
+      // Safely disconnect member exams so they remain as standalone exams with marks intact
+      await tx.exam.updateMany({
+        where: { examGroupId: id },
+        data: { examGroupId: null },
+      });
+      // Wipe out the exam group
+      await tx.examGroup.delete({ where: { id } });
+    });
 
     return NextResponse.json({ message: 'Exam group deleted successfully' });
   } catch (error) {

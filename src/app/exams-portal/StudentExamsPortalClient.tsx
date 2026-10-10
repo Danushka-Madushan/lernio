@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import StudentExamCard from '@/components/exams/StudentExamCard';
+import LoadingScreen from '@/components/LoadingScreen';
 import { Award, Search, Sparkles, Filter, CheckCircle2, TrendingUp, AlertCircle, Loader2 } from 'lucide-react';
 
 interface StudentExamItem {
@@ -77,12 +78,7 @@ export default function StudentExamsPortalClient() {
       : 0;
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-        <Loader2 size={32} className="animate-spin text-blue-600" />
-        <p className="text-sm font-medium text-gray-500">Loading your exam results...</p>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (

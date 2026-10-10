@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import MarkLogBookTable, { RosterStudent } from '@/components/exams/MarkLogBookTable';
+import LoadingScreen from '@/components/LoadingScreen';
 import { ArrowLeft, TrendingUp, Loader2, AlertCircle } from 'lucide-react';
 import { Button } from '@heroui/react';
 
@@ -48,12 +49,7 @@ export default function MarksLogBookClient({ examId }: MarksLogBookClientProps) 
   }, [examId]);
 
   if (isLoading) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-[60vh] gap-3">
-        <Loader2 size={32} className="animate-spin text-blue-600" />
-        <p className="text-sm font-medium text-gray-500">Loading student roster...</p>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   if (error || !data) {

@@ -297,9 +297,13 @@ export async function DELETE(
       console.error('Failed to delete file from R2 bucket:', r2Err);
     }
 
-    // 3. Delete database record
-    await db.video.delete({
-      where: { id },
+    // 3. Delete database record and all dependent interactions
+    await db.$transaction(async (tx) => {
+      await tx.customVideoAccess.deleteMany({ where: { videoId: id } });
+      await tx.comment.deleteMany({ where: { videoId: id } });
+      await tx.like.deleteMany({ where: { videoId: id } });
+      await tx.view.deleteMany({ where: { videoId: id } });
+      await tx.video.delete({ where: { id } });
     });
 
     return NextResponse.json({ success: true, message: 'Video deleted successfully' });

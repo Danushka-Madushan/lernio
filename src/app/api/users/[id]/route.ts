@@ -160,8 +160,17 @@ export async function DELETE(
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
     }
 
-    await db.user.delete({
-      where: { id },
+    await db.$transaction(async (tx) => {
+      // Purge student's marks from all exams
+      await tx.examMark.deleteMany({ where: { studentId: id } });
+      // Purge student's custom video access permissions
+      await tx.customVideoAccess.deleteMany({ where: { userId: id } });
+      // Purge student's comments, likes, and views
+      await tx.comment.deleteMany({ where: { userId: id } });
+      await tx.like.deleteMany({ where: { userId: id } });
+      await tx.view.deleteMany({ where: { userId: id } });
+      // Finally, delete the student account
+      await tx.user.delete({ where: { id } });
     });
 
     return NextResponse.json({ success: true, message: 'Student account deleted' });
