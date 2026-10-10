@@ -62,9 +62,9 @@ export default function MarksLogBookClient({ examId }: MarksLogBookClientProps) 
         <AlertCircle size={40} className="text-rose-500 mx-auto" />
         <h3 className="font-bold text-gray-900 text-lg">Unable to load roster</h3>
         <p className="text-xs text-gray-500 max-w-sm mx-auto">{error}</p>
-        <Link href={`/exams-portal/exams/${examId}`}>
+        <Link href="/exams-portal">
           <Button size="sm" variant="outline" className="mt-2 text-xs">
-            Back to Exam
+            Back to All Exams
           </Button>
         </Link>
       </div>
@@ -76,10 +76,10 @@ export default function MarksLogBookClient({ examId }: MarksLogBookClientProps) 
       {/* Top Navigation */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <Link
-          href={`/exams-portal/exams/${examId}`}
+          href="/exams-portal"
           className="inline-flex items-center gap-1.5 text-xs font-semibold text-gray-600 hover:text-blue-600 transition-colors"
         >
-          <ArrowLeft size={16} /> Back to Exam & Chart
+          <ArrowLeft size={16} /> Back to All Exams
         </Link>
 
         <Link href={`/exams-portal/exams/${examId}`}>
