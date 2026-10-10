@@ -553,8 +553,8 @@ export default function ExamPerformanceChart({
             const displayNumber = getStudentDisplayNumber(activeStudent.username);
 
             // Generous card dimensions for comfortable viewing
-            const cardW = 76;
-            const cardH = 46;
+            const cardW = 80;
+            const cardH = 50;
             const isDown = y < 110;
 
             // Clamp card within chart horizontal boundaries
@@ -610,7 +610,7 @@ export default function ExamPerformanceChart({
                     x={cardX + cardW / 2}
                     y={cardY + (isDown ? 24 : 19)}
                     textAnchor="middle"
-                    fontSize="13"
+                    fontSize="12"
                     fontWeight="700"
                     fill={isUser ? '#1a73e8' : '#111827'}
                     fontFamily="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
@@ -624,12 +624,12 @@ export default function ExamPerformanceChart({
                     x={cardX + cardW / 2}
                     y={cardY + (isDown ? 38 : 34)}
                     textAnchor="middle"
-                    fontSize="11"
+                    fontSize="15"
                     fontWeight="600"
                     fill={studentItem.score >= thresholdMarks ? '#059669' : '#d97706'}
-                    fontFamily="system-ui, sans-serif"
+                    fontFamily="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
                   >
-                    {studentItem.score} marks {isUser ? '(You)' : ''}
+                    {studentItem.score} Marks {isUser ? '(You)' : ''}
                   </text>
                 </g>
               </g>
