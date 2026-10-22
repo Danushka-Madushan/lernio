@@ -150,6 +150,27 @@ export async function PUT(request: Request, context: RouteContext) {
       updateData.visibility = visibility === 'GRADE' ? VideoVisibility.GRADE : VideoVisibility.PUBLIC;
     }
 
+    const finalVisibility =
+      visibility !== undefined
+        ? visibility === 'GRADE'
+          ? VideoVisibility.GRADE
+          : VideoVisibility.PUBLIC
+        : liveClass.visibility;
+
+    const finalGrade =
+      grade !== undefined
+        ? grade && Object.values(Grade).includes(grade)
+          ? (grade as Grade)
+          : null
+        : liveClass.grade;
+
+    if (finalVisibility === VideoVisibility.GRADE && !finalGrade) {
+      return NextResponse.json(
+        { error: 'A specific target grade is required when visibility is set to Target Grade Only' },
+        { status: 400 }
+      );
+    }
+
     const updated = await db.youTubeClass.update({
       where: { id },
       data: updateData,

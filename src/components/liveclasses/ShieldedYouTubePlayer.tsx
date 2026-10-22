@@ -765,17 +765,17 @@ export default function ShieldedYouTubePlayer({
 
       {/* ── LAYER 5: CENTER GLYPH / STATUS (Eye-Friendly Start & Playback Controls) ── */}
       <div
-        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 transition-opacity duration-200 ${
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 isolate [transform:translate3d(-50%,-50%,0)] transition-opacity duration-200 ${
           showHud || !isPlaying || isBuffering ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
         {/* Debounced Buffering Spinner */}
         {isBuffering && (
           <div className="flex flex-col items-center gap-2.5 pointer-events-none">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-900/70 border border-red-500/30 backdrop-blur-md flex items-center justify-center text-white shadow-2xl">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#0b101d] border border-red-500/40 flex items-center justify-center text-white shadow-2xl">
               <Loader2 size={32} className="animate-spin text-red-500" />
             </div>
-            <span className="text-[11px] font-mono tracking-wider uppercase text-red-200 px-3 py-1 rounded-full bg-slate-900/80 border border-slate-700/60 shadow-lg">
+            <span className="text-[11px] font-mono tracking-wider uppercase text-red-200 px-3 py-1 rounded-full bg-[#0b101d] border border-slate-700/80 shadow-lg">
               Loading Stream
             </span>
           </div>
@@ -790,12 +790,12 @@ export default function ShieldedYouTubePlayer({
               aria-label="Play video"
               className="relative group/play flex items-center justify-center cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded-full"
             >
-              <div className="absolute -inset-2 rounded-full bg-red-600/30 blur-md group-hover/play:bg-red-600/45 transition-all animate-pulse" />
-              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-600 hover:bg-red-500 active:bg-red-700 border border-red-500/50 backdrop-blur-md flex items-center justify-center text-white shadow-[0_4px_30px_rgba(220,38,38,0.5)] transition-all group-hover/play:scale-105 group-active/play:scale-95">
+              <div className="absolute -inset-2 rounded-full border border-red-500/35 animate-pulse pointer-events-none" />
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-600 hover:bg-red-500 active:bg-red-700 border border-red-400/50 flex items-center justify-center text-white shadow-[0_4px_30px_rgba(220,38,38,0.55)] transition-all group-hover/play:scale-105 group-active/play:scale-95">
                 <Play size={32} className="ml-1 fill-white text-white" />
               </div>
             </button>
-            <span className="text-xs font-medium text-slate-300 px-3.5 py-1 rounded-full bg-slate-900/80 border border-slate-700/60 shadow-lg backdrop-blur-sm tracking-wide">
+            <span className="text-xs font-medium text-slate-200 px-3.5 py-1 rounded-full bg-[#0b101d] border border-slate-700/80 shadow-lg tracking-wide">
               Click to start class
             </span>
           </div>
@@ -808,11 +808,11 @@ export default function ShieldedYouTubePlayer({
               type="button"
               onClick={togglePlayPause}
               aria-label="Replay stream"
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-600 hover:bg-red-500 border border-red-500 text-white flex items-center justify-center shadow-[0_4px_30px_rgba(220,38,38,0.5)] transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-600 hover:bg-red-500 border border-red-500 text-white flex items-center justify-center shadow-[0_4px_30px_rgba(220,38,38,0.55)] transition-transform hover:scale-105 active:scale-95 cursor-pointer"
             >
               <RotateCcw size={28} />
             </button>
-            <span className="text-[11px] font-semibold text-slate-200 px-3 py-1 rounded-full bg-slate-900/80 border border-slate-700/60 shadow-lg">
+            <span className="text-[11px] font-semibold text-slate-200 px-3 py-1 rounded-full bg-[#0b101d] border border-slate-700/80 shadow-lg">
               Replay Stream
             </span>
           </div>
@@ -820,7 +820,7 @@ export default function ShieldedYouTubePlayer({
 
         {/* Error Notification */}
         {error && (
-          <div className="flex flex-col items-center gap-2 px-6 py-4 rounded-2xl bg-slate-950/90 border border-red-500/40 text-center max-w-sm shadow-2xl">
+          <div className="flex flex-col items-center gap-2 px-6 py-4 rounded-2xl bg-slate-950/95 border border-red-500/40 text-center max-w-sm shadow-2xl">
             <AlertCircle size={28} className="text-red-400" />
             <p className="text-xs text-red-200">{error}</p>
           </div>

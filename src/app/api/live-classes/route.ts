@@ -145,6 +145,15 @@ export async function POST(request: Request) {
       );
     }
 
+    if (visibility === 'GRADE') {
+      if (!grade || !Object.values(Grade).includes(grade)) {
+        return NextResponse.json(
+          { error: 'A specific target grade is required when visibility is set to Target Grade Only' },
+          { status: 400 }
+        );
+      }
+    }
+
     const teacherId = user.role === 'ADMIN' && targetTeacherId ? targetTeacherId : user.id;
 
     const sanitizedThumbnail =

@@ -111,6 +111,11 @@ export default function EditLiveClassModal({
       return;
     }
 
+    if (visibility === 'GRADE' && !grade) {
+      setError('Please select a specific grade for "Target Grade Only" visibility');
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -294,30 +299,6 @@ export default function EditLiveClassModal({
               )}
             </div>
 
-            {/* Grade Selection */}
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-[#5f6368]">
-                Target Grade
-              </label>
-              <select
-                value={grade}
-                onChange={(e) => setGrade(e.target.value as Grade | '')}
-                disabled={loading}
-                className="w-full rounded-xl border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
-              >
-                <option value="">All Grades (General / Seminar)</option>
-                {availableGrades.map((g) => {
-                  const customLabel = gradeAliases?.[g];
-                  const standardLabel = GRADE_LABELS[g] || g;
-                  return (
-                    <option key={g} value={g}>
-                      {customLabel ? `${customLabel} (${standardLabel})` : standardLabel}
-                    </option>
-                  );
-                })}
-              </select>
-            </div>
-
             {/* Visibility Mode */}
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-[#5f6368]">
@@ -338,7 +319,12 @@ export default function EditLiveClassModal({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setVisibility('GRADE')}
+                  onClick={() => {
+                    setVisibility('GRADE');
+                    if (!grade && availableGrades.length > 0) {
+                      setGrade(availableGrades[0]);
+                    }
+                  }}
                   className={`px-3 py-2.5 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
                     visibility === 'GRADE'
                       ? 'bg-blue-50 border-blue-300 text-blue-700 shadow-2xs'
@@ -348,6 +334,40 @@ export default function EditLiveClassModal({
                   <span>Target Grade Only</span>
                 </button>
               </div>
+            </div>
+
+            {/* Target Grade */}
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-[#5f6368]">
+                Target Grade {visibility === 'GRADE' ? <span className="text-red-500">*</span> : <span className="font-normal text-[#9aa0a6]">(Optional for All Students)</span>}
+              </label>
+              <select
+                value={grade}
+                onChange={(e) => setGrade(e.target.value as Grade | '')}
+                required={visibility === 'GRADE'}
+                disabled={loading}
+                className={`w-full rounded-xl border bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20 ${
+                  visibility === 'GRADE' && !grade ? 'border-red-300 ring-1 ring-red-300' : 'border-[#dadce0]'
+                }`}
+              >
+                <option value="">
+                  {visibility === 'GRADE' ? '-- Select a Specific Target Grade --' : 'All Grades (General / Seminar)'}
+                </option>
+                {availableGrades.map((g) => {
+                  const customLabel = gradeAliases?.[g];
+                  const standardLabel = GRADE_LABELS[g] || g;
+                  return (
+                    <option key={g} value={g}>
+                      {customLabel ? `${customLabel} (${standardLabel})` : standardLabel}
+                    </option>
+                  );
+                })}
+              </select>
+              {visibility === 'GRADE' && !grade && (
+                <p className="mt-1 text-[11px] text-red-600 font-medium">
+                  Please select a specific grade for target grade visibility.
+                </p>
+              )}
             </div>
 
             {/* Description */}
@@ -377,7 +397,7 @@ export default function EditLiveClassModal({
               </Button>
               <Button
                 type="submit"
-                isDisabled={loading || !title.trim() || !parsedId}
+                isDisabled={loading || !title.trim() || !parsedId || (visibility === 'GRADE' && !grade)}
                 className="text-xs font-semibold h-10 px-5 rounded-xl bg-blue-600 text-white shadow-xs hover:bg-blue-700 disabled:opacity-50"
               >
                 {loading ? <Loader2 size={15} className="animate-spin" /> : 'Save Changes'}
