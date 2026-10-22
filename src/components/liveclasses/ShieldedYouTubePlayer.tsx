@@ -765,33 +765,33 @@ export default function ShieldedYouTubePlayer({
 
       {/* ── LAYER 5: CENTER GLYPH / STATUS (Eye-Friendly Start & Playback Controls) ── */}
       <div
-        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 isolate [transform:translate3d(-50%,-50%,0)] transition-opacity duration-200 ${
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 isolate transform-[translate3d(-50%,-50%,0)] transition-opacity duration-200 ${
           showHud || !isPlaying || isBuffering ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
         {/* Debounced Buffering Spinner */}
         {isBuffering && (
           <div className="flex flex-col items-center gap-2.5 pointer-events-none">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#0b101d] border border-red-500/40 flex items-center justify-center text-white shadow-2xl">
-              <Loader2 size={32} className="animate-spin text-red-500" />
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#0b101d] border border-blue-500/30 flex items-center justify-center text-white shadow-2xl">
+              <Loader2 size={32} className="animate-spin text-blue-400" />
             </div>
-            <span className="text-[11px] font-mono tracking-wider uppercase text-red-200 px-3 py-1 rounded-full bg-[#0b101d] border border-slate-700/80 shadow-lg">
+            <span className="text-[11px] font-mono tracking-wider uppercase text-blue-200 px-3 py-1 rounded-full bg-[#0b101d] border border-slate-700/80 shadow-lg">
               Loading Stream
             </span>
           </div>
         )}
 
-        {/* Start / Resuming Play Button (Clean, Inviting, Eye-Friendly with YouTube Red Accent) */}
+        {/* Start / Resuming Play Button (Clean, Inviting, Eye-Friendly Platform Theme) */}
         {!isBuffering && !isPlaying && !isEnded && (
           <div className="flex flex-col items-center gap-3">
             <button
               type="button"
               onClick={togglePlayPause}
               aria-label="Play video"
-              className="relative group/play flex items-center justify-center cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded-full"
+              className="relative group/play flex items-center justify-center cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-full"
             >
-              <div className="absolute -inset-2 rounded-full border border-red-500/35 animate-pulse pointer-events-none" />
-              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-600 hover:bg-red-500 active:bg-red-700 border border-red-400/50 flex items-center justify-center text-white shadow-[0_4px_30px_rgba(220,38,38,0.55)] transition-all group-hover/play:scale-105 group-active/play:scale-95">
+              <div className="absolute -inset-2 rounded-full border border-blue-400/40 animate-pulse pointer-events-none" />
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 border border-blue-400/50 flex items-center justify-center text-white shadow-[0_4px_30px_rgba(37,99,235,0.45)] transition-all group-hover/play:scale-105 group-active/play:scale-95">
                 <Play size={32} className="ml-1 fill-white text-white" />
               </div>
             </button>
@@ -808,7 +808,7 @@ export default function ShieldedYouTubePlayer({
               type="button"
               onClick={togglePlayPause}
               aria-label="Replay stream"
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-600 hover:bg-red-500 border border-red-500 text-white flex items-center justify-center shadow-[0_4px_30px_rgba(220,38,38,0.55)] transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 border border-blue-400 text-white flex items-center justify-center shadow-[0_4px_30px_rgba(37,99,235,0.45)] transition-transform hover:scale-105 active:scale-95 cursor-pointer"
             >
               <RotateCcw size={28} />
             </button>
@@ -834,11 +834,11 @@ export default function ShieldedYouTubePlayer({
         }`}
       >
         <div className="flex items-center gap-2.5 min-w-0 max-w-[65vw]">
-          <span className="w-2 h-2 rounded-full bg-red-500 shrink-0 animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0 animate-pulse" />
           <h2 className="text-xs sm:text-sm font-semibold text-white truncate drop-shadow-xs">
             {title}
           </h2>
-          <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-red-500/20 text-red-300 border border-red-500/30">
+          <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
             <Sparkles size={11} />
             <span>MAX HD</span>
           </span>
@@ -892,7 +892,7 @@ export default function ShieldedYouTubePlayer({
                 style={{ width: `${bufferedPct}%` }}
               />
               <div
-                className="absolute inset-y-0 left-0 bg-red-600 shadow-[0_0_12px_rgba(239,68,68,0.6)]"
+                className="absolute inset-y-0 left-0 bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.5)]"
                 style={{ width: `${seekPct}%` }}
               />
             </div>
@@ -973,7 +973,7 @@ export default function ShieldedYouTubePlayer({
                 >
                   <div className="w-full h-1 bg-slate-700 rounded-full overflow-hidden relative">
                     <div
-                      className="absolute inset-y-0 left-0 bg-red-500"
+                      className="absolute inset-y-0 left-0 bg-blue-400"
                       style={{ width: `${isMuted ? 0 : volume}%` }}
                     />
                   </div>
