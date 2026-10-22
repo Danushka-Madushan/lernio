@@ -703,7 +703,7 @@ export default function ShieldedYouTubePlayer({
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 w-screen h-[100dvh] z-50 flex flex-col justify-between overflow-hidden select-none touch-none text-slate-100"
+      className="fixed inset-0 w-screen h-dvh z-50 flex flex-col justify-between overflow-hidden select-none touch-none text-slate-100"
       onContextMenu={(e) => e.preventDefault()}
       onPointerMove={() => revealHud()}
       style={{
