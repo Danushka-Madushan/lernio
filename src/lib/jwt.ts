@@ -1,6 +1,10 @@
 import { SignJWT, jwtVerify } from 'jose';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'lernio-super-secret-key-change-me-in-production';
+const rawSecret = process.env.JWT_SECRET;
+if (!rawSecret && process.env.NODE_ENV === 'production') {
+  throw new Error('FATAL: JWT_SECRET environment variable is missing in production!');
+}
+const JWT_SECRET = rawSecret || 'lernio-super-secret-key-change-me-in-production';
 const secretKey = new TextEncoder().encode(JWT_SECRET);
 
 export interface UserSession {
@@ -34,7 +38,7 @@ export async function verifyToken(token: string): Promise<UserSession | null> {
       role: payload.role as 'ADMIN' | 'TEACHER' | 'STUDENT',
       teacherId: (payload.teacherId as string | undefined) || null,
     };
-  } catch (error) {
+  } catch {
     return null;
   }
 }

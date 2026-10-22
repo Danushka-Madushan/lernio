@@ -130,12 +130,17 @@ export async function GET(
       console.warn('View tracking transaction issue:', viewErr);
     }
 
+
     // 5. Generate presigned URL (valid for 5 minutes)
-    const getCommand = new GetObjectCommand({
-      Bucket: bucketName,
-      Key: video.cloudflareR2Key,
-    });
-    const presignedUrl = await getSignedUrl(s3, getCommand, { expiresIn: 300 });
+    const rawKey = video.cloudflareR2Key?.trim();
+    let presignedUrl = rawKey || '';
+    if (rawKey && !rawKey.startsWith('http')) {
+      const getCommand = new GetObjectCommand({
+        Bucket: bucketName,
+        Key: rawKey,
+      });
+      presignedUrl = await getSignedUrl(s3, getCommand, { expiresIn: 300 });
+    }
 
     // 6. Check if current user liked this video
     const userHasLiked = await db.like.findUnique({
@@ -223,7 +228,7 @@ export async function PUT(
       title: title.trim(),
       description: typeof description === 'string' ? (description.trim() || null) : (description ?? null),
       grade: grade ? (grade as Grade) : null,
-      ...(cloudflareR2ThumbnailKey !== undefined ? { cloudflareR2ThumbnailKey } : {}),
+      ...(cloudflareR2ThumbnailKey !== undefined ? { cloudflareR2ThumbnailKey: typeof cloudflareR2ThumbnailKey === 'string' ? (cloudflareR2ThumbnailKey.trim() || null) : cloudflareR2ThumbnailKey } : {}),
     };
 
     if (visibility !== undefined) {
