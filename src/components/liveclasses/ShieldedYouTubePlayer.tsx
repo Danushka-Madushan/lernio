@@ -763,47 +763,54 @@ export default function ShieldedYouTubePlayer({
         )}
       </div>
 
-      {/* ── LAYER 5: CENTER GLYPH / STATUS (Eye-Friendly Start & Playback Controls) ── */}
+      {/* ── LAYER 5: CENTER GLYPH / STATUS (Dead-Centered Eye-Friendly Controls) ── */}
       <div
-        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex items-center justify-center pointer-events-none transition-opacity duration-200 ${
-          showHud || !isPlaying || isBuffering ? 'opacity-100' : 'opacity-0'
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 isolate transition-opacity duration-200 ${
+          showHud || !isPlaying || isBuffering ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
         {/* Debounced Buffering Spinner */}
         {isBuffering && (
-          <div className="relative flex flex-col items-center pointer-events-none">
+          <div className="relative flex items-center justify-center">
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#0b101d] border border-blue-500/30 flex items-center justify-center text-white shadow-2xl">
               <Loader2 size={32} className="animate-spin text-blue-400" />
             </div>
-            <span className="absolute top-full mt-3 left-1/2 -translate-x-1/2 whitespace-nowrap text-[11px] font-mono tracking-wider uppercase text-blue-200 px-3 py-1 rounded-full bg-[#0b101d] border border-slate-700/80 shadow-lg">
+            <span className="absolute top-full mt-3 left-1/2 -translate-x-1/2 whitespace-nowrap text-[11px] font-mono tracking-wider uppercase text-blue-200 px-3 py-1 rounded-full bg-[#0b101d] border border-slate-700/80 shadow-lg pointer-events-none">
               Loading Stream
             </span>
           </div>
         )}
 
-        {/* Start / Resuming Play Button (Locked to Center, Label Positioned Below) */}
-        {!isBuffering && !isPlaying && !isEnded && (
-          <div className="relative flex items-center justify-center pointer-events-auto">
+        {/* Start / Play / Pause Primary Center Button (Dead Center on Viewport) */}
+        {!isBuffering && !isEnded && (
+          <div className="relative flex items-center justify-center">
             <button
               type="button"
               onClick={togglePlayPause}
-              aria-label="Play video"
-              className="relative group/play flex items-center justify-center cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-full"
+              aria-label={isPlaying ? 'Pause video' : 'Play video'}
+              className="group/play relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 border border-blue-400/50 flex items-center justify-center text-white shadow-[0_4px_30px_rgba(37,99,235,0.45)] transition-all hover:scale-105 active:scale-95 cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-blue-400"
             >
-              <div className="absolute -inset-2 rounded-full border border-blue-400/40 animate-pulse pointer-events-none" />
-              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 border border-blue-400/50 flex items-center justify-center text-white shadow-[0_4px_30px_rgba(37,99,235,0.45)] transition-all group-hover/play:scale-105 group-active/play:scale-95">
+              {isPlaying ? (
+                <Pause size={32} className="fill-white text-white" />
+              ) : (
                 <Play size={32} className="ml-1 fill-white text-white" />
-              </div>
+              )}
             </button>
-            <span className="absolute top-full mt-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-medium text-slate-200 px-3.5 py-1 rounded-full bg-[#0b101d] border border-slate-700/80 shadow-lg tracking-wide pointer-events-none">
-              {currentTime > 0 ? 'Resume class' : 'Click to start class'}
+
+            {/* Label badge anchored beneath without shifting center */}
+            <span className="absolute top-full mt-3 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-medium text-slate-200 px-3.5 py-1 rounded-full bg-[#0b101d] border border-slate-700/80 shadow-lg tracking-wide pointer-events-none">
+              {isPlaying
+                ? 'Click to pause'
+                : currentTime > 0
+                ? 'Paused • Click to resume'
+                : 'Click to start class'}
             </span>
           </div>
         )}
 
         {/* Replay Stream Button */}
         {isEnded && (
-          <div className="relative flex items-center justify-center pointer-events-auto">
+          <div className="relative flex items-center justify-center">
             <button
               type="button"
               onClick={togglePlayPause}
@@ -812,7 +819,7 @@ export default function ShieldedYouTubePlayer({
             >
               <RotateCcw size={28} />
             </button>
-            <span className="absolute top-full mt-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[11px] font-semibold text-slate-200 px-3 py-1 rounded-full bg-[#0b101d] border border-slate-700/80 shadow-lg pointer-events-none">
+            <span className="absolute top-full mt-3 left-1/2 -translate-x-1/2 whitespace-nowrap text-[11px] font-semibold text-slate-200 px-3 py-1 rounded-full bg-[#0b101d] border border-slate-700/80 shadow-lg pointer-events-none">
               Replay Stream
             </span>
           </div>
@@ -820,7 +827,7 @@ export default function ShieldedYouTubePlayer({
 
         {/* Error Notification */}
         {error && (
-          <div className="relative flex flex-col items-center gap-2 px-6 py-4 rounded-2xl bg-slate-950/95 border border-red-500/40 text-center max-w-sm shadow-2xl pointer-events-auto">
+          <div className="flex flex-col items-center gap-2 px-6 py-4 rounded-2xl bg-slate-950/95 border border-red-500/40 text-center max-w-sm shadow-2xl">
             <AlertCircle size={28} className="text-red-400" />
             <p className="text-xs text-red-200">{error}</p>
           </div>

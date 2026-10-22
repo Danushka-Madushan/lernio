@@ -11,8 +11,6 @@ import {
   Award,
   Video,
   Shield,
-  GraduationCap,
-  Sparkles,
   ExternalLink,
 } from 'lucide-react';
 import RepoVersionBadge from '@/components/RepoVersionBadge';
@@ -85,76 +83,81 @@ export default function UserMenuDropdown({ user }: UserMenuDropdownProps) {
 
   return (
     <div className="relative" ref={dropdownRef}>
-      {/* Trigger Button */}
+      {/* Trigger Button (Flat, Uniform h-9) */}
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-haspopup="true"
-        className="flex items-center gap-2 pl-1.5 pr-2.5 py-1 rounded-full bg-[#f1f3f4] hover:bg-[#e8eaed] border border-gray-200 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer group"
+        className="h-9 inline-flex items-center gap-2 pl-1.5 pr-2.5 rounded-lg bg-white hover:bg-gray-50 border border-gray-200 text-xs font-semibold text-gray-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 cursor-pointer group"
       >
         {/* Avatar circle */}
         <div
-          className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs shadow-2xs shrink-0 ${roleColor}`}
+          className={`w-6.5 h-6.5 rounded-full flex items-center justify-center font-bold text-[11px] shrink-0 ${roleColor}`}
         >
           {initials}
         </div>
 
         {/* Username */}
-        <span className="text-xs font-semibold text-gray-800 max-w-28 truncate">
+        <span className="font-semibold text-gray-800 max-w-28 truncate">
           {user.username}
         </span>
 
         {/* Role badge */}
         <span
-          className={`px-1.5 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase shadow-2xs ${roleColor}`}
+          className={`px-1.5 py-0.5 rounded-md text-[9px] font-bold tracking-wider uppercase ${roleColor}`}
         >
           {user.role === 'ADMIN' ? 'Admin' : user.role === 'TEACHER' ? 'Teacher' : 'Student'}
         </span>
 
         <ChevronDown
-          size={14}
+          size={13}
           className={`text-gray-500 transition-transform duration-200 ${
-            isOpen ? 'rotate-180 text-blue-600' : 'group-hover:text-gray-700'
+            isOpen ? 'rotate-180 text-blue-600' : 'group-hover:text-gray-800'
           }`}
         />
       </button>
 
-      {/* Dropdown Card */}
+      {/* Dropdown Card (Comfortable Size, Accessible Targets, Flat Style) */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-72 sm:w-80 rounded-2xl bg-white border border-gray-200 shadow-xl p-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+        <div className="absolute right-0 mt-2 w-80 rounded-2xl bg-white border border-gray-200 shadow-lg p-1.5 z-50 animate-in fade-in zoom-in-95 duration-150">
           {/* Header Info */}
           <div className="px-3.5 py-3 border-b border-gray-100 flex items-center gap-3">
             <div
-              className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shadow-xs shrink-0 ${roleColor}`}
+              className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 ${roleColor}`}
             >
               {initials}
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-sm font-bold text-gray-900 truncate">{user.username}</p>
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                <span className="inline-block w-2 h-2 rounded-full bg-emerald-500" />
                 <span className="text-xs text-gray-500 font-medium">{roleLabel}</span>
               </div>
             </div>
           </div>
 
-          {/* Quick Platform Portals */}
-          <div className="py-2 border-b border-gray-100 space-y-1">
-            <p className="px-3.5 pt-1 pb-1 text-[11px] font-bold uppercase tracking-wider text-gray-400">
+          {/* Quick Platform Portals (Enlarged Click Targets) */}
+          <div className="py-1.5 border-b border-gray-100 space-y-0.5">
+            <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
               Platform Switcher
             </p>
 
             <Link
               href="/"
               onClick={() => setIsOpen(false)}
-              className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-blue-50/80 transition-colors group cursor-pointer"
+              className="flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-700 hover:text-blue-600 hover:bg-blue-50/70 transition-colors group"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors shrink-0">
                   <Video size={16} />
                 </div>
-                <span>Student Feed (Lectures)</span>
+                <div>
+                  <p className="text-[13px] font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                    Student Feed
+                  </p>
+                  <p className="text-xs text-gray-500">Video lectures catalog</p>
+                </div>
               </div>
               <ExternalLink size={13} className="text-gray-400 group-hover:text-blue-600" />
             </Link>
@@ -162,13 +165,18 @@ export default function UserMenuDropdown({ user }: UserMenuDropdownProps) {
             <Link
               href="/liveclasses"
               onClick={() => setIsOpen(false)}
-              className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-blue-50/80 transition-colors group cursor-pointer"
+              className="flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-700 hover:text-blue-600 hover:bg-blue-50/70 transition-colors group"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors shrink-0">
                   <Tv size={16} />
                 </div>
-                <span>Live Classes Portal</span>
+                <div>
+                  <p className="text-[13px] font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                    Live Classes
+                  </p>
+                  <p className="text-xs text-gray-500">YouTube stream classes</p>
+                </div>
               </div>
               <ExternalLink size={13} className="text-gray-400 group-hover:text-blue-600" />
             </Link>
@@ -176,13 +184,18 @@ export default function UserMenuDropdown({ user }: UserMenuDropdownProps) {
             <Link
               href="/exams-portal"
               onClick={() => setIsOpen(false)}
-              className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-blue-50/80 transition-colors group cursor-pointer"
+              className="flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-700 hover:text-blue-600 hover:bg-blue-50/70 transition-colors group"
             >
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center shrink-0 group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors shrink-0">
                   <Award size={16} />
                 </div>
-                <span>Exams & Marksheet Portal</span>
+                <div>
+                  <p className="text-[13px] font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                    Exams Portal
+                  </p>
+                  <p className="text-xs text-gray-500">Exams & marksheets</p>
+                </div>
               </div>
               <ExternalLink size={13} className="text-gray-400 group-hover:text-blue-600" />
             </Link>
@@ -191,13 +204,18 @@ export default function UserMenuDropdown({ user }: UserMenuDropdownProps) {
               <Link
                 href="/admin"
                 onClick={() => setIsOpen(false)}
-                className="flex items-center justify-between px-3 py-2.5 rounded-xl text-sm font-semibold text-gray-700 hover:text-blue-600 hover:bg-blue-50/80 transition-colors group cursor-pointer"
+                className="flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-700 hover:text-blue-600 hover:bg-blue-50/70 transition-colors group"
               >
                 <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center shrink-0 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                  <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition-colors shrink-0">
                     <Shield size={16} />
                   </div>
-                  <span>Admin Management Center</span>
+                  <div>
+                    <p className="text-[13px] font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                      Admin Management
+                    </p>
+                    <p className="text-xs text-gray-500">Control & configure system</p>
+                  </div>
                 </div>
                 <ExternalLink size={13} className="text-gray-400 group-hover:text-purple-600" />
               </Link>
@@ -211,17 +229,17 @@ export default function UserMenuDropdown({ user }: UserMenuDropdownProps) {
           </div>
 
           {/* Logout Action */}
-          <div className="pt-2">
+          <div className="p-1.5">
             <button
               type="button"
               onClick={handleLogout}
               disabled={logoutLoading}
-              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-sm font-semibold text-red-600 hover:bg-red-50 active:bg-red-100 transition-colors cursor-pointer disabled:opacity-50"
+              className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 active:bg-red-100 transition-colors cursor-pointer disabled:opacity-50"
             >
               {logoutLoading ? (
-                <Loader2 size={16} className="animate-spin text-red-500" />
+                <Loader2 size={14} className="animate-spin text-red-500" />
               ) : (
-                <LogOut size={16} />
+                <LogOut size={14} />
               )}
               <span>Log out of session</span>
             </button>

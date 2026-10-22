@@ -360,29 +360,29 @@ const VideosAdminPage = () => {
                 <table className="w-full border-collapse text-left text-xs">
                   <thead>
                     <tr className="border-b border-[#e8eaed] bg-[#f8f9fa]">
-                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] min-w-[220px]">
+                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] min-w-[200px] max-w-xs md:max-w-sm">
                         Lesson Title
                       </th>
                       {isAdmin && (
-                        <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                        <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] w-[140px] whitespace-nowrap">
                           Teacher
                         </th>
                       )}
-                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] min-w-[120px] max-w-[170px]">
+                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] w-[150px] whitespace-nowrap">
                         Grade
                       </th>
-                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                         Visibility
                       </th>
-                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                         <span className="flex items-center gap-1">
                           <Eye size={11} /> Views
                         </span>
                       </th>
-                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                         Published
                       </th>
-                      <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                      <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-[#5f6368] w-[140px] whitespace-nowrap">
                         Actions
                       </th>
                     </tr>
@@ -393,9 +393,9 @@ const VideosAdminPage = () => {
                         key={video.id}
                         className="group transition-colors duration-100 hover:bg-[#f8f9fa]"
                       >
-                        <td className="min-w-[220px] max-w-sm px-4 py-3">
+                        <td className="min-w-[200px] max-w-xs md:max-w-sm px-4 py-3">
                           <div className="flex items-center space-x-3">
-                            <div className="relative w-30 shrink-0 aspect-video overflow-hidden rounded-md border border-[#e8eaed] bg-[#202124]">
+                            <div className="relative w-28 sm:w-30 shrink-0 aspect-video overflow-hidden rounded-md border border-[#e8eaed] bg-[#202124]">
                               <VideoThumbnail
                                 videoId={video.id}
                                 title={video.title}
@@ -404,15 +404,17 @@ const VideosAdminPage = () => {
                                 showGrade={false}
                               />
                             </div>
-                            <div className="min-w-0">
+                            <div className="min-w-0 flex-1">
                               <span
-                                className={`block truncate text-wrap font-medium text-[#202124] ${notoSans.className}`}
+                                className={`block truncate font-medium text-[#202124] ${notoSans.className}`}
+                                title={video.title}
                               >
                                 {video.title}
                               </span>
                               {video.description && (
                                 <span
                                   className={`mt-0.5 block truncate text-[11px] text-[#5f6368] ${notoSans.className}`}
+                                  title={video.description}
                                 >
                                   {video.description}
                                 </span>
@@ -423,10 +425,13 @@ const VideosAdminPage = () => {
 
                         {/* Teacher column (Admin only) */}
                         {isAdmin && (
-                          <td className="px-4 py-3">
+                          <td className="px-4 py-3 whitespace-nowrap">
                             {video.teacher ? (
-                              <span className="inline-flex max-w-[130px] truncate items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[10px] font-medium text-purple-700 border border-purple-100" title={video.teacher.username}>
-                                <UserCheck size={10} className="shrink-0" />
+                              <span
+                                className="inline-flex max-w-[130px] sm:max-w-[140px] truncate items-center gap-1 rounded-full bg-purple-50 px-2.5 py-1 text-[11px] font-medium text-purple-700 border border-purple-100"
+                                title={video.teacher.username}
+                              >
+                                <UserCheck size={11} className="shrink-0" />
                                 <span className="truncate">{video.teacher.username}</span>
                               </span>
                             ) : (
@@ -436,7 +441,7 @@ const VideosAdminPage = () => {
                         )}
 
                         {/* Grade badge */}
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3 whitespace-nowrap">
                           {video.grade ? (() => {
                             const vTeacher = video.teacherId
                               ? teachers.find((t) => t.id === video.teacherId)
@@ -445,7 +450,7 @@ const VideosAdminPage = () => {
                             const gradeLabel = getGradeLabel(video.grade, vAliases);
                             return (
                               <span
-                                className="inline-block max-w-[130px] sm:max-w-[160px] truncate align-middle rounded-full bg-[#e8f0fe] px-2.5 py-1 text-[11px] font-medium text-blue-500"
+                                className="inline-block max-w-[130px] sm:max-w-[150px] truncate align-middle rounded-full bg-[#e8f0fe] px-2.5 py-1 text-[11px] font-medium text-blue-600"
                                 title={gradeLabel}
                               >
                                 {gradeLabel}
@@ -472,12 +477,12 @@ const VideosAdminPage = () => {
                         </td>
 
                         {/* Views */}
-                        <td className="px-4 py-3 text-[#5f6368]">
+                        <td className="px-4 py-3 whitespace-nowrap text-[#5f6368]">
                           {video.viewsCount.toLocaleString()}
                         </td>
 
                         {/* Date */}
-                        <td className="px-4 py-3 text-[#5f6368]">
+                        <td className="px-4 py-3 whitespace-nowrap text-[#5f6368]">
                           {new Date(video.createdAt).toLocaleDateString('en-GB', {
                             day: '2-digit',
                             month: 'short',
@@ -486,8 +491,8 @@ const VideosAdminPage = () => {
                         </td>
 
                         {/* Actions */}
-                        <td className="px-4 py-3">
-                          <div className="flex items-center justify-end gap-1">
+                        <td className="px-4 py-3 text-right whitespace-nowrap min-w-[140px]">
+                          <div className="flex items-center justify-end gap-1 shrink-0">
                             <button
                               onClick={() => setEditTarget(video)}
                               className="flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-blue-500 transition-colors hover:bg-blue-100"
