@@ -765,25 +765,25 @@ export default function ShieldedYouTubePlayer({
 
       {/* ── LAYER 5: CENTER GLYPH / STATUS (Eye-Friendly Start & Playback Controls) ── */}
       <div
-        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 isolate transform-[translate3d(-50%,-50%,0)] transition-opacity duration-200 ${
-          showHud || !isPlaying || isBuffering ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex items-center justify-center pointer-events-none transition-opacity duration-200 ${
+          showHud || !isPlaying || isBuffering ? 'opacity-100' : 'opacity-0'
         }`}
       >
         {/* Debounced Buffering Spinner */}
         {isBuffering && (
-          <div className="flex flex-col items-center gap-2.5 pointer-events-none">
+          <div className="relative flex flex-col items-center pointer-events-none">
             <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-[#0b101d] border border-blue-500/30 flex items-center justify-center text-white shadow-2xl">
               <Loader2 size={32} className="animate-spin text-blue-400" />
             </div>
-            <span className="text-[11px] font-mono tracking-wider uppercase text-blue-200 px-3 py-1 rounded-full bg-[#0b101d] border border-slate-700/80 shadow-lg">
+            <span className="absolute top-full mt-3 left-1/2 -translate-x-1/2 whitespace-nowrap text-[11px] font-mono tracking-wider uppercase text-blue-200 px-3 py-1 rounded-full bg-[#0b101d] border border-slate-700/80 shadow-lg">
               Loading Stream
             </span>
           </div>
         )}
 
-        {/* Start / Resuming Play Button (Clean, Inviting, Eye-Friendly Platform Theme) */}
+        {/* Start / Resuming Play Button (Locked to Center, Label Positioned Below) */}
         {!isBuffering && !isPlaying && !isEnded && (
-          <div className="flex flex-col items-center gap-3">
+          <div className="relative flex items-center justify-center pointer-events-auto">
             <button
               type="button"
               onClick={togglePlayPause}
@@ -795,15 +795,15 @@ export default function ShieldedYouTubePlayer({
                 <Play size={32} className="ml-1 fill-white text-white" />
               </div>
             </button>
-            <span className="text-xs font-medium text-slate-200 px-3.5 py-1 rounded-full bg-[#0b101d] border border-slate-700/80 shadow-lg tracking-wide">
-              Click to start class
+            <span className="absolute top-full mt-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap text-xs font-medium text-slate-200 px-3.5 py-1 rounded-full bg-[#0b101d] border border-slate-700/80 shadow-lg tracking-wide pointer-events-none">
+              {currentTime > 0 ? 'Resume class' : 'Click to start class'}
             </span>
           </div>
         )}
 
         {/* Replay Stream Button */}
         {isEnded && (
-          <div className="flex flex-col items-center gap-2">
+          <div className="relative flex items-center justify-center pointer-events-auto">
             <button
               type="button"
               onClick={togglePlayPause}
@@ -812,7 +812,7 @@ export default function ShieldedYouTubePlayer({
             >
               <RotateCcw size={28} />
             </button>
-            <span className="text-[11px] font-semibold text-slate-200 px-3 py-1 rounded-full bg-[#0b101d] border border-slate-700/80 shadow-lg">
+            <span className="absolute top-full mt-3.5 left-1/2 -translate-x-1/2 whitespace-nowrap text-[11px] font-semibold text-slate-200 px-3 py-1 rounded-full bg-[#0b101d] border border-slate-700/80 shadow-lg pointer-events-none">
               Replay Stream
             </span>
           </div>
@@ -820,7 +820,7 @@ export default function ShieldedYouTubePlayer({
 
         {/* Error Notification */}
         {error && (
-          <div className="flex flex-col items-center gap-2 px-6 py-4 rounded-2xl bg-slate-950/95 border border-red-500/40 text-center max-w-sm shadow-2xl">
+          <div className="relative flex flex-col items-center gap-2 px-6 py-4 rounded-2xl bg-slate-950/95 border border-red-500/40 text-center max-w-sm shadow-2xl pointer-events-auto">
             <AlertCircle size={28} className="text-red-400" />
             <p className="text-xs text-red-200">{error}</p>
           </div>
