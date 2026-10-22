@@ -16,6 +16,7 @@ import {
   ChevronRight,
   GraduationCap,
   Award,
+  Tv,
   Shield,
 } from 'lucide-react';
 import { Button } from '@heroui/react';
@@ -171,6 +172,7 @@ const MobileDrawerNav = ({ username, role = 'STUDENT' }: Props) => {
   // Build nav items dynamically based on user role
   const navItems: NavItem[] = [
     { id: 'home', label: 'Home (Videos)', icon: House, href: '/' },
+    { id: 'liveclasses', label: 'Live Classes', icon: Tv, href: '/liveclasses' },
     { id: 'exams', label: 'Exams Portal', icon: Award, href: '/exams-portal' },
   ];
 

@@ -3,9 +3,9 @@ import { verifyToken } from '@/lib/jwt';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
-import LogoutButton from '@/components/LogoutButton';
 import { Award, ArrowLeft } from 'lucide-react';
 import ExamsMobileNav from '@/components/exams/ExamsMobileNav';
+import UserMenuDropdown from '@/components/UserMenuDropdown';
 
 export default async function ExamsPortalLayout({
   children,
@@ -68,34 +68,18 @@ export default async function ExamsPortalLayout({
                 >
                   Exam Groups
                 </Link>
+                <Link
+                  href="/liveclasses"
+                  className="text-gray-700 hover:text-blue-600 hover:bg-blue-50/60 font-medium px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  Live Classes
+                </Link>
               </nav>
             )}
           </div>
 
           {/* Right Action & User Controls */}
           <div className="flex items-center space-x-2 sm:space-x-3 text-xs sm:text-sm shrink-0">
-            {/* Identity Badge (Desktop) */}
-            <div className="hidden lg:flex items-center bg-[#f1f3f4] border border-gray-200 rounded-full pl-2 pr-3 py-1">
-              <span
-                className={`text-white px-2 py-0.5 rounded-full text-[9px] font-bold tracking-wider uppercase mr-2 shadow-2xs ${
-                  user.role === 'ADMIN'
-                    ? 'bg-blue-500'
-                    : user.role === 'TEACHER'
-                    ? 'bg-purple-600'
-                    : 'bg-emerald-600'
-                }`}
-              >
-                {user.role === 'ADMIN'
-                  ? 'Admin'
-                  : user.role === 'TEACHER'
-                  ? 'Teacher'
-                  : 'Student'}
-              </span>
-              <span className="text-gray-800 font-semibold max-w-28 truncate">
-                {user.username}
-              </span>
-            </div>
-
             {/* Desktop Back Switchers */}
             {isStaff ? (
               <Link
@@ -124,11 +108,9 @@ export default async function ExamsPortalLayout({
               <ArrowLeft size={16} />
             </Link>
 
-            <div className="hidden md:block w-px h-5 bg-gray-200"></div>
-
-            {/* Desktop Logout Button */}
+            {/* Consolidated User Dropdown (Desktop) */}
             <div className="hidden md:block">
-              <LogoutButton />
+              <UserMenuDropdown user={user} />
             </div>
 
             {/* Mobile Drawer Trigger (Mobile-only) */}

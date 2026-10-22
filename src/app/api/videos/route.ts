@@ -222,7 +222,16 @@ export async function POST(request: Request) {
     const { title, description, cloudflareR2Key, cloudflareR2ThumbnailKey, grade, visibility } =
       await request.json();
 
-    if (!title || !cloudflareR2Key) {
+    const sanitizedTitle = typeof title === 'string' ? title.trim() : '';
+    const sanitizedKey = typeof cloudflareR2Key === 'string' ? cloudflareR2Key.trim() : '';
+    const sanitizedThumbKey = typeof cloudflareR2ThumbnailKey === 'string'
+      ? (cloudflareR2ThumbnailKey.trim() || null)
+      : null;
+    const sanitizedDescription = typeof description === 'string'
+      ? (description.trim() || null)
+      : (description ?? null);
+
+    if (!sanitizedTitle || !sanitizedKey) {
       return NextResponse.json({ error: 'Title and cloudflareR2Key are required' }, { status: 400 });
     }
 
@@ -256,10 +265,10 @@ export async function POST(request: Request) {
 
     const video = await db.video.create({
       data: {
-        title,
-        description,
-        cloudflareR2Key,
-        cloudflareR2ThumbnailKey,
+        title: sanitizedTitle,
+        description: sanitizedDescription,
+        cloudflareR2Key: sanitizedKey,
+        cloudflareR2ThumbnailKey: sanitizedThumbKey,
         grade: grade ? (grade as Grade) : null,
         visibility: resolvedVisibility,
         teacherId: user.id,

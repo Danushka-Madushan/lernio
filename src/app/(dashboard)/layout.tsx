@@ -2,10 +2,10 @@ import { cookies } from 'next/headers';
 import { verifyToken } from '@/lib/jwt';
 import Link from 'next/link';
 import Image from 'next/image';
-import LogoutButton from '@/components/LogoutButton';
 import StudentMeetingsNav from '@/components/StudentMeetingsNav';
 import MobileDrawerNav from '@/components/MobileDrawerNav';
-import { GraduationCap, Award } from 'lucide-react';
+import UserMenuDropdown from '@/components/UserMenuDropdown';
+import { Award, Tv } from 'lucide-react';
 
 const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   const cookieStore = await cookies();
@@ -17,11 +17,9 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen flex flex-col bg-[#f8f9fa] text-[#202124]">
       {/* 
-        Upgraded Header: 
-        - bg-white/90 and backdrop-blur-md create a modern "frosted glass" effect.
-        - shadow-sm gives it just enough lift off the page to eliminate the "flat" feeling.
+        Upgraded Modern Glass Navbar
       */}
-      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-sm transition-all duration-300">
+      <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-200 shadow-xs transition-all duration-300">
         <div className="max-w-6xl mx-auto px-4 sm:py-2 py-3 flex justify-between items-center">
 
           {/* Logo Section */}
@@ -44,7 +42,7 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
           </Link>
 
           {/* User Controls Section */}
-          <div className="flex items-center space-x-3 sm:space-x-5 text-sm">
+          <div className="flex items-center space-x-2 sm:space-x-3 text-sm">
             {user && (
               <>
                 {/* Zoom button: only on md+ for students (moves to bottom nav on mobile) */}
@@ -54,19 +52,14 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
                   </span>
                 )}
 
-                <div className="hidden sm:flex items-center gap-3 px-3 py-2 rounded-xl bg-linear-to-r from-[#e8f0fe] to-[#f0f4ff] border border-blue-100">
-                  <div className="flex items-center justify-center w-9 h-9 rounded-full bg-linear-to-br from-blue-500 to-blue-600 shadow-sm shadow-blue-400/30 shrink-0 select-none">
-                    <GraduationCap size={20} className="text-white" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-[#9aa0a6] leading-none mb-0.5">
-                      Welcome back
-                    </p>
-                    <p className="text-sm font-semibold text-[#202124] truncate">
-                      {user.username}
-                    </p>
-                  </div>
-                </div>
+                {/* Live Classes Portal Link */}
+                <Link
+                  href="/liveclasses"
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-medium text-xs rounded-full border border-blue-200 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500/40 outline-none shadow-2xs"
+                >
+                  <Tv size={14} className="text-blue-600" />
+                  <span>Live Classes</span>
+                </Link>
 
                 {/* Exams Portal Link */}
                 <Link
@@ -81,19 +74,16 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
                 {(user.role === 'ADMIN' || user.role === 'TEACHER') && (
                   <Link
                     href="/admin"
-                    className="hidden sm:flex items-center px-3 py-1.5 bg-[#e8f0fe] text-blue-500 font-medium text-xs rounded-full hover:bg-[#d2e3fc] transition-colors focus-visible:ring-2 focus-visible:ring-blue-500/40 outline-none"
+                    className="hidden sm:flex items-center px-3 py-1.5 bg-[#e8f0fe] text-blue-600 font-medium text-xs rounded-full hover:bg-[#d2e3fc] transition-colors focus-visible:ring-2 focus-visible:ring-blue-500/40 outline-none"
                   >
                     {user.role === 'ADMIN' ? 'Admin Panel' : 'Teacher Panel'}
                   </Link>
                 )}
 
-                {/* Vertical Divider */}
-                <div className="hidden sm:block w-px h-6 bg-gray-300"></div>
-
-                {/* Logout button: hidden on mobile (logout lives in mobile drawer) */}
-                <span className="hidden md:flex">
-                  <LogoutButton />
-                </span>
+                {/* Consolidated User Dropdown */}
+                <div className="hidden sm:flex items-center">
+                  <UserMenuDropdown user={user} />
+                </div>
               </>
             )}
           </div>
@@ -108,6 +98,6 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
       {user && <MobileDrawerNav username={user.username} role={user.role} />}
     </div>
   );
-}
+};
 
 export default DashboardLayout;
