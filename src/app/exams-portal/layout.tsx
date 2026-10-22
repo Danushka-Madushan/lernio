@@ -68,6 +68,12 @@ export default async function ExamsPortalLayout({
                 >
                   Exam Groups
                 </Link>
+                <Link
+                  href="/liveclasses"
+                  className="text-gray-700 hover:text-blue-600 hover:bg-blue-50/60 font-medium px-3 py-1.5 rounded-lg transition-colors"
+                >
+                  Live Classes
+                </Link>
               </nav>
             )}
           </div>

@@ -53,12 +53,13 @@ model User {
   likes          Like[]
   views          View[]
   customVideos   CustomVideoAccess[]
-  videos         Video[]    @relation("TeacherVideos")
-  meetings       ZoomLink[] @relation("TeacherMeetings")
-  zoomAccounts   ZoomAccount[] @relation("TeacherZoomAccounts")
-  examGroups     ExamGroup[] @relation("TeacherExamGroups")
-  exams          Exam[]      @relation("TeacherExams")
-  examMarks      ExamMark[]  @relation("StudentExamMarks")
+  videos         Video[]        @relation("TeacherVideos")
+  meetings       ZoomLink[]     @relation("TeacherMeetings")
+  zoomAccounts   ZoomAccount[]  @relation("TeacherZoomAccounts")
+  examGroups     ExamGroup[]    @relation("TeacherExamGroups")
+  exams          Exam[]         @relation("TeacherExams")
+  examMarks      ExamMark[]     @relation("StudentExamMarks")
+  liveClasses    YouTubeClass[] @relation("TeacherYouTubeClasses")
 }
 
 model Video {
@@ -209,4 +210,18 @@ model ExamMark {
   updatedAt DateTime @updatedAt
 
   @@unique([examId, studentId])
+}
+
+model YouTubeClass {
+  id          String          @id @default(uuid())
+  title       String
+  description String?
+  youtubeId   String
+  grade       Grade?
+  visibility  VideoVisibility @default(PUBLIC)
+  teacherId   String?
+  teacher     User?           @relation("TeacherYouTubeClasses", fields: [teacherId], references: [id], onDelete: Cascade)
+  viewsCount  Int             @default(0)
+  createdAt   DateTime        @default(now())
+  updatedAt   DateTime        @updatedAt
 }

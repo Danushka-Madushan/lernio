@@ -5,7 +5,7 @@ import Image from 'next/image';
 import LogoutButton from '@/components/LogoutButton';
 import StudentMeetingsNav from '@/components/StudentMeetingsNav';
 import MobileDrawerNav from '@/components/MobileDrawerNav';
-import { GraduationCap, Award } from 'lucide-react';
+import { GraduationCap, Award, Tv } from 'lucide-react';
 
 const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   const cookieStore = await cookies();
@@ -67,6 +67,15 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
                     </p>
                   </div>
                 </div>
+
+                {/* Live Classes Portal Link */}
+                <Link
+                  href="/liveclasses"
+                  className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-blue-50 text-blue-700 hover:bg-blue-100 font-medium text-xs rounded-full border border-blue-200 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500/40 outline-none shadow-2xs"
+                >
+                  <Tv size={14} className="text-blue-600" />
+                  <span>Live Classes</span>
+                </Link>
 
                 {/* Exams Portal Link */}
                 <Link

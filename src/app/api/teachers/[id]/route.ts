@@ -266,6 +266,10 @@ export async function DELETE(
         where: { teacherId: id },
         data: { teacherId: adminUser.id },
       });
+      await tx.youTubeClass.updateMany({
+        where: { teacherId: id },
+        data: { teacherId: adminUser.id },
+      });
 
       // Purge any marks where this teacher was recorded as a student
       await tx.examMark.deleteMany({ where: { studentId: id } });

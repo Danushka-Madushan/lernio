@@ -1,0 +1,2012 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>StudioPlayer — Fullscreen-Only Shielded YouTube Cinema</title>
+
+  <!-- Tailwind CSS v4 Browser CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+
+  <!-- Google Fonts: Inter & JetBrains Mono -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style type="text/tailwindcss">
+    @theme {
+      --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+
+    * {
+      -webkit-tap-highlight-color: transparent;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      background-color: #0a0a0c;
+      color: #f4f4f6;
+      overscroll-behavior: none;
+      touch-action: manipulation;
+    }
+
+    /* Unified Matte Architectural Surfaces — Strictly Zero Gradients */
+    .surface-base {
+      background-color: #0a0a0c;
+    }
+
+    .surface-panel {
+      background-color: #121215;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+    }
+
+    .surface-elevated {
+      background-color: #1c1c21;
+      border: 1px solid rgba(255, 255, 255, 0.11);
+    }
+
+    .surface-hud {
+      background-color: rgba(18, 18, 21, 0.96);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.11);
+    }
+
+    /* Unified Fluent-Material Buttons */
+    .btn-matte {
+      background-color: #1c1c21;
+      border: 1px solid rgba(255, 255, 255, 0.11);
+      color: #f4f4f6;
+      transition: background-color 0.12s ease, border-color 0.12s ease, transform 0.08s ease;
+    }
+
+    .btn-matte:hover {
+      background-color: #25252c;
+      border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    .btn-matte:active {
+      transform: scale(0.96);
+      background-color: #2c2c35;
+    }
+
+    .btn-solid {
+      background-color: #f4f4f6;
+      border: 1px solid #ffffff;
+      color: #0a0a0c;
+      transition: background-color 0.12s ease, transform 0.08s ease;
+    }
+
+    .btn-solid:hover {
+      background-color: #e4e4e7;
+    }
+
+    .btn-solid:active {
+      transform: scale(0.96);
+    }
+
+    .btn-close {
+      background-color: #221215;
+      border: 1px solid #472026;
+      color: #fca5a5;
+      transition: background-color 0.12s ease, border-color 0.12s ease, transform 0.08s ease;
+    }
+
+    .btn-close:hover {
+      background-color: #2e171b;
+      border-color: #632b34;
+    }
+
+    .btn-close:active {
+      transform: scale(0.96);
+    }
+
+    /* Razor-Sharp Solid #000000 Top & Bottom Cinema Mask Bars */
+    .cinema-bar-top {
+      background-color: #000000;
+      border-bottom: 1px solid #16161a;
+    }
+
+    .cinema-bar-bottom {
+      background-color: #000000;
+      border-top: 1px solid #16161a;
+    }
+
+    /* Hide mouse cursor when HUD is auto-hidden on desktop */
+    .cursor-none-all,
+    .cursor-none-all * {
+      cursor: none !important;
+    }
+
+    /* Crisp Skip Feedback Pop */
+    @keyframes skipBadgePop {
+      0% { opacity: 0; transform: translateY(-50%) scale(0.94); }
+      18% { opacity: 1; transform: translateY(-50%) scale(1); }
+      82% { opacity: 1; transform: translateY(-50%) scale(1); }
+      100% { opacity: 0; transform: translateY(-50%) scale(0.96); }
+    }
+
+    .animate-skip-pop {
+      animation: skipBadgePop 0.55s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    }
+  </style>
+</head>
+
+<body class="surface-base min-h-[100dvh] text-zinc-100 font-sans antialiased selection:bg-zinc-700 selection:text-white overflow-x-hidden">
+
+  <!-- ===================================================================== -->
+  <!-- SYSTEM NOTIFICATION BANNER REGION                                     -->
+  <!-- ===================================================================== -->
+  <div
+    id="toast-container"
+    class="fixed top-4 right-4 left-4 sm:left-auto sm:w-96 z-[100] flex flex-col gap-2 pointer-events-none"
+    aria-live="polite"
+  ></div>
+
+  <!-- ===================================================================== -->
+  <!-- LAUNCHER & LIVE JSON CONFIGURATION WORKSPACE                          -->
+  <!-- ===================================================================== -->
+  <main id="launcher-workspace" class="max-w-6xl mx-auto px-4 sm:px-6 py-5 sm:py-8">
+
+    <!-- Top Matte Header -->
+    <header class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-5 border-b border-white/10">
+      <div class="flex items-center gap-3">
+        <div class="w-11 h-11 rounded-lg surface-elevated flex items-center justify-center text-zinc-100 shrink-0">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <line x1="2" y1="8" x2="22" y2="8" />
+            <line x1="2" y1="16" x2="22" y2="16" />
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-base sm:text-lg font-semibold tracking-tight text-zinc-100">StudioPlayer</h1>
+            <span class="px-2 py-0.5 text-[11px] font-mono uppercase surface-elevated rounded text-zinc-300">
+              Fluent Matte v3.0
+            </span>
+          </div>
+          <p class="text-xs text-zinc-400 mt-0.5">
+            Fullscreen-Only Shielded YouTube Player • Razor-Sharp #000 Bars • Max Quality Enforcement
+          </p>
+        </div>
+      </div>
+
+      <!-- System Readiness Badges -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div class="surface-panel px-3 py-2 rounded-lg flex items-center gap-2 text-xs">
+          <span id="yt-api-dot" class="w-2 h-2 rounded-full bg-amber-400"></span>
+          <span class="text-zinc-400">YT API:</span>
+          <strong id="yt-api-status" class="font-mono text-zinc-100">LOADING</strong>
+        </div>
+        <div class="surface-panel px-3 py-2 rounded-lg flex items-center gap-2 text-xs">
+          <span class="text-zinc-400">POLICY:</span>
+          <strong class="font-mono text-zinc-100">FULLSCREEN ONLY</strong>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Configuration & Launch Grid -->
+    <section class="mt-6 grid grid-cols-1 lg:grid-cols-12 gap-5">
+
+      <!-- Left Column: Active Configured Stream Card (7 cols) -->
+      <div class="lg:col-span-7 surface-panel rounded-xl p-4 sm:p-6 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between gap-2 pb-3.5 border-b border-white/10">
+            <span class="text-xs font-mono uppercase tracking-wider text-zinc-400">
+              Active PLAYER_CONFIG Target
+            </span>
+            <span id="active-video-id-pill" class="px-2.5 py-0.5 text-xs font-mono surface-elevated rounded text-zinc-200">
+              ID: -----------
+            </span>
+          </div>
+
+          <!-- Preview Stage with Razor-Sharp Top & Bottom Bars -->
+          <div class="mt-4 relative aspect-video bg-black rounded-lg overflow-hidden border border-white/10">
+            <img
+              id="launcher-preview-img"
+              src=""
+              alt="Configured Video Preview"
+              class="w-full h-full object-cover opacity-75"
+              onerror="this.src='https://placehold.co/960x540/0a0a0c/71717a?text=Configured+Cinema+Stream'"
+            />
+            <!-- Sharp Black Top & Bottom Preview Bars -->
+            <div class="cinema-bar-top absolute top-0 inset-x-0 h-[13%]"></div>
+            <div class="cinema-bar-bottom absolute bottom-0 inset-x-0 h-[14%]"></div>
+
+            <!-- Dead-Center Launch Button -->
+            <button
+              id="preview-launch-btn"
+              type="button"
+              class="absolute inset-0 flex items-center justify-center bg-black/35 hover:bg-black/20 transition-colors cursor-pointer"
+              aria-label="Launch Fullscreen Player"
+            >
+              <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-xl btn-solid flex items-center justify-center">
+                <svg class="w-7 h-7 sm:w-8 sm:h-8 ml-0.5 fill-current" viewBox="0 0 24 24">
+                  <polygon points="6 4 20 12 6 20 6 4" />
+                </svg>
+              </div>
+            </button>
+          </div>
+
+          <!-- Active Title & Raw Link Readout -->
+          <div class="mt-4">
+            <h2 id="active-config-title" class="text-base sm:text-lg font-semibold text-zinc-100 leading-snug">
+              Loading Configuration...
+            </h2>
+            <p id="active-config-link" class="text-xs font-mono text-zinc-400 mt-1 truncate"></p>
+          </div>
+        </div>
+
+        <!-- Direct Title & Link Override Controls -->
+        <div class="mt-5 pt-4 border-t border-white/10 flex flex-col gap-3">
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label for="input-config-title" class="block text-[11px] font-mono uppercase text-zinc-400 mb-1">
+                Config Title (<code class="text-zinc-300">PLAYER_CONFIG.title</code>)
+              </label>
+              <input
+                id="input-config-title"
+                type="text"
+                class="w-full h-11 px-3.5 rounded-lg bg-[#0a0a0c] border border-white/10 text-sm text-zinc-100 focus:outline-none focus:border-zinc-400"
+                placeholder="Stream Title"
+              />
+            </div>
+            <div>
+              <label for="input-config-link" class="block text-[11px] font-mono uppercase text-zinc-400 mb-1">
+                YouTube URL or ID (<code class="text-zinc-300">PLAYER_CONFIG.link</code>)
+              </label>
+              <input
+                id="input-config-link"
+                type="text"
+                class="w-full h-11 px-3.5 rounded-lg bg-[#0a0a0c] border border-white/10 text-sm font-mono text-zinc-100 focus:outline-none focus:border-zinc-400"
+                placeholder="https://www.youtube.com/watch?v=..."
+              />
+            </div>
+          </div>
+
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 pt-1">
+            <button
+              id="primary-launch-btn"
+              type="button"
+              class="btn-solid h-12 px-5 rounded-lg font-semibold text-sm flex items-center justify-center gap-2.5 cursor-pointer flex-1"
+            >
+              <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                <polygon points="6 4 20 12 6 20 6 4" />
+              </svg>
+              <span>Launch Fullscreen Cinema</span>
+            </button>
+            <button
+              id="sync-fields-btn"
+              type="button"
+              class="btn-matte h-12 px-4 rounded-lg text-xs font-mono uppercase tracking-wider cursor-pointer"
+            >
+              Sync to JSON
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Live Top-Level JSON Configuration Editor (5 cols) -->
+      <div class="lg:col-span-5 surface-panel rounded-xl p-4 sm:p-6 flex flex-col justify-between">
+        <div>
+          <div class="flex items-center justify-between gap-2 pb-3.5 border-b border-white/10">
+            <span class="text-xs font-mono uppercase tracking-wider text-zinc-300">
+              Top-Level JSON (PLAYER_CONFIG)
+            </span>
+            <button
+              id="reset-config-btn"
+              type="button"
+              class="text-xs font-mono text-zinc-400 hover:text-zinc-100 cursor-pointer"
+            >
+              Reset Default
+            </button>
+          </div>
+
+          <p class="text-xs text-zinc-400 mt-3 leading-relaxed">
+            Edit <code class="text-zinc-200 font-mono">title</code>, <code class="text-zinc-200 font-mono">link</code>, or <code class="text-zinc-200 font-mono">settings</code> in the top-level JSON structure and click <strong>Apply JSON</strong>:
+          </p>
+
+          <textarea
+            id="json-editor-textarea"
+            rows="12"
+            spellcheck="false"
+            class="mt-3 w-full p-3.5 rounded-lg bg-[#0a0a0c] border border-white/10 text-xs font-mono text-zinc-200 leading-relaxed focus:outline-none focus:border-zinc-400 resize-y"
+          ></textarea>
+        </div>
+
+        <div class="mt-4 pt-4 border-t border-white/10 flex items-center justify-between gap-3">
+          <span id="json-status-indicator" class="text-xs font-mono text-emerald-400">
+            ● Valid PLAYER_CONFIG
+          </span>
+          <button
+            id="apply-json-config-btn"
+            type="button"
+            class="btn-matte h-11 px-4 rounded-lg text-xs font-semibold cursor-pointer"
+          >
+            Apply JSON Config
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Preset Stream Selector Grid -->
+    <section class="mt-7">
+      <div class="flex items-center justify-between mb-3.5">
+        <div>
+          <h3 class="text-sm sm:text-base font-semibold text-zinc-100">Preset Cinema Streams</h3>
+          <p class="text-xs text-zinc-400">Defined in <code class="font-mono text-zinc-300">PLAYER_CONFIG.presets</code> — tap any card to load &amp; launch in Fullscreen</p>
+        </div>
+      </div>
+      <div id="presets-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5"></div>
+    </section>
+  </main>
+
+  <!-- ===================================================================== -->
+  <!-- FULLSCREEN-ONLY SHIELDED YOUTUBE PLAYER STAGE                         -->
+  <!-- ===================================================================== -->
+  <div
+    id="cinema-stage"
+    class="fixed inset-0 w-screen h-[100dvh] z-50 bg-black hidden select-none overflow-hidden flex-col justify-between"
+    oncontextmenu="return false;"
+  >
+    <!-- 1. LOCKED YOUTUBE EMBED LAYER (Overscanned & Pointer-Events None) -->
+    <div class="absolute inset-0 z-0 overflow-hidden bg-black flex items-center justify-center pointer-events-none select-none">
+      <div
+        id="yt-overscan-box"
+        class="relative pointer-events-none select-none flex items-center justify-center"
+        style="width: 100vw; height: 100dvh; transform: scale(1.22);"
+      >
+        <div id="yt-iframe-host" class="w-full h-full pointer-events-none select-none"></div>
+      </div>
+    </div>
+
+    <!-- 2. RAZOR-SHARP SOLID #000000 TOP & BOTTOM OCCLUSION BARS -->
+    <!-- Zero gradients. Crisp 1px structural borders cover YT title bar & bottom watermark -->
+    <div
+      id="razor-bar-top"
+      class="cinema-bar-top absolute top-0 inset-x-0 z-10 pointer-events-none"
+      style="height: 76px;"
+    ></div>
+
+    <div
+      id="razor-bar-bottom"
+      class="cinema-bar-bottom absolute bottom-0 inset-x-0 z-10 pointer-events-none"
+      style="height: 88px;"
+    ></div>
+
+    <!-- 3. SYNCHRONOUS SOLID #000000 CURTAIN (STARTUP, PAUSE, BUFFERING, END-SCREEN) -->
+    <!-- Engages synchronously BEFORE pauseVideo() is invoked so YT pause UI never leaks -->
+    <div
+      id="opaque-curtain"
+      class="absolute inset-0 z-15 bg-black pointer-events-none transition-opacity duration-100 opacity-100 flex items-center justify-center"
+    >
+      <!-- Subtle ultra-dimmed poster frame inside the solid black curtain -->
+      <img
+        id="curtain-poster"
+        src=""
+        alt=""
+        class="w-full h-full object-cover opacity-10"
+        onerror="this.style.display='none'"
+      />
+      <div class="absolute inset-0 bg-black/85"></div>
+    </div>
+
+    <!-- 4. FULL-BLEED INTERACTION SHIELD (CAPTURES ALL CLICKS, TAPS, DOUBLE-TAPS) -->
+    <div
+      id="interaction-shield"
+      class="absolute inset-0 z-20 cursor-pointer touch-manipulation"
+      aria-label="Player Interaction Shield"
+    >
+      <!-- Mobile/Desktop Double-Tap Left (-10s) Feedback Badge -->
+      <div
+        id="feedback-skip-back"
+        class="hidden absolute left-5 sm:left-14 top-1/2 -translate-y-1/2 pointer-events-none surface-hud px-4 py-2.5 rounded-lg flex items-center gap-2 text-zinc-100"
+      >
+        <svg class="w-4 h-4 text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M11 17l-5-5 5-5M18 17l-5-5 5-5" />
+        </svg>
+        <span class="text-xs font-mono font-semibold">-10s</span>
+      </div>
+
+      <!-- Mobile/Desktop Double-Tap Right (+10s) Feedback Badge -->
+      <div
+        id="feedback-skip-fwd"
+        class="hidden absolute right-5 sm:right-14 top-1/2 -translate-y-1/2 pointer-events-none surface-hud px-4 py-2.5 rounded-lg flex items-center gap-2 text-zinc-100"
+      >
+        <span class="text-xs font-mono font-semibold">+10s</span>
+        <svg class="w-4 h-4 text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M13 17l5-5-5-5M6 17l5-5-5-5" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- 5. DEAD-CENTER CUSTOM TRANSPORT SHIELD (Covers Center YT Play Button) -->
+    <div
+      id="center-controls-group"
+      class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 flex flex-col items-center gap-3.5 pointer-events-none transition-opacity duration-150"
+    >
+      <div class="flex items-center gap-4 sm:gap-6 pointer-events-auto">
+        <!-- Rewind 10s Button -->
+        <button
+          id="center-btn-rewind"
+          type="button"
+          class="btn-matte w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex flex-col items-center justify-center cursor-pointer"
+          title="Skip Back 10 Seconds (J or Left Arrow)"
+          aria-label="Skip Back 10 Seconds"
+        >
+          <svg class="w-5 h-5 text-zinc-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+          </svg>
+          <span class="text-[10px] font-mono font-semibold text-zinc-300 -mt-0.5">-10</span>
+        </button>
+
+        <!-- Primary Center Play / Pause / Replay Button -->
+        <button
+          id="center-btn-play"
+          type="button"
+          class="btn-solid w-20 h-20 sm:w-24 sm:h-24 rounded-2xl flex items-center justify-center cursor-pointer"
+          title="Play / Pause (Space or K)"
+          aria-label="Play or Pause"
+        >
+          <svg id="center-svg-play" class="w-9 h-9 sm:w-10 sm:h-10 ml-1 fill-current" viewBox="0 0 24 24">
+            <polygon points="6 4 20 12 6 20 6 4" />
+          </svg>
+          <svg id="center-svg-pause" class="w-9 h-9 sm:w-10 sm:h-10 fill-current hidden" viewBox="0 0 24 24">
+            <rect x="6" y="4" width="4" height="16" rx="1" />
+            <rect x="14" y="4" width="4" height="16" rx="1" />
+          </svg>
+          <svg id="center-svg-replay" class="w-9 h-9 sm:w-10 sm:h-10 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2">
+            <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+            <path d="M3 3v5h5" />
+          </svg>
+          <svg id="center-svg-spinner" class="w-9 h-9 sm:w-10 sm:h-10 animate-spin hidden" viewBox="0 0 24 24" fill="none">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3"></circle>
+            <path class="opacity-90" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+        </button>
+
+        <!-- Forward 10s Button -->
+        <button
+          id="center-btn-forward"
+          type="button"
+          class="btn-matte w-12 h-12 sm:w-14 sm:h-14 rounded-xl flex flex-col items-center justify-center cursor-pointer"
+          title="Skip Forward 10 Seconds (L or Right Arrow)"
+          aria-label="Skip Forward 10 Seconds"
+        >
+          <svg class="w-5 h-5 text-zinc-200" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+            <path d="M21 3v5h-5" />
+          </svg>
+          <span class="text-[10px] font-mono font-semibold text-zinc-300 -mt-0.5">+10</span>
+        </button>
+      </div>
+
+      <!-- Status Pill Under Center Button -->
+      <div class="surface-hud px-3.5 py-1.5 rounded-lg flex items-center gap-2 text-[11px] font-mono text-zinc-300">
+        <span id="center-status-dot" class="w-2 h-2 rounded-full bg-zinc-400"></span>
+        <span id="center-status-text">BUFFERING HIGHEST QUALITY</span>
+      </div>
+    </div>
+
+    <!-- 6. TOP HUD BAR (Housed cleanly inside the Top Black Bar) -->
+    <div
+      id="hud-top-bar"
+      class="relative z-30 px-3 sm:px-6 pt-3 flex items-center justify-between gap-2 transition-opacity duration-150"
+    >
+      <!-- Left: Stream Title & Locked Max Resolution Badge -->
+      <div class="surface-hud h-11 px-3.5 rounded-lg flex items-center gap-2.5 min-w-0 max-w-[58vw] sm:max-w-xl">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+        <span id="hud-video-title" class="text-xs sm:text-sm font-semibold text-zinc-100 truncate">
+          Configured Video
+        </span>
+        <span
+          id="hud-quality-pill"
+          class="px-2 py-0.5 rounded bg-[#1c1c21] border border-white/10 text-[10px] font-mono uppercase text-zinc-200 shrink-0"
+        >
+          MAX HD
+        </span>
+      </div>
+
+      <!-- Right: Aspect Mask Selector & Minimize/Close Button -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button
+          id="btn-cycle-mask"
+          type="button"
+          class="btn-matte h-11 px-3 rounded-lg text-xs font-mono flex items-center gap-2 cursor-pointer"
+          title="Cycle Razor-Sharp Mask Ratio"
+        >
+          <svg class="w-4 h-4 text-zinc-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <rect x="2" y="4" width="20" height="16" rx="2" />
+            <line x1="2" y1="8" x2="22" y2="8" />
+            <line x1="2" y1="16" x2="22" y2="16" />
+          </svg>
+          <span id="label-mask-mode" class="hidden md:inline">MASK: 2.35:1</span>
+        </button>
+
+        <button
+          id="btn-minimize-close"
+          type="button"
+          class="btn-close h-11 px-3.5 sm:px-4 rounded-lg text-xs font-semibold flex items-center gap-2 cursor-pointer"
+          title="Minimize or Exit Fullscreen (Automatically Closes Player)"
+        >
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M4 14h6v6M20 10h-6V4M14 10l7-7M3 21l7-7" />
+          </svg>
+          <span>Minimize</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- 7. BOTTOM HUD CONTROL DECK (Mobile-First Touch & Desktop Pointer Controls) -->
+    <div
+      id="hud-bottom-bar"
+      class="relative z-30 px-3 sm:px-6 pb-3 sm:pb-4 pt-1 transition-opacity duration-150"
+    >
+      <div class="max-w-5xl mx-auto surface-hud rounded-xl px-3 sm:px-4 py-2.5">
+
+        <!-- Unified Pointer-Captured Seek Timeline (Touch & Mouse) -->
+        <div
+          id="seek-slider"
+          class="group relative h-8 flex items-center cursor-pointer touch-none select-none"
+          role="slider"
+          aria-label="Seek Timeline"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          aria-valuenow="0"
+        >
+          <!-- Hover / Drag Timestamp Readout -->
+          <div
+            id="seek-hover-pill"
+            class="hidden group-hover:block absolute -top-7 -translate-x-1/2 px-2 py-0.5 rounded bg-[#0a0a0c] border border-white/15 text-[11px] font-mono tabular-nums text-zinc-100 pointer-events-none"
+          >
+            00:00
+          </div>
+
+          <!-- Track Rail -->
+          <div class="w-full h-1.5 group-hover:h-2 transition-all bg-[#25252c] rounded-none overflow-hidden relative">
+            <div id="seek-buffered-fill" class="absolute inset-y-0 left-0 bg-zinc-600" style="width: 0%;"></div>
+            <div id="seek-played-fill" class="absolute inset-y-0 left-0 bg-zinc-100" style="width: 0%;"></div>
+          </div>
+
+          <!-- Crisp Rectangular Scrubber Thumb -->
+          <div
+            id="seek-thumb"
+            class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-white border border-black pointer-events-none transition-transform group-hover:scale-125"
+            style="left: 0%;"
+          ></div>
+        </div>
+
+        <!-- Transport & Audio Row (All Interactive Targets >= 44px Height) -->
+        <div class="mt-0.5 flex items-center justify-between gap-1.5 sm:gap-2">
+
+          <!-- Left Group: Play/Pause, -10s, +10s, Monospace Clock -->
+          <div class="flex items-center gap-1.5 sm:gap-2">
+            <!-- Play / Pause -->
+            <button
+              id="hud-btn-play"
+              type="button"
+              class="btn-solid h-11 min-w-[44px] px-3 sm:px-3.5 rounded-lg text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer shrink-0"
+              title="Play / Pause (Space)"
+            >
+              <svg id="hud-svg-play" class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+                <polygon points="6 4 20 12 6 20 6 4" />
+              </svg>
+              <svg id="hud-svg-pause" class="w-4 h-4 fill-current hidden" viewBox="0 0 24 24">
+                <rect x="6" y="4" width="4" height="16" rx="1" />
+                <rect x="14" y="4" width="4" height="16" rx="1" />
+              </svg>
+              <span id="hud-label-play" class="hidden sm:inline font-mono uppercase">Play</span>
+            </button>
+
+            <!-- Skip -10s -->
+            <button
+              id="hud-btn-rewind"
+              type="button"
+              class="btn-matte h-11 min-w-[44px] px-2.5 sm:px-3 rounded-lg text-xs font-mono font-medium flex items-center justify-center gap-1 cursor-pointer shrink-0"
+              title="Rewind 10 Seconds"
+            >
+              <svg class="w-4 h-4 text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8" />
+                <path d="M3 3v5h5" />
+              </svg>
+              <span>-10s</span>
+            </button>
+
+            <!-- Skip +10s -->
+            <button
+              id="hud-btn-forward"
+              type="button"
+              class="btn-matte h-11 min-w-[44px] px-2.5 sm:px-3 rounded-lg text-xs font-mono font-medium flex items-center justify-center gap-1 cursor-pointer shrink-0"
+              title="Forward 10 Seconds"
+            >
+              <span>+10s</span>
+              <svg class="w-4 h-4 text-zinc-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8" />
+                <path d="M21 3v5h-5" />
+              </svg>
+            </button>
+
+            <!-- Tabular Monospace Timestamp -->
+            <div class="h-11 px-2.5 sm:px-3 rounded-lg bg-[#0a0a0c] border border-white/10 flex items-center gap-1 text-[11px] sm:text-xs font-mono tabular-nums text-zinc-300 shrink-0">
+              <span id="clock-current" class="text-zinc-100 font-medium">00:00</span>
+              <span class="text-zinc-600">/</span>
+              <span id="clock-total" class="text-zinc-400">00:00</span>
+            </div>
+          </div>
+
+          <!-- Right Group: Pointer-Captured Sound Control, Playback Rate, Exit -->
+          <div class="flex items-center gap-1.5 sm:gap-2">
+
+            <!-- Unified Sound Module (Mute Button + Pointer-Captured Volume Scrubber) -->
+            <div class="h-11 px-2 sm:px-3 rounded-lg bg-[#0a0a0c] border border-white/10 flex items-center gap-2">
+              <button
+                id="hud-btn-mute"
+                type="button"
+                class="w-8 h-8 flex items-center justify-center text-zinc-200 hover:text-white cursor-pointer shrink-0"
+                title="Mute / Unmute (M)"
+                aria-label="Mute or Unmute"
+              >
+                <svg id="svg-vol-high" class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                  <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+                </svg>
+                <svg id="svg-vol-low" class="w-4 h-4 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+                </svg>
+                <svg id="svg-vol-muted" class="w-4 h-4 text-rose-400 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+                  <line x1="23" y1="9" x2="17" y2="15" />
+                  <line x1="17" y1="9" x2="23" y2="15" />
+                </svg>
+              </button>
+
+              <!-- Custom Pointer-Captured Volume Bar (Works on Mobile Touch & Desktop Mouse) -->
+              <div
+                id="volume-slider"
+                class="relative w-14 sm:w-20 h-8 flex items-center cursor-pointer touch-none select-none"
+                role="slider"
+                aria-label="Volume"
+                aria-valuemin="0"
+                aria-valuemax="100"
+                aria-valuenow="100"
+              >
+                <div class="w-full h-1.5 bg-[#25252c] overflow-hidden relative">
+                  <div id="volume-fill" class="absolute inset-y-0 left-0 bg-zinc-100" style="width: 100%;"></div>
+                </div>
+                <div
+                  id="volume-thumb"
+                  class="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3 h-3 bg-white border border-black pointer-events-none"
+                  style="left: 100%;"
+                ></div>
+              </div>
+
+              <span id="volume-percent-label" class="hidden md:inline-block text-[11px] font-mono tabular-nums text-zinc-400 w-8 text-right">
+                100%
+              </span>
+            </div>
+
+            <!-- Playback Speed Button -->
+            <button
+              id="hud-btn-speed"
+              type="button"
+              class="btn-matte h-11 min-w-[48px] px-2.5 rounded-lg text-xs font-mono font-semibold cursor-pointer shrink-0"
+              title="Cycle Playback Speed"
+            >
+              1.0x
+            </button>
+
+            <!-- Bottom Quick Minimize / Exit Button -->
+            <button
+              id="hud-btn-exit"
+              type="button"
+              class="btn-close h-11 min-w-[44px] px-2.5 sm:px-3 rounded-lg text-xs font-mono flex items-center justify-center cursor-pointer shrink-0"
+              title="Exit Fullscreen & Close Player (Esc)"
+              aria-label="Exit Fullscreen and Close Player"
+            >
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18" />
+                <line x1="6" y1="6" x2="18" y2="18" />
+              </svg>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================================================================== -->
+  <!-- APPLICATION LOGIC & TOP-LEVEL JSON CONFIGURATION                      -->
+  <!-- ===================================================================== -->
+  <script>
+    /**
+     * =========================================================================
+     * 1. TOP-LEVEL JSON CONFIGURATION (`PLAYER_CONFIG`)
+     * =========================================================================
+     * Contains the active `title`, `link` (any YouTube watch URL, short URL,
+     * embed URL, shorts URL, or 11-character ID), player behavior `settings`,
+     * and selectable `presets`.
+     */
+    const DEFAULT_PLAYER_CONFIG = {
+      title: "Blender Open Movie — Charge (4K 60fps Master)",
+      link: "https://www.youtube.com/watch?v=UXqq0ZvbOnk",
+      settings: {
+        skipSeconds: 10,
+        defaultVolume: 100,
+        preferMaxQuality: true,
+        autoCloseOnMinimize: true,
+        endScreenInterceptLeadSec: 0.42,
+        maskRatioIndex: 0
+      },
+      presets: [
+        {
+          title: "Blender Open Movie — Charge (4K 60fps Master)",
+          link: "https://www.youtube.com/watch?v=UXqq0ZvbOnk",
+          tag: "4K SCI-FI"
+        },
+        {
+          title: "Spring — Blender Studio Open Short Film",
+          link: "https://www.youtube.com/watch?v=WhWc3b3KhnY",
+          tag: "4K FANTASY"
+        },
+        {
+          title: "Sprite Fright — Open Movie Production",
+          link: "https://youtu.be/_cMxraX_5RE",
+          tag: "4K ANAMORPHIC"
+        }
+      ]
+    };
+
+    // Mutable runtime configuration initialized from DEFAULT_PLAYER_CONFIG
+    let PLAYER_CONFIG = JSON.parse(JSON.stringify(DEFAULT_PLAYER_CONFIG));
+
+    /**
+     * Razor-sharp cinema mask presets (zero gradients, pure #000000 bars)
+     */
+    const MASK_PRESETS = [
+      { label: "MASK: 2.35:1", vhTop: 12.5, vhBottom: 13.5, minTopPx: 74, minBottomPx: 86 },
+      { label: "MASK: 2.00:1", vhTop: 10.5, vhBottom: 11.5, minTopPx: 68, minBottomPx: 80 },
+      { label: "MASK: 1.85:1", vhTop: 9.0,  vhBottom: 10.5, minTopPx: 64, minBottomPx: 76 }
+    ];
+
+    /**
+     * Quality priority ladder used to enforce the highest stream resolution available
+     */
+    const QUALITY_PRIORITY = [
+      "highres",
+      "hd2880",
+      "hd2160",
+      "hd1440",
+      "hd1080",
+      "hd720",
+      "large",
+      "medium",
+      "small"
+    ];
+
+    const QUALITY_LABELS = {
+      highres: "8K/4K MAX",
+      hd2880: "5K UHD",
+      hd2160: "4K UHD",
+      hd1440: "1440P QHD",
+      hd1080: "1080P FHD",
+      hd720: "720P HD",
+      large: "480P HQ",
+      medium: "360P SD",
+      small: "240P SD",
+      auto: "MAX AUTO"
+    };
+
+    const PLAYBACK_SPEEDS = [0.75, 1.0, 1.25, 1.5, 2.0];
+
+    /**
+     * Runtime State Machine
+     */
+    const state = {
+      ytApiReady: false,
+      player: null,
+      playerReady: false,
+      sessionActive: false,
+      enteringFullscreen: false,
+      closingSession: false,
+      fallbackFullscreenMode: false,
+
+      videoId: "UXqq0ZvbOnk",
+      videoTitle: DEFAULT_PLAYER_CONFIG.title,
+      isPlaying: false,
+      isBuffering: true,
+      isEndedIntercepted: false,
+      hasRenderedFirstFrame: false,
+
+      duration: 0,
+      currentTime: 0,
+      volume: 100,
+      isMuted: false,
+      speedIndex: 1,
+      lockedQuality: "auto",
+
+      isScrubbingSeek: false,
+      isScrubbingVolume: false,
+      rafId: null,
+      pollTimerId: null,
+      hudHideTimerId: null,
+      lastTapTime: 0,
+      lastTapSide: null
+    };
+
+    /**
+     * Cached DOM Elements
+     */
+    const el = {
+      toastContainer: document.getElementById("toast-container"),
+      ytApiDot: document.getElementById("yt-api-dot"),
+      ytApiStatus: document.getElementById("yt-api-status"),
+
+      activeVideoIdPill: document.getElementById("active-video-id-pill"),
+      launcherPreviewImg: document.getElementById("launcher-preview-img"),
+      previewLaunchBtn: document.getElementById("preview-launch-btn"),
+      activeConfigTitle: document.getElementById("active-config-title"),
+      activeConfigLink: document.getElementById("active-config-link"),
+
+      inputConfigTitle: document.getElementById("input-config-title"),
+      inputConfigLink: document.getElementById("input-config-link"),
+      primaryLaunchBtn: document.getElementById("primary-launch-btn"),
+      syncFieldsBtn: document.getElementById("sync-fields-btn"),
+
+      jsonEditorTextarea: document.getElementById("json-editor-textarea"),
+      jsonStatusIndicator: document.getElementById("json-status-indicator"),
+      applyJsonConfigBtn: document.getElementById("apply-json-config-btn"),
+      resetConfigBtn: document.getElementById("reset-config-btn"),
+      presetsGrid: document.getElementById("presets-grid"),
+
+      cinemaStage: document.getElementById("cinema-stage"),
+      ytOverscanBox: document.getElementById("yt-overscan-box"),
+      razorBarTop: document.getElementById("razor-bar-top"),
+      razorBarBottom: document.getElementById("razor-bar-bottom"),
+
+      opaqueCurtain: document.getElementById("opaque-curtain"),
+      curtainPoster: document.getElementById("curtain-poster"),
+      interactionShield: document.getElementById("interaction-shield"),
+      feedbackSkipBack: document.getElementById("feedback-skip-back"),
+      feedbackSkipFwd: document.getElementById("feedback-skip-fwd"),
+
+      centerControlsGroup: document.getElementById("center-controls-group"),
+      centerBtnRewind: document.getElementById("center-btn-rewind"),
+      centerBtnPlay: document.getElementById("center-btn-play"),
+      centerBtnForward: document.getElementById("center-btn-forward"),
+      centerSvgPlay: document.getElementById("center-svg-play"),
+      centerSvgPause: document.getElementById("center-svg-pause"),
+      centerSvgReplay: document.getElementById("center-svg-replay"),
+      centerSvgSpinner: document.getElementById("center-svg-spinner"),
+      centerStatusDot: document.getElementById("center-status-dot"),
+      centerStatusText: document.getElementById("center-status-text"),
+
+      hudTopBar: document.getElementById("hud-top-bar"),
+      hudVideoTitle: document.getElementById("hud-video-title"),
+      hudQualityPill: document.getElementById("hud-quality-pill"),
+      btnCycleMask: document.getElementById("btn-cycle-mask"),
+      labelMaskMode: document.getElementById("label-mask-mode"),
+      btnMinimizeClose: document.getElementById("btn-minimize-close"),
+
+      hudBottomBar: document.getElementById("hud-bottom-bar"),
+      seekSlider: document.getElementById("seek-slider"),
+      seekHoverPill: document.getElementById("seek-hover-pill"),
+      seekBufferedFill: document.getElementById("seek-buffered-fill"),
+      seekPlayedFill: document.getElementById("seek-played-fill"),
+      seekThumb: document.getElementById("seek-thumb"),
+
+      hudBtnPlay: document.getElementById("hud-btn-play"),
+      hudSvgPlay: document.getElementById("hud-svg-play"),
+      hudSvgPause: document.getElementById("hud-svg-pause"),
+      hudLabelPlay: document.getElementById("hud-label-play"),
+      hudBtnRewind: document.getElementById("hud-btn-rewind"),
+      hudBtnForward: document.getElementById("hud-btn-forward"),
+      clockCurrent: document.getElementById("clock-current"),
+      clockTotal: document.getElementById("clock-total"),
+
+      hudBtnMute: document.getElementById("hud-btn-mute"),
+      svgVolHigh: document.getElementById("svg-vol-high"),
+      svgVolLow: document.getElementById("svg-vol-low"),
+      svgVolMuted: document.getElementById("svg-vol-muted"),
+      volumeSlider: document.getElementById("volume-slider"),
+      volumeFill: document.getElementById("volume-fill"),
+      volumeThumb: document.getElementById("volume-thumb"),
+      volumePercentLabel: document.getElementById("volume-percent-label"),
+
+      hudBtnSpeed: document.getElementById("hud-btn-speed"),
+      hudBtnExit: document.getElementById("hud-btn-exit")
+    };
+
+    /**
+     * =========================================================================
+     * 2. UTILITY FUNCTIONS (URL PARSING, TIME FORMATTING, TOASTS)
+     * =========================================================================
+     */
+    function extractYouTubeId(input) {
+      if (!input || typeof input !== "string") return null;
+      const raw = input.trim();
+      if (/^[a-zA-Z0-9_-]{11}$/.test(raw)) return raw;
+
+      const patterns = [
+        /(?:youtube\.com\/watch\?v=|youtu\.be\/|youtube\.com\/embed\/|youtube\.com\/v\/|youtube\.com\/shorts\/|youtube\.com\/live\/)([a-zA-Z0-9_-]{11})/,
+        /[?&]v=([a-zA-Z0-9_-]{11})/
+      ];
+      for (const regex of patterns) {
+        const match = raw.match(regex);
+        if (match && match[1]) return match[1];
+      }
+      return null;
+    }
+
+    function formatTimecode(seconds) {
+      if (!Number.isFinite(seconds) || seconds < 0) return "00:00";
+      const total = Math.floor(seconds);
+      const hrs = Math.floor(total / 3600);
+      const mins = Math.floor((total % 3600) / 60);
+      const secs = total % 60;
+      const pad = (n) => String(n).padStart(2, "0");
+      return hrs > 0 ? `${hrs}:${pad(mins)}:${pad(secs)}` : `${pad(mins)}:${pad(secs)}`;
+    }
+
+    function notify(message, tone = "neutral") {
+      const box = document.createElement("div");
+      const borderClass =
+        tone === "error"
+          ? "border-rose-500/40 text-rose-200"
+          : tone === "success"
+          ? "border-emerald-500/40 text-emerald-200"
+          : "border-white/15 text-zinc-100";
+
+      box.className = `surface-hud px-3.5 py-2.5 rounded-lg border ${borderClass} text-xs font-mono flex items-center justify-between gap-3 shadow-2xl transition-opacity duration-200`;
+      box.innerHTML = `<span>${message}</span>`;
+      el.toastContainer.appendChild(box);
+
+      setTimeout(() => {
+        box.style.opacity = "0";
+        setTimeout(() => box.remove(), 220);
+      }, 2800);
+    }
+
+    /**
+     * =========================================================================
+     * 3. TOP-LEVEL CONFIGURATION SYNC & LAUNCHER RENDERING
+     * =========================================================================
+     */
+    function syncConfigurationToUI() {
+      const parsedId = extractYouTubeId(PLAYER_CONFIG.link) || "UXqq0ZvbOnk";
+      state.videoId = parsedId;
+      state.videoTitle = (PLAYER_CONFIG.title || "Untitled Cinema Stream").trim();
+
+      el.activeVideoIdPill.textContent = `ID: ${parsedId}`;
+      el.activeConfigTitle.textContent = state.videoTitle;
+      el.activeConfigLink.textContent = PLAYER_CONFIG.link;
+
+      el.inputConfigTitle.value = state.videoTitle;
+      el.inputConfigLink.value = PLAYER_CONFIG.link;
+
+      const thumbUrl = `https://i.ytimg.com/vi/${parsedId}/maxresdefault.jpg`;
+      el.launcherPreviewImg.src = thumbUrl;
+      el.curtainPoster.style.display = "block";
+      el.curtainPoster.src = thumbUrl;
+
+      el.jsonEditorTextarea.value = JSON.stringify(PLAYER_CONFIG, null, 2);
+      el.jsonStatusIndicator.textContent = "● Valid PLAYER_CONFIG";
+      el.jsonStatusIndicator.className = "text-xs font-mono text-emerald-400";
+
+      renderPresetsGrid();
+      applyMaskPreset(PLAYER_CONFIG.settings?.maskRatioIndex ?? 0);
+    }
+
+    function renderPresetsGrid() {
+      const presets = Array.isArray(PLAYER_CONFIG.presets) ? PLAYER_CONFIG.presets : [];
+      el.presetsGrid.innerHTML = "";
+
+      presets.forEach((item) => {
+        const vid = extractYouTubeId(item.link) || "UXqq0ZvbOnk";
+        const isCurrent = vid === state.videoId;
+        const card = document.createElement("div");
+        card.className = `surface-panel rounded-xl p-3.5 flex flex-col justify-between gap-3 cursor-pointer transition-colors hover:border-white/25 ${
+          isCurrent ? "ring-1 ring-zinc-300" : ""
+        }`;
+
+        card.innerHTML = `
+          <div>
+            <div class="relative aspect-video bg-black rounded-lg overflow-hidden border border-white/10">
+              <img
+                src="https://i.ytimg.com/vi/${vid}/hqdefault.jpg"
+                alt="${item.title || "Preset"}"
+                class="w-full h-full object-cover opacity-80"
+                 loading="lazy"
+              />
+              <div class="cinema-bar-top absolute top-0 inset-x-0 h-[13%]"></div>
+              <div class="cinema-bar-bottom absolute bottom-0 inset-x-0 h-[14%]"></div>
+              <span class="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/90 border border-white/15 text-[10px] font-mono text-zinc-200">
+                ${item.tag || "FULLSCREEN"}
+              </span>
+            </div>
+            <h4 class="text-xs sm:text-sm font-semibold text-zinc-100 mt-3 line-clamp-1">${item.title}</h4>
+            <p class="text-[11px] font-mono text-zinc-400 mt-0.5 truncate">${item.link}</p>
+          </div>
+          <div class="flex items-center justify-between pt-2 border-t border-white/10">
+            <span class="text-[11px] font-mono text-zinc-400">ID: ${vid}</span>
+            <span class="text-xs font-mono font-semibold text-zinc-100 flex items-center gap-1">
+              Launch Fullscreen →
+            </span>
+          </div>
+        `;
+
+        card.addEventListener("click", () => {
+          PLAYER_CONFIG.title = item.title;
+          PLAYER_CONFIG.link = item.link;
+          syncConfigurationToUI();
+          launchFullscreenPlayer();
+        });
+
+        el.presetsGrid.appendChild(card);
+      });
+    }
+
+    /**
+     * =========================================================================
+     * 4. RESPONSIVE GEOMETRY & RAZOR-SHARP BLACK BAR OCCLUSION
+     * =========================================================================
+     * Ensures the underlying 16:9 YouTube video fills the viewport while its
+     * top title bar and bottom watermark are permanently cropped behind the
+     * razor-sharp #000000 bars on both mobile portrait and desktop landscape.
+     */
+    function applyMaskPreset(index) {
+      const safeIdx = ((index % MASK_PRESETS.length) + MASK_PRESETS.length) % MASK_PRESETS.length;
+      if (!PLAYER_CONFIG.settings) PLAYER_CONFIG.settings = {};
+      PLAYER_CONFIG.settings.maskRatioIndex = safeIdx;
+
+      const preset = MASK_PRESETS[safeIdx];
+      el.labelMaskMode.textContent = preset.label;
+      el.razorBarTop.style.height = `max(${preset.vhTop}dvh, ${preset.minTopPx}px)`;
+      el.razorBarBottom.style.height = `max(${preset.vhBottom}dvh, ${preset.minBottomPx}px)`;
+      computeCinemaViewportGeometry();
+    }
+
+    function computeCinemaViewportGeometry() {
+      const vw = window.innerWidth || 1280;
+      const vh = window.innerHeight || 720;
+      const viewportAspect = vw / vh;
+      const targetVideoAspect = 16 / 9;
+
+      // Size the 16:9 container so it cleanly fits or covers, then apply overscan
+      // so YouTube's top/bottom chrome is pushed well behind our sharp #000000 bars.
+      let boxW = vw;
+      let boxH = vh;
+
+      if (viewportAspect < targetVideoAspect) {
+        // Mobile Portrait or Tall Tablet: fit width, expand height slightly so YT chrome is pushed into black bars
+        boxW = vw;
+        boxH = Math.max(vw / targetVideoAspect, vh * 0.62);
+      } else if (viewportAspect > targetVideoAspect) {
+        // Ultrawide screen
+        boxW = vw;
+        boxH = vw / targetVideoAspect;
+      }
+
+      el.ytOverscanBox.style.width = `${Math.ceil(boxW)}px`;
+      el.ytOverscanBox.style.height = `${Math.ceil(boxH)}px`;
+      el.ytOverscanBox.style.transform = "scale(1.20)";
+    }
+
+    /**
+     * =========================================================================
+     * 5. YOUTUBE IFRAME API INITIALIZATION & MAX QUALITY ENFORCEMENT
+     * =========================================================================
+     */
+    function loadYouTubeIframeAPI() {
+      if (window.YT && window.YT.Player) {
+        onYouTubeIframeAPIReady();
+        return;
+      }
+      const script = document.createElement("script");
+      script.src = "https://www.youtube.com/iframe_api";
+      script.async = true;
+      document.head.appendChild(script);
+    }
+
+    window.onYouTubeIframeAPIReady = function () {
+      state.ytApiReady = true;
+      el.ytApiDot.className = "w-2 h-2 rounded-full bg-emerald-400";
+      el.ytApiStatus.textContent = "READY";
+    };
+
+    /**
+     * Queries `getAvailableQualityLevels()` and locks the highest available
+     * resolution tier (`highres`, `hd2160`, `hd1440`, `hd1080`, `hd720`, etc.)
+     */
+    function enforceMaximumVideoQuality() {
+      if (!state.player || !state.playerReady) return;
+      try {
+        const levels =
+          typeof state.player.getAvailableQualityLevels === "function"
+            ? state.player.getAvailableQualityLevels()
+            : [];
+
+        let chosen = "highres";
+        if (Array.isArray(levels) && levels.length > 0) {
+          for (const tier of QUALITY_PRIORITY) {
+            if (levels.includes(tier)) {
+              chosen = tier;
+              break;
+            }
+          }
+          if (!chosen && levels[0]) {
+            chosen = levels[0];
+          }
+        }
+
+        if (typeof state.player.setPlaybackQuality === "function") {
+          state.player.setPlaybackQuality(chosen);
+        }
+        if (typeof state.player.setPlaybackQualityRange === "function") {
+          state.player.setPlaybackQualityRange(chosen, chosen);
+        }
+
+        const currentActual =
+          typeof state.player.getPlaybackQuality === "function"
+            ? state.player.getPlaybackQuality()
+            : chosen;
+
+        const badgeKey =
+          currentActual && currentActual !== "unknown" ? currentActual : chosen;
+        state.lockedQuality = badgeKey;
+        el.hudQualityPill.textContent = QUALITY_LABELS[badgeKey] || "MAX HD";
+      } catch (_) {
+        el.hudQualityPill.textContent = "MAX HD";
+      }
+    }
+
+    function createOrLoadYouTubePlayer(videoId) {
+      if (state.player && state.playerReady && typeof state.player.loadVideoById === "function") {
+        state.player.loadVideoById({
+          videoId: videoId,
+          startSeconds: 0,
+          suggestedQuality: "highres"
+        });
+        enforceMaximumVideoQuality();
+        return;
+      }
+
+      if (!window.YT || !window.YT.Player) {
+        notify("YouTube API still initializing — retrying...", "neutral");
+        setTimeout(() => {
+          if (state.sessionActive) createOrLoadYouTubePlayer(videoId);
+        }, 350);
+        return;
+      }
+
+      state.player = new YT.Player("yt-iframe-host", {
+        width: "100%",
+        height: "100%",
+        videoId: videoId,
+        playerVars: {
+          autoplay: 1,
+          controls: 0,
+          disablekb: 1,
+          fs: 0,
+          iv_load_policy: 3,
+          modestbranding: 1,
+          rel: 0,
+          playsinline: 1,
+          cc_load_policy: 0,
+          origin: window.location.origin || undefined
+        },
+        events: {
+          onReady: handlePlayerReady,
+          onStateChange: handlePlayerStateChange,
+          onPlaybackQualityChange: handleQualityChange,
+          onError: handlePlayerError
+        }
+      });
+    }
+
+    function handlePlayerReady(event) {
+      state.playerReady = true;
+
+      // Ensure iframe cannot receive pointer or keyboard focus directly
+      try {
+        const iframe = event.target.getIframe();
+        if (iframe) {
+          iframe.setAttribute("tabindex", "-1");
+          iframe.style.pointerEvents = "none";
+          iframe.style.userSelect = "none";
+        }
+      } catch (_) {}
+
+      const configuredVol = Number(PLAYER_CONFIG.settings?.defaultVolume ?? 100);
+      setPlayerVolume(configuredVol);
+      enforceMaximumVideoQuality();
+
+      if (state.sessionActive) {
+        event.target.playVideo();
+        startHighFrequencyMonitor();
+      }
+    }
+
+    function handleQualityChange() {
+      enforceMaximumVideoQuality();
+    }
+
+    function handlePlayerError(event) {
+      const code = event?.data;
+      notify(`YouTube Embed Error (Code ${code}). Try another video URL.`, "error");
+      engageOpaqueCurtain(true, "STREAM UNAVAILABLE");
+    }
+
+    function handlePlayerStateChange(event) {
+      if (!state.sessionActive) return;
+      const ytState = event.data;
+
+      if (ytState === YT.PlayerState.PLAYING) {
+        state.isPlaying = true;
+        state.isBuffering = false;
+        state.isEndedIntercepted = false;
+
+        state.duration = state.player.getDuration() || state.duration;
+        el.clockTotal.textContent = formatTimecode(state.duration);
+
+        enforceMaximumVideoQuality();
+
+        // Reveal video frame only after active playback frames have begun rendering
+        setTimeout(() => {
+          if (state.sessionActive && state.isPlaying && !state.isEndedIntercepted) {
+            state.hasRenderedFirstFrame = true;
+            engageOpaqueCurtain(false);
+          }
+        }, 90);
+
+        updateTransportVisuals("PLAYING");
+        scheduleHudAutoHide();
+      } else if (ytState === YT.PlayerState.PAUSED) {
+        state.isPlaying = false;
+        state.isBuffering = false;
+        // Keep opaque solid black curtain active so YT pause shelf/logo are 100% hidden
+        engageOpaqueCurtain(true, state.isEndedIntercepted ? "STREAM COMPLETED" : "PAUSED");
+        updateTransportVisuals(state.isEndedIntercepted ? "ENDED" : "PAUSED");
+        revealHud(true);
+      } else if (ytState === YT.PlayerState.BUFFERING) {
+        state.isBuffering = true;
+        enforceMaximumVideoQuality();
+        if (!state.hasRenderedFirstFrame) {
+          engageOpaqueCurtain(true, "BUFFERING MAX QUALITY");
+        }
+        updateTransportVisuals("BUFFERING");
+      } else if (ytState === YT.PlayerState.ENDED) {
+        handleInterceptedEnd();
+      } else if (ytState === YT.PlayerState.UNSTARTED || ytState === YT.PlayerState.CUED) {
+        engageOpaqueCurtain(true, "PREPARING STREAM");
+        updateTransportVisuals("BUFFERING");
+      }
+    }
+
+    /**
+     * =========================================================================
+     * 6. SYNCHRONOUS PAUSE MASKING & 60FPS END-SCREEN INTERCEPTION
+     * =========================================================================
+     */
+    function engageOpaqueCurtain(visible, statusLabel = "") {
+      if (visible) {
+        el.opaqueCurtain.style.opacity = "1";
+        if (statusLabel) {
+          el.centerStatusText.textContent = statusLabel;
+        }
+      } else {
+        el.opaqueCurtain.style.opacity = "0";
+      }
+    }
+
+    /**
+     * Toggles Play / Pause while guaranteeing the opaque #000000 mask is
+     * painted BEFORE `pauseVideo()` is called on the YouTube iframe.
+     */
+    function togglePlayPause() {
+      if (!state.sessionActive || !state.player || !state.playerReady) return;
+
+      if (state.isEndedIntercepted) {
+        state.isEndedIntercepted = false;
+        engageOpaqueCurtain(true, "REPLAYING STREAM");
+        state.player.seekTo(0, true);
+        state.player.playVideo();
+        return;
+      }
+
+      if (state.isPlaying) {
+        // CRITICAL: Synchronously activate solid #000000 curtain BEFORE calling pauseVideo()
+        state.isPlaying = false;
+        engageOpaqueCurtain(true, "PAUSED");
+        updateTransportVisuals("PAUSED");
+        revealHud(true);
+        // Force style flush before pausing YT iframe so native YT pause overlay never flashes
+        void el.opaqueCurtain.offsetHeight;
+        state.player.pauseVideo();
+      } else {
+        el.centerStatusText.textContent = "RESUMING STREAM";
+        updateTransportVisuals("BUFFERING");
+        enforceMaximumVideoQuality();
+        state.player.playVideo();
+      }
+    }
+
+    function handleInterceptedEnd() {
+      if (!state.sessionActive) return;
+      state.isEndedIntercepted = true;
+      state.isPlaying = false;
+
+      // Paint solid #000000 curtain before pausing at end so YT related videos grid never appears
+      engageOpaqueCurtain(true, "STREAM COMPLETED — TAP TO REPLAY");
+      void el.opaqueCurtain.offsetHeight;
+
+      if (state.player && state.playerReady && typeof state.player.pauseVideo === "function") {
+        try {
+          state.player.pauseVideo();
+        } catch (_) {}
+      }
+
+      if (state.duration > 0) {
+        updateScrubberUI(state.duration, state.duration);
+      }
+      updateTransportVisuals("ENDED");
+      revealHud(true);
+    }
+
+    function startHighFrequencyMonitor() {
+      stopHighFrequencyMonitor();
+
+      const tick = () => {
+        if (!state.sessionActive) return;
+        syncTimelineAndCheckEndScreen();
+        state.rafId = requestAnimationFrame(tick);
+      };
+      state.rafId = requestAnimationFrame(tick);
+      state.pollTimerId = setInterval(syncTimelineAndCheckEndScreen, 80);
+    }
+
+    function stopHighFrequencyMonitor() {
+      if (state.rafId) {
+        cancelAnimationFrame(state.rafId);
+        state.rafId = null;
+      }
+      if (state.pollTimerId) {
+        clearInterval(state.pollTimerId);
+        state.pollTimerId = null;
+      }
+    }
+
+    function syncTimelineAndCheckEndScreen() {
+      if (!state.sessionActive || !state.player || !state.playerReady) return;
+
+      try {
+        const cur = Number(state.player.getCurrentTime?.() || 0);
+        const dur = Number(state.player.getDuration?.() || state.duration || 0);
+        const loadedFraction = Number(state.player.getVideoLoadedFraction?.() || 0);
+
+        if (dur > 0) {
+          state.duration = dur;
+          const lead = Number(PLAYER_CONFIG.settings?.endScreenInterceptLeadSec ?? 0.42);
+          // Intercept before YouTube triggers its native end-screen grid
+          if (state.isPlaying && !state.isEndedIntercepted && cur >= dur - lead) {
+            handleInterceptedEnd();
+            return;
+          }
+        }
+
+        if (!state.isScrubbingSeek) {
+          state.currentTime = cur;
+          updateScrubberUI(cur, dur, loadedFraction);
+        }
+      } catch (_) {}
+    }
+
+    function updateScrubberUI(currentSec, durationSec, bufferedFraction = 0) {
+      const pct = durationSec > 0 ? Math.min(100, Math.max(0, (currentSec / durationSec) * 100)) : 0;
+      const bufPct = Math.min(100, Math.max(0, bufferedFraction * 100));
+
+      el.seekPlayedFill.style.width = `${pct}%`;
+      el.seekThumb.style.left = `${pct}%`;
+      el.seekBufferedFill.style.width = `${bufPct}%`;
+      el.seekSlider.setAttribute("aria-valuenow", String(Math.round(pct)));
+
+      el.clockCurrent.textContent = formatTimecode(currentSec);
+      if (durationSec > 0) {
+        el.clockTotal.textContent = formatTimecode(durationSec);
+      }
+    }
+
+    /**
+     * =========================================================================
+     * 7. TRANSPORT, SKIP +/-10s, SOUND & SPEED CONTROLS
+     * =========================================================================
+     */
+    function skipBySeconds(deltaSeconds) {
+      if (!state.sessionActive || !state.player || !state.playerReady) return;
+      const dur = state.duration || state.player.getDuration() || 0;
+      const cur = state.player.getCurrentTime() || 0;
+      const safeMax = dur > 0 ? Math.max(0, dur - 0.5) : cur + deltaSeconds;
+      const target = Math.max(0, Math.min(safeMax, cur + deltaSeconds));
+
+      if (state.isEndedIntercepted && target < safeMax) {
+        state.isEndedIntercepted = false;
+      }
+
+      state.currentTime = target;
+      updateScrubberUI(target, dur);
+      state.player.seekTo(target, true);
+
+      // Flash crisp skip feedback badge
+      const badge = deltaSeconds < 0 ? el.feedbackSkipBack : el.feedbackSkipFwd;
+      badge.classList.remove("hidden", "animate-skip-pop");
+      void badge.offsetWidth;
+      badge.classList.add("animate-skip-pop");
+      setTimeout(() => badge.classList.add("hidden"), 560);
+
+      revealHud();
+    }
+
+    function setPlayerVolume(val) {
+      const clamped = Math.max(0, Math.min(100, Math.round(val)));
+      state.volume = clamped;
+      state.isMuted = clamped === 0;
+
+      if (state.player && state.playerReady) {
+        try {
+          if (clamped === 0) {
+            state.player.mute();
+          } else {
+            state.player.unMute();
+            state.player.setVolume(clamped);
+          }
+        } catch (_) {}
+      }
+
+      updateVolumeUI();
+    }
+
+    function toggleMute() {
+      if (!state.player || !state.playerReady) return;
+      if (state.isMuted) {
+        state.isMuted = false;
+        const restore = state.volume > 0 ? state.volume : 80;
+        setPlayerVolume(restore);
+      } else {
+        state.isMuted = true;
+        try {
+          state.player.mute();
+        } catch (_) {}
+        updateVolumeUI();
+      }
+      revealHud();
+    }
+
+    function updateVolumeUI() {
+      const effective = state.isMuted ? 0 : state.volume;
+      el.volumeFill.style.width = `${effective}%`;
+      el.volumeThumb.style.left = `${effective}%`;
+      el.volumePercentLabel.textContent = `${effective}%`;
+      el.volumeSlider.setAttribute("aria-valuenow", String(effective));
+
+      el.svgVolHigh.classList.add("hidden");
+      el.svgVolLow.classList.add("hidden");
+      el.svgVolMuted.classList.add("hidden");
+
+      if (effective === 0) {
+        el.svgVolMuted.classList.remove("hidden");
+      } else if (effective < 50) {
+        el.svgVolLow.classList.remove("hidden");
+      } else {
+        el.svgVolHigh.classList.remove("hidden");
+      }
+    }
+
+    function cyclePlaybackSpeed() {
+      state.speedIndex = (state.speedIndex + 1) % PLAYBACK_SPEEDS.length;
+      const rate = PLAYBACK_SPEEDS[state.speedIndex];
+      el.hudBtnSpeed.textContent = `${rate.toFixed(rate % 1 === 0 ? 1 : 2)}x`;
+      if (state.player && state.playerReady && typeof state.player.setPlaybackRate === "function") {
+        try {
+          state.player.setPlaybackRate(rate);
+        } catch (_) {}
+      }
+      revealHud();
+    }
+
+    function updateTransportVisuals(mode) {
+      el.centerSvgPlay.classList.add("hidden");
+      el.centerSvgPause.classList.add("hidden");
+      el.centerSvgReplay.classList.add("hidden");
+      el.centerSvgSpinner.classList.add("hidden");
+
+      el.hudSvgPlay.classList.add("hidden");
+      el.hudSvgPause.classList.add("hidden");
+
+      if (mode === "PLAYING") {
+        el.centerSvgPause.classList.remove("hidden");
+        el.hudSvgPause.classList.remove("hidden");
+        el.hudLabelPlay.textContent = "Pause";
+        el.centerStatusDot.className = "w-2 h-2 rounded-full bg-emerald-400";
+        el.centerStatusText.textContent = `PLAYING • ${QUALITY_LABELS[state.lockedQuality] || "MAX HD"}`;
+      } else if (mode === "PAUSED") {
+        el.centerSvgPlay.classList.remove("hidden");
+        el.hudSvgPlay.classList.remove("hidden");
+        el.hudLabelPlay.textContent = "Play";
+        el.centerStatusDot.className = "w-2 h-2 rounded-full bg-amber-400";
+      } else if (mode === "ENDED") {
+        el.centerSvgReplay.classList.remove("hidden");
+        el.hudSvgPlay.classList.remove("hidden");
+        el.hudLabelPlay.textContent = "Replay";
+        el.centerStatusDot.className = "w-2 h-2 rounded-full bg-zinc-200";
+      } else {
+        el.centerSvgSpinner.classList.remove("hidden");
+        el.hudSvgPlay.classList.remove("hidden");
+        el.hudLabelPlay.textContent = "Play";
+        el.centerStatusDot.className = "w-2 h-2 rounded-full bg-zinc-400";
+      }
+    }
+
+    /**
+     * =========================================================================
+     * 8. HUD VISIBILITY & AUTO-HIDE ENGINE
+     * =========================================================================
+     */
+    function revealHud(pinOpen = false) {
+      if (!state.sessionActive) return;
+      clearTimeout(state.hudHideTimerId);
+
+      el.cinemaStage.classList.remove("cursor-none-all");
+      el.hudTopBar.style.opacity = "1";
+      el.hudTopBar.style.pointerEvents = "auto";
+      el.hudBottomBar.style.opacity = "1";
+      el.hudBottomBar.style.pointerEvents = "auto";
+      el.centerControlsGroup.style.opacity = "1";
+
+      if (!pinOpen && state.isPlaying && !state.isScrubbingSeek && !state.isScrubbingVolume) {
+        scheduleHudAutoHide();
+      }
+    }
+
+    function scheduleHudAutoHide() {
+      clearTimeout(state.hudHideTimerId);
+      state.hudHideTimerId = setTimeout(() => {
+        if (state.sessionActive && state.isPlaying && !state.isScrubbingSeek && !state.isScrubbingVolume) {
+          el.hudTopBar.style.opacity = "0";
+          el.hudTopBar.style.pointerEvents = "none";
+          el.hudBottomBar.style.opacity = "0";
+          el.hudBottomBar.style.pointerEvents = "none";
+          el.centerControlsGroup.style.opacity = "0";
+          el.cinemaStage.classList.add("cursor-none-all");
+        }
+      }, 2800);
+    }
+
+    /**
+     * =========================================================================
+     * 9. FULLSCREEN-ONLY LIFECYCLE & AUTO-CLOSE ON MINIMIZE/EXIT
+     * =========================================================================
+     */
+    function isNativeFullscreenActive() {
+      return Boolean(
+        document.fullscreenElement ||
+          document.webkitFullscreenElement ||
+          document.msFullscreenElement
+      );
+    }
+
+    async function requestStageFullscreen(element) {
+      try {
+        if (element.requestFullscreen) {
+          await element.requestFullscreen({ navigationUI: "hide" });
+          return true;
+        }
+        if (element.webkitRequestFullscreen) {
+          element.webkitRequestFullscreen();
+          return true;
+        }
+      } catch (_) {}
+      return false;
+    }
+
+    async function exitNativeFullscreen() {
+      try {
+        if (document.fullscreenElement && document.exitFullscreen) {
+          await document.exitFullscreen();
+        } else if (document.webkitFullscreenElement && document.webkitExitFullscreen) {
+          document.webkitExitFullscreen();
+        }
+      } catch (_) {}
+    }
+
+    async function launchFullscreenPlayer() {
+      const parsedId = extractYouTubeId(el.inputConfigLink.value || PLAYER_CONFIG.link);
+      if (!parsedId) {
+        notify("Invalid YouTube link or 11-character Video ID.", "error");
+        return;
+      }
+
+      PLAYER_CONFIG.link = el.inputConfigLink.value.trim() || PLAYER_CONFIG.link;
+      PLAYER_CONFIG.title = el.inputConfigTitle.value.trim() || PLAYER_CONFIG.title;
+      syncConfigurationToUI();
+
+      state.sessionActive = true;
+      state.closingSession = false;
+      state.enteringFullscreen = true;
+      state.hasRenderedFirstFrame = false;
+      state.isEndedIntercepted = false;
+      state.isPlaying = false;
+      state.currentTime = 0;
+
+      el.hudVideoTitle.textContent = state.videoTitle;
+      updateScrubberUI(0, 0, 0);
+      engageOpaqueCurtain(true, "INITIALIZING FULLSCREEN STREAM");
+      updateTransportVisuals("BUFFERING");
+
+      // Show stage and lock body scroll
+      el.cinemaStage.classList.remove("hidden");
+      el.cinemaStage.classList.add("flex");
+      document.body.style.overflow = "hidden";
+      computeCinemaViewportGeometry();
+      revealHud(true);
+
+      // Request hardware fullscreen (and landscape orientation on mobile if supported)
+      const enteredNativeFs = await requestStageFullscreen(el.cinemaStage);
+      state.fallbackFullscreenMode = !enteredNativeFs;
+
+      if (screen.orientation && typeof screen.orientation.lock === "function") {
+        screen.orientation.lock("landscape").catch(() => {});
+      }
+
+      setTimeout(() => {
+        state.enteringFullscreen = false;
+      }, 450);
+
+      createOrLoadYouTubePlayer(state.videoId);
+      startHighFrequencyMonitor();
+    }
+
+    /**
+     * Immediately stops playback, engages the solid black curtain, exits
+     * fullscreen if still active, and closes the player stage.
+     */
+    function closeAndDestroyPlayerSession(reason = "Player minimized — session closed.") {
+      if (!state.sessionActive || state.closingSession) return;
+      state.closingSession = true;
+      state.sessionActive = false;
+      state.isPlaying = false;
+
+      // Immediately engage opaque curtain and stop video
+      engageOpaqueCurtain(true, "CLOSING SESSION");
+      stopHighFrequencyMonitor();
+      clearTimeout(state.hudHideTimerId);
+
+      if (state.player && state.playerReady) {
+        try {
+          state.player.stopVideo();
+        } catch (_) {}
+      }
+
+      if (screen.orientation && typeof screen.orientation.unlock === "function") {
+        try {
+          screen.orientation.unlock();
+        } catch (_) {}
+      }
+
+      if (isNativeFullscreenActive()) {
+        exitNativeFullscreen();
+      }
+
+      el.cinemaStage.classList.remove("flex", "cursor-none-all");
+      el.cinemaStage.classList.add("hidden");
+      document.body.style.overflow = "";
+
+      if (reason) {
+        notify(reason, "neutral");
+      }
+
+      setTimeout(() => {
+        state.closingSession = false;
+      }, 200);
+    }
+
+    /**
+     * =========================================================================
+     * 10. UNIFIED POINTER EVENTS (TOUCH & DESKTOP SCRUBBING + GESTURES)
+     * =========================================================================
+     */
+    function bindUnifiedPointerScrubber() {
+      const computeFraction = (clientX, element) => {
+        const rect = element.getBoundingClientRect();
+        if (!rect.width) return 0;
+        return Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+      };
+
+      // Seek Timeline Pointer Events
+      el.seekSlider.addEventListener("pointerdown", (e) => {
+        if (!state.sessionActive) return;
+        e.stopPropagation();
+        state.isScrubbingSeek = true;
+        el.seekSlider.setPointerCapture(e.pointerId);
+        revealHud(true);
+
+        const frac = computeFraction(e.clientX, el.seekSlider);
+        const previewSec = frac * (state.duration || 0);
+        updateScrubberUI(previewSec, state.duration || 0);
+      });
+
+      el.seekSlider.addEventListener("pointermove", (e) => {
+        const frac = computeFraction(e.clientX, el.seekSlider);
+        const hoverSec = frac * (state.duration || 0);
+        el.seekHoverPill.style.left = `${frac * 100}%`;
+        el.seekHoverPill.textContent = formatTimecode(hoverSec);
+
+        if (!state.isScrubbingSeek) return;
+        e.stopPropagation();
+        updateScrubberUI(hoverSec, state.duration || 0);
+      });
+
+      const finishSeekScrub = (e) => {
+        if (!state.isScrubbingSeek) return;
+        e.stopPropagation();
+        state.isScrubbingSeek = false;
+        try {
+          el.seekSlider.releasePointerCapture(e.pointerId);
+        } catch (_) {}
+
+        const frac = computeFraction(e.clientX, el.seekSlider);
+        const dur = state.duration || 0;
+        const targetSec = Math.min(Math.max(0, dur - 0.5), frac * dur);
+
+        if (state.isEndedIntercepted && targetSec < dur - 0.5) {
+          state.isEndedIntercepted = false;
+        }
+
+        if (state.player && state.playerReady && dur > 0) {
+          state.player.seekTo(targetSec, true);
+        }
+        revealHud();
+      };
+
+      el.seekSlider.addEventListener("pointerup", finishSeekScrub);
+      el.seekSlider.addEventListener("pointercancel", finishSeekScrub);
+
+      // Volume Bar Pointer Events
+      el.volumeSlider.addEventListener("pointerdown", (e) => {
+        if (!state.sessionActive) return;
+        e.stopPropagation();
+        state.isScrubbingVolume = true;
+        el.volumeSlider.setPointerCapture(e.pointerId);
+        const frac = computeFraction(e.clientX, el.volumeSlider);
+        setPlayerVolume(frac * 100);
+        revealHud(true);
+      });
+
+      el.volumeSlider.addEventListener("pointermove", (e) => {
+        if (!state.isScrubbingVolume) return;
+        e.stopPropagation();
+        const frac = computeFraction(e.clientX, el.volumeSlider);
+        setPlayerVolume(frac * 100);
+      });
+
+      const finishVolumeScrub = (e) => {
+        if (!state.isScrubbingVolume) return;
+        e.stopPropagation();
+        state.isScrubbingVolume = false;
+        try {
+          el.volumeSlider.releasePointerCapture(e.pointerId);
+        } catch (_) {}
+        revealHud();
+      };
+
+      el.volumeSlider.addEventListener("pointerup", finishVolumeScrub);
+      el.volumeSlider.addEventListener("pointercancel", finishVolumeScrub);
+    }
+
+    function bindEventListeners() {
+      // Launcher actions
+      el.primaryLaunchBtn.addEventListener("click", launchFullscreenPlayer);
+      el.previewLaunchBtn.addEventListener("click", launchFullscreenPlayer);
+
+      el.syncFieldsBtn.addEventListener("click", () => {
+        const id = extractYouTubeId(el.inputConfigLink.value);
+        if (!id) {
+          notify("Please enter a valid YouTube URL or 11-char ID.", "error");
+          return;
+        }
+        PLAYER_CONFIG.title = el.inputConfigTitle.value.trim() || PLAYER_CONFIG.title;
+        PLAYER_CONFIG.link = el.inputConfigLink.value.trim();
+        syncConfigurationToUI();
+        notify("Synced Title & Link to PLAYER_CONFIG.", "success");
+      });
+
+      el.applyJsonConfigBtn.addEventListener("click", () => {
+        try {
+          const parsed = JSON.parse(el.jsonEditorTextarea.value);
+          const id = extractYouTubeId(parsed.link);
+          if (!id) {
+            throw new Error("Invalid `link` field in JSON configuration.");
+          }
+          PLAYER_CONFIG = parsed;
+          syncConfigurationToUI();
+          notify("Applied updated PLAYER_CONFIG JSON.", "success");
+        } catch (err) {
+          el.jsonStatusIndicator.textContent = `✕ ${err.message || "Invalid JSON"}`;
+          el.jsonStatusIndicator.className = "text-xs font-mono text-rose-400";
+          notify(err.message || "Invalid JSON syntax.", "error");
+        }
+      });
+
+      el.resetConfigBtn.addEventListener("click", () => {
+        PLAYER_CONFIG = JSON.parse(JSON.stringify(DEFAULT_PLAYER_CONFIG));
+        syncConfigurationToUI();
+        notify("Restored default PLAYER_CONFIG.", "neutral");
+      });
+
+      // Shielded Interaction Layer: Single tap toggles Play/Pause or HUD, Double-tap left/right skips +/-10s
+      el.interactionShield.addEventListener("pointerup", (e) => {
+        if (!state.sessionActive) return;
+        const now = performance.now();
+        const rect = el.interactionShield.getBoundingClientRect();
+        const relX = (e.clientX - rect.left) / (rect.width || 1);
+        const side = relX < 0.35 ? "left" : relX > 0.65 ? "right" : "center";
+        const skipSec = Number(PLAYER_CONFIG.settings?.skipSeconds ?? 10);
+
+        if (now - state.lastTapTime < 280 && state.lastTapSide === side && side !== "center") {
+          state.lastTapTime = 0;
+          skipBySeconds(side === "left" ? -skipSec : skipSec);
+          return;
+        }
+
+        state.lastTapTime = now;
+        state.lastTapSide = side;
+
+        if (e.pointerType === "touch") {
+          // On touch devices, tapping shield reveals HUD or toggles play
+          const hudHidden = el.hudBottomBar.style.opacity === "0";
+          if (hudHidden) {
+            revealHud();
+          } else {
+            togglePlayPause();
+          }
+        } else {
+          togglePlayPause();
+        }
+      });
+
+      el.cinemaStage.addEventListener("pointermove", () => {
+        if (state.sessionActive) revealHud();
+      });
+
+      // Center & Bottom Transport Buttons
+      const skipSec = () => Number(PLAYER_CONFIG.settings?.skipSeconds ?? 10);
+      el.centerBtnPlay.addEventListener("click", (e) => {
+        e.stopPropagation();
+        togglePlayPause();
+      });
+      el.hudBtnPlay.addEventListener("click", (e) => {
+        e.stopPropagation();
+        togglePlayPause();
+      });
+      el.centerBtnRewind.addEventListener("click", (e) => {
+        e.stopPropagation();
+        skipBySeconds(-skipSec());
+      });
+      el.hudBtnRewind.addEventListener("click", (e) => {
+        e.stopPropagation();
+        skipBySeconds(-skipSec());
+      });
+      el.centerBtnForward.addEventListener("click", (e) => {
+        e.stopPropagation();
+        skipBySeconds(skipSec());
+      });
+      el.hudBtnForward.addEventListener("click", (e) => {
+        e.stopPropagation();
+        skipBySeconds(skipSec());
+      });
+
+      el.hudBtnMute.addEventListener("click", (e) => {
+        e.stopPropagation();
+        toggleMute();
+      });
+      el.hudBtnSpeed.addEventListener("click", (e) => {
+        e.stopPropagation();
+        cyclePlaybackSpeed();
+      });
+
+      el.btnCycleMask.addEventListener("click", (e) => {
+        e.stopPropagation();
+        const nextIdx = ((PLAYER_CONFIG.settings?.maskRatioIndex ?? 0) + 1) % MASK_PRESETS.length;
+        applyMaskPreset(nextIdx);
+        revealHud();
+      });
+
+      // Minimize / Exit Buttons immediately close player
+      el.btnMinimizeClose.addEventListener("click", (e) => {
+        e.stopPropagation();
+        closeAndDestroyPlayerSession("Player minimized — fullscreen session closed.");
+      });
+      el.hudBtnExit.addEventListener("click", (e) => {
+        e.stopPropagation();
+        closeAndDestroyPlayerSession("Exited fullscreen — player closed.");
+      });
+
+      // Auto-Close on Exiting Fullscreen
+      const onFullscreenChange = () => {
+        if (!state.sessionActive || state.enteringFullscreen) return;
+        if (!isNativeFullscreenActive() && !state.fallbackFullscreenMode) {
+          closeAndDestroyPlayerSession("Fullscreen exited — player automatically closed.");
+        }
+      };
+      document.addEventListener("fullscreenchange", onFullscreenChange);
+      document.addEventListener("webkitfullscreenchange", onFullscreenChange);
+
+      // Auto-Close on Browser Minimize / Tab Switch / App Backgrounding
+      document.addEventListener("visibilitychange", () => {
+        if (state.sessionActive && document.hidden && PLAYER_CONFIG.settings?.autoCloseOnMinimize !== false) {
+          closeAndDestroyPlayerSession("Window minimized or backgrounded — player closed.");
+        }
+      });
+
+      window.addEventListener("pagehide", () => {
+        if (state.sessionActive) {
+          closeAndDestroyPlayerSession();
+        }
+      });
+
+      window.addEventListener("resize", () => {
+        if (state.sessionActive) {
+          computeCinemaViewportGeometry();
+        }
+      });
+
+      // Keyboard Shortcuts while Fullscreen Session is Active
+      window.addEventListener("keydown", (e) => {
+        if (!state.sessionActive) return;
+
+        if (e.key === "Escape") {
+          e.preventDefault();
+          closeAndDestroyPlayerSession("Escape pressed — player closed.");
+          return;
+        }
+        if (e.key === " " || e.key.toLowerCase() === "k") {
+          e.preventDefault();
+          togglePlayPause();
+        } else if (e.key === "ArrowLeft" || e.key.toLowerCase() === "j") {
+          e.preventDefault();
+          skipBySeconds(-skipSec());
+        } else if (e.key === "ArrowRight" || e.key.toLowerCase() === "l") {
+          e.preventDefault();
+          skipBySeconds(skipSec());
+        } else if (e.key.toLowerCase() === "m") {
+          e.preventDefault();
+          toggleMute();
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          setPlayerVolume(state.volume + 5);
+          revealHud();
+        } else if (e.key === "ArrowDown") {
+          e.preventDefault();
+          setPlayerVolume(state.volume - 5);
+          revealHud();
+        }
+      });
+
+      bindUnifiedPointerScrubber();
+    }
+
+    /**
+     * =========================================================================
+     * 11. BOOTSTRAP APPLICATION
+     * =========================================================================
+     */
+    window.addEventListener("DOMContentLoaded", () => {
+      syncConfigurationToUI();
+      bindEventListeners();
+      loadYouTubeIframeAPI();
+    });
+  </script>
+</body>
+</html>
