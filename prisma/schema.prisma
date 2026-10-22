@@ -213,11 +213,12 @@ model ExamMark {
 }
 
 model YouTubeClass {
-  id          String          @id @default(uuid())
-  title       String
-  description String?
-  youtubeId   String
-  grade       Grade?
+  id                 String          @id @default(uuid())
+  title              String
+  description        String?
+  youtubeId          String
+  customThumbnailUrl String?
+  grade              Grade?
   visibility  VideoVisibility @default(PUBLIC)
   teacherId   String?
   teacher     User?           @relation("TeacherYouTubeClasses", fields: [teacherId], references: [id], onDelete: Cascade)

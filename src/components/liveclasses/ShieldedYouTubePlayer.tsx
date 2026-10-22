@@ -14,7 +14,6 @@ import {
   ChevronLeft,
   Loader2,
   AlertCircle,
-  Crop,
 } from 'lucide-react';
 
 // Declaration for global window.YT from YouTube IFrame API
@@ -773,26 +772,26 @@ export default function ShieldedYouTubePlayer({
         {/* Debounced Buffering Spinner */}
         {isBuffering && (
           <div className="flex flex-col items-center gap-2.5 pointer-events-none">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-900/70 border border-blue-500/30 backdrop-blur-md flex items-center justify-center text-white shadow-2xl">
-              <Loader2 size={32} className="animate-spin text-blue-400" />
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-900/70 border border-red-500/30 backdrop-blur-md flex items-center justify-center text-white shadow-2xl">
+              <Loader2 size={32} className="animate-spin text-red-500" />
             </div>
-            <span className="text-[11px] font-mono tracking-wider uppercase text-blue-200 px-3 py-1 rounded-full bg-slate-900/80 border border-slate-700/60 shadow-lg">
+            <span className="text-[11px] font-mono tracking-wider uppercase text-red-200 px-3 py-1 rounded-full bg-slate-900/80 border border-slate-700/60 shadow-lg">
               Loading Stream
             </span>
           </div>
         )}
 
-        {/* Start / Resuming Play Button (Clean, Inviting, Eye-Friendly) */}
+        {/* Start / Resuming Play Button (Clean, Inviting, Eye-Friendly with YouTube Red Accent) */}
         {!isBuffering && !isPlaying && !isEnded && (
           <div className="flex flex-col items-center gap-3">
             <button
               type="button"
               onClick={togglePlayPause}
               aria-label="Play video"
-              className="relative group/play flex items-center justify-center cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-full"
+              className="relative group/play flex items-center justify-center cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-red-500 rounded-full"
             >
-              <div className="absolute -inset-2 rounded-full bg-blue-500/25 blur-md group-hover/play:bg-blue-500/40 transition-all animate-pulse" />
-              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 border border-blue-400/50 backdrop-blur-md flex items-center justify-center text-white shadow-[0_4px_30px_rgba(37,99,235,0.45)] transition-all group-hover/play:scale-105 group-active/play:scale-95">
+              <div className="absolute -inset-2 rounded-full bg-red-600/30 blur-md group-hover/play:bg-red-600/45 transition-all animate-pulse" />
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-600 hover:bg-red-500 active:bg-red-700 border border-red-500/50 backdrop-blur-md flex items-center justify-center text-white shadow-[0_4px_30px_rgba(220,38,38,0.5)] transition-all group-hover/play:scale-105 group-active/play:scale-95">
                 <Play size={32} className="ml-1 fill-white text-white" />
               </div>
             </button>
@@ -809,7 +808,7 @@ export default function ShieldedYouTubePlayer({
               type="button"
               onClick={togglePlayPause}
               aria-label="Replay stream"
-              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-blue-600 hover:bg-blue-500 border border-blue-400 text-white flex items-center justify-center shadow-[0_4px_30px_rgba(37,99,235,0.45)] transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-red-600 hover:bg-red-500 border border-red-500 text-white flex items-center justify-center shadow-[0_4px_30px_rgba(220,38,38,0.5)] transition-transform hover:scale-105 active:scale-95 cursor-pointer"
             >
               <RotateCcw size={28} />
             </button>
@@ -835,28 +834,17 @@ export default function ShieldedYouTubePlayer({
         }`}
       >
         <div className="flex items-center gap-2.5 min-w-0 max-w-[65vw]">
-          <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0 animate-pulse" />
+          <span className="w-2 h-2 rounded-full bg-red-500 shrink-0 animate-pulse" />
           <h2 className="text-xs sm:text-sm font-semibold text-white truncate drop-shadow-xs">
             {title}
           </h2>
-          <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-blue-500/20 text-blue-300 border border-blue-500/30">
+          <span className="hidden sm:inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-mono font-bold bg-red-500/20 text-red-300 border border-red-500/30">
             <Sparkles size={11} />
             <span>MAX HD</span>
           </span>
         </div>
 
         <div className="flex items-center gap-2">
-          {/* Cycle Aspect Mask */}
-          <button
-            type="button"
-            onClick={cycleMask}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/60 hover:bg-slate-700/80 active:bg-slate-700 border border-slate-700/60 text-slate-200 text-xs font-mono transition-colors cursor-pointer"
-            title="Cycle Cinema Mask Aspect Ratio"
-          >
-            <Crop size={14} />
-            <span className="hidden md:inline">{currentPreset.label}</span>
-          </button>
-
           {/* Minimize / Exit */}
           <button
             type="button"
@@ -904,7 +892,7 @@ export default function ShieldedYouTubePlayer({
                 style={{ width: `${bufferedPct}%` }}
               />
               <div
-                className="absolute inset-y-0 left-0 bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.5)]"
+                className="absolute inset-y-0 left-0 bg-red-600 shadow-[0_0_12px_rgba(239,68,68,0.6)]"
                 style={{ width: `${seekPct}%` }}
               />
             </div>
@@ -985,7 +973,7 @@ export default function ShieldedYouTubePlayer({
                 >
                   <div className="w-full h-1 bg-slate-700 rounded-full overflow-hidden relative">
                     <div
-                      className="absolute inset-y-0 left-0 bg-blue-400"
+                      className="absolute inset-y-0 left-0 bg-red-500"
                       style={{ width: `${isMuted ? 0 : volume}%` }}
                     />
                   </div>

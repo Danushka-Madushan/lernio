@@ -66,6 +66,7 @@ export async function GET(request: Request) {
           description: true,
           grade: true,
           visibility: true,
+          customThumbnailUrl: true,
           viewsCount: true,
           createdAt: true,
           teacher: {
@@ -130,7 +131,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { title, description, youtubeUrl, grade, visibility, targetTeacherId } = body;
+    const { title, description, youtubeUrl, grade, visibility, targetTeacherId, customThumbnailUrl } = body;
 
     if (!title || typeof title !== 'string' || !title.trim()) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
@@ -146,11 +147,17 @@ export async function POST(request: Request) {
 
     const teacherId = user.role === 'ADMIN' && targetTeacherId ? targetTeacherId : user.id;
 
+    const sanitizedThumbnail =
+      customThumbnailUrl && typeof customThumbnailUrl === 'string' && customThumbnailUrl.trim()
+        ? customThumbnailUrl.trim()
+        : null;
+
     const newClass = await db.youTubeClass.create({
       data: {
         title: title.trim(),
         description: description?.trim() || null,
         youtubeId,
+        customThumbnailUrl: sanitizedThumbnail,
         grade: grade && Object.values(Grade).includes(grade) ? (grade as Grade) : null,
         visibility: visibility === 'GRADE' ? VideoVisibility.GRADE : VideoVisibility.PUBLIC,
         teacherId,

@@ -108,12 +108,13 @@ export async function PUT(request: Request, context: RouteContext) {
     }
 
     const body = await request.json();
-    const { title, description, youtubeUrl, grade, visibility } = body;
+    const { title, description, youtubeUrl, grade, visibility, customThumbnailUrl } = body;
 
     const updateData: {
       title?: string;
       description?: string | null;
       youtubeId?: string;
+      customThumbnailUrl?: string | null;
       grade?: Grade | null;
       visibility?: VideoVisibility;
     } = {};
@@ -124,6 +125,13 @@ export async function PUT(request: Request, context: RouteContext) {
 
     if (description !== undefined) {
       updateData.description = description?.trim() || null;
+    }
+
+    if (customThumbnailUrl !== undefined) {
+      updateData.customThumbnailUrl =
+        customThumbnailUrl && typeof customThumbnailUrl === 'string' && customThumbnailUrl.trim()
+          ? customThumbnailUrl.trim()
+          : null;
     }
 
     if (youtubeUrl) {

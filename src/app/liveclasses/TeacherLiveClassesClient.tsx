@@ -19,6 +19,7 @@ import {
 import { Button } from '@heroui/react';
 import { Grade } from '@/generated/client/enums';
 import { GRADE_LABELS } from '@/lib/constants';
+import { getYouTubeThumbnail } from '@/lib/youtube';
 import AddLiveClassModal from '@/components/liveclasses/AddLiveClassModal';
 import EditLiveClassModal from '@/components/liveclasses/EditLiveClassModal';
 import LiveClassDeleteConfirmModal from '@/components/liveclasses/LiveClassDeleteConfirmModal';
@@ -30,6 +31,7 @@ interface LiveClass {
   title: string;
   description: string | null;
   youtubeId: string;
+  customThumbnailUrl?: string | null;
   grade: Grade | null;
   visibility: 'PUBLIC' | 'GRADE';
   viewsCount: number;
@@ -265,19 +267,44 @@ export default function TeacherLiveClassesClient({
             return (
               <div
                 key={item.id}
-                className="bg-white rounded-3xl border border-gray-200 shadow-2xs p-5 flex flex-col justify-between hover:border-blue-300 transition-all group"
+                className="bg-white rounded-3xl border border-gray-200 shadow-2xs p-5 flex flex-col justify-between hover:border-blue-300 transition-all group overflow-hidden"
               >
                 <div>
+                  {/* Thumbnail Cover Header */}
+                  <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-gray-950 mb-3.5 border border-gray-100 shadow-2xs group-hover:border-blue-200 transition-colors">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={item.customThumbnailUrl || getYouTubeThumbnail(item.youtubeId)}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/75 via-transparent to-black/30 pointer-events-none" />
+                    <div className="absolute top-2.5 right-2.5">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-black/60 backdrop-blur-md text-white border border-white/20 flex items-center gap-1">
+                        <Eye size={10} />
+                        <span>{item.viewsCount}</span>
+                      </span>
+                    </div>
+                    <div className="absolute bottom-2.5 left-2.5 right-2.5 flex items-center justify-between text-white">
+                      <span className="px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-xs font-mono text-[10px] text-gray-200">
+                        Key: {item.youtubeId}
+                      </span>
+                      <span className="px-2 py-0.5 rounded-md bg-emerald-600/90 font-semibold text-[10px] uppercase tracking-wider backdrop-blur-xs">
+                        Shielded
+                      </span>
+                    </div>
+                  </div>
+
                   {/* Top Badges */}
-                  <div className="flex items-center justify-between gap-2 mb-3">
+                  <div className="flex items-center justify-between gap-2 mb-2">
                     <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 flex items-center gap-1">
                       <GraduationCap size={12} />
                       <span>{gradeLabel}</span>
                     </span>
 
-                    <span className="text-[11px] font-mono text-gray-400 flex items-center gap-1">
-                      <Eye size={12} />
-                      <span>{item.viewsCount} views</span>
+                    <span className="text-[11px] font-medium text-gray-500">
+                      {item.visibility === 'GRADE' ? 'Target Grade' : 'All Students'}
                     </span>
                   </div>
 
@@ -293,14 +320,6 @@ export default function TeacherLiveClassesClient({
                   ) : (
                     <p className="text-xs text-gray-400 italic mt-1">No description provided</p>
                   )}
-
-                  {/* Stream Target Readout */}
-                  <div className="mt-3.5 p-2 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-between text-[11px] font-mono text-gray-600">
-                    <span className="truncate">Key: {item.youtubeId}</span>
-                    <span className="text-[10px] font-semibold text-emerald-600 uppercase bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                      Shielded
-                    </span>
-                  </div>
                 </div>
 
                 {/* Card Footer Actions */}

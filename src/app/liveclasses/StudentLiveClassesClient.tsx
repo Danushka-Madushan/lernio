@@ -22,6 +22,7 @@ interface StudentLiveClass {
   id: string;
   title: string;
   description: string | null;
+  customThumbnailUrl?: string | null;
   grade: Grade | null;
   visibility: 'PUBLIC' | 'GRADE';
   viewsCount: number;
@@ -171,20 +172,31 @@ export default function StudentLiveClassesClient() {
             return (
               <div
                 key={item.id}
-                className="bg-white rounded-3xl border border-gray-200 shadow-2xs p-5 flex flex-col justify-between hover:border-blue-300 hover:shadow-md transition-all group"
+                className="bg-white rounded-3xl border border-gray-200 shadow-2xs p-5 flex flex-col justify-between hover:border-blue-300 hover:shadow-md transition-all group overflow-hidden"
               >
                 <div>
-                  {/* Badges */}
-                  <div className="flex items-center justify-between gap-2 mb-3">
-                    <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-100 flex items-center gap-1">
-                      <GraduationCap size={12} />
-                      <span>{gradeLabel}</span>
-                    </span>
-
-                    <span className="text-[11px] font-mono text-gray-400 flex items-center gap-1">
-                      <Eye size={12} />
-                      <span>{item.viewsCount} views</span>
-                    </span>
+                  {/* Thumbnail Cover Header (Privacy Preserved) */}
+                  <div className="relative aspect-video w-full rounded-2xl overflow-hidden bg-gray-950 mb-3.5 border border-gray-100 shadow-2xs group-hover:border-blue-200 transition-colors">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={item.customThumbnailUrl || `/api/live-classes/${item.id}/thumbnail`}
+                      alt={item.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                    />
+                    <div className="absolute inset-0 bg-linear-to-t from-black/75 via-transparent to-black/30 pointer-events-none" />
+                    <div className="absolute top-2.5 right-2.5">
+                      <span className="px-2 py-0.5 rounded-full text-[10px] font-mono font-semibold bg-black/60 backdrop-blur-md text-white border border-white/20 flex items-center gap-1">
+                        <Eye size={10} />
+                        <span>{item.viewsCount}</span>
+                      </span>
+                    </div>
+                    <div className="absolute bottom-2.5 left-2.5">
+                      <span className="px-2 py-0.5 rounded-md bg-blue-600/90 text-white font-semibold text-[10px] backdrop-blur-xs flex items-center gap-1">
+                        <GraduationCap size={11} />
+                        <span>{gradeLabel}</span>
+                      </span>
+                    </div>
                   </div>
 
                   {/* Title */}

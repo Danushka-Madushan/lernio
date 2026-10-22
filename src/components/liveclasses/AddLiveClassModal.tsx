@@ -1,11 +1,12 @@
 'use client';
 
 import { useState } from 'react';
-import { Video, X, Loader2, Sparkles, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Video, X, Loader2, Sparkles, AlertCircle, ImagePlus, Check } from 'lucide-react';
 import { Button } from '@heroui/react';
 import { Grade } from '@/generated/client/enums';
 import { GRADE_LABELS } from '@/lib/constants';
 import { extractYouTubeId, getYouTubeThumbnail } from '@/lib/youtube';
+import ThumbnailUploader from '@/components/ThumbnailUploader';
 
 interface AddLiveClassModalProps {
   isOpen: boolean;
@@ -22,18 +23,50 @@ export default function AddLiveClassModal({
   allowedGrades,
   gradeAliases,
 }: AddLiveClassModalProps) {
+  const [youtubeUrl, setYoutubeUrl] = useState('');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [youtubeUrl, setYoutubeUrl] = useState('');
   const [grade, setGrade] = useState<Grade | ''>('');
   const [visibility, setVisibility] = useState<'PUBLIC' | 'GRADE'>('PUBLIC');
+  const [thumbnailMode, setThumbnailMode] = useState<'YOUTUBE' | 'CUSTOM'>('YOUTUBE');
+  const [customThumbnailUrl, setCustomThumbnailUrl] = useState<string>('');
+  const [fetchingInfo, setFetchingInfo] = useState(false);
+  const [infoFetched, setInfoFetched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   if (!isOpen) return null;
 
   const parsedId = extractYouTubeId(youtubeUrl);
-  const previewThumbnail = parsedId ? getYouTubeThumbnail(parsedId) : null;
+  const defaultYouTubeThumbnail = parsedId ? getYouTubeThumbnail(parsedId) : null;
+
+  const handleGetInfo = async () => {
+    if (!parsedId) {
+      setError('Please enter a valid YouTube URL or 11-character video ID first');
+      return;
+    }
+
+    setFetchingInfo(true);
+    setError(null);
+
+    try {
+      const res = await fetch(`/api/live-classes/info?url=${encodeURIComponent(youtubeUrl.trim())}`);
+      const data = await res.json();
+
+      if (res.ok && data.success) {
+        if (data.title) {
+          setTitle(data.title);
+        }
+        setInfoFetched(true);
+      } else {
+        setError(data.error || 'Could not fetch video info from YouTube');
+      }
+    } catch {
+      setError('Failed to connect to YouTube info service');
+    } finally {
+      setFetchingInfo(false);
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -61,6 +94,7 @@ export default function AddLiveClassModal({
           youtubeUrl: youtubeUrl.trim(),
           grade: grade || null,
           visibility,
+          customThumbnailUrl: thumbnailMode === 'CUSTOM' ? customThumbnailUrl.trim() || null : null,
         }),
       });
 
@@ -108,7 +142,7 @@ export default function AddLiveClassModal({
         </div>
 
         {/* Content */}
-        <div className="max-h-[80vh] overflow-y-auto px-6 py-5">
+        <div className="max-h-[82vh] overflow-y-auto px-6 py-5">
           {error && (
             <div className="mb-4 flex items-center gap-2 rounded-xl border border-[#fad2cf] bg-[#fce8e6] px-3.5 py-2.5 text-xs text-[#c5221f]">
               <AlertCircle size={15} className="shrink-0" />
@@ -117,6 +151,46 @@ export default function AddLiveClassModal({
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* YouTube Link / ID with "Get Info" Button */}
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-[#5f6368]">
+                YouTube URL or Video ID <span className="text-red-500">*</span>
+              </label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  required
+                  value={youtubeUrl}
+                  onChange={(e) => {
+                    setYoutubeUrl(e.target.value);
+                    setInfoFetched(false);
+                  }}
+                  placeholder="https://www.youtube.com/watch?v=... or Video ID"
+                  disabled={loading}
+                  className="flex-1 min-w-0 rounded-xl border border-[#dadce0] bg-white px-3.5 py-2.5 text-xs sm:text-sm font-mono text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
+                />
+                <button
+                  type="button"
+                  onClick={handleGetInfo}
+                  disabled={loading || fetchingInfo || !parsedId}
+                  className="px-3.5 h-10.5 rounded-xl bg-blue-50 text-blue-700 hover:bg-blue-100 border border-blue-200 text-xs font-semibold shrink-0 flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50"
+                  title="Fetch video title from YouTube"
+                >
+                  {fetchingInfo ? (
+                    <Loader2 size={14} className="animate-spin text-blue-600" />
+                  ) : infoFetched ? (
+                    <Check size={14} className="text-emerald-600" />
+                  ) : (
+                    <Sparkles size={14} className="text-blue-600" />
+                  )}
+                  <span>{fetchingInfo ? 'Fetching...' : infoFetched ? 'Updated' : 'Get Info'}</span>
+                </button>
+              </div>
+              <p className="mt-1 text-[11px] text-[#5f6368]">
+                Type or paste a video link or ID. Click <strong>Get Info</strong> to retrieve title automatically.
+              </p>
+            </div>
+
             {/* Title */}
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-[#5f6368]">
@@ -133,48 +207,69 @@ export default function AddLiveClassModal({
               />
             </div>
 
-            {/* YouTube Link / ID with Live Validation Preview */}
+            {/* Thumbnail Selection */}
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-[#5f6368]">
-                YouTube URL or Video ID <span className="text-red-500">*</span>
+                Cover Thumbnail
               </label>
-              <input
-                type="text"
-                required
-                value={youtubeUrl}
-                onChange={(e) => setYoutubeUrl(e.target.value)}
-                placeholder="https://www.youtube.com/watch?v=... or Video ID"
-                disabled={loading}
-                className="w-full rounded-xl border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm font-mono text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
-              />
-              <p className="mt-1 text-[11px] text-[#5f6368]">
-                Supports any standard YouTube URL, live stream, shorts, or 11-char ID. Students will never see this URL.
-              </p>
+              <div className="grid grid-cols-2 gap-2 mb-3">
+                <button
+                  type="button"
+                  onClick={() => setThumbnailMode('YOUTUBE')}
+                  className={`px-3 py-2 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                    thumbnailMode === 'YOUTUBE'
+                      ? 'bg-blue-50 border-blue-300 text-blue-700 shadow-2xs'
+                      : 'bg-white border-[#dadce0] text-[#5f6368] hover:bg-gray-50'
+                  }`}
+                >
+                  <Video size={13} />
+                  <span>YouTube Default</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setThumbnailMode('CUSTOM')}
+                  className={`px-3 py-2 rounded-xl border text-xs font-semibold flex items-center justify-center gap-1.5 transition-colors cursor-pointer ${
+                    thumbnailMode === 'CUSTOM'
+                      ? 'bg-blue-50 border-blue-300 text-blue-700 shadow-2xs'
+                      : 'bg-white border-[#dadce0] text-[#5f6368] hover:bg-gray-50'
+                  }`}
+                >
+                  <ImagePlus size={13} />
+                  <span>Custom Thumbnail</span>
+                </button>
+              </div>
 
-              {parsedId && (
-                <div className="mt-2.5 flex items-center gap-3 p-2.5 rounded-xl bg-blue-50/70 border border-blue-200">
-                  {previewThumbnail && (
-                    /* eslint-disable-next-line @next/next/no-img-element */
+              {thumbnailMode === 'YOUTUBE' ? (
+                defaultYouTubeThumbnail ? (
+                  <div className="relative aspect-video rounded-xl overflow-hidden border border-gray-200 bg-gray-900 group shadow-2xs">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
-                      src={previewThumbnail}
-                      alt="Stream Preview"
-                      className="w-20 h-12 object-cover rounded-lg border border-blue-200 shrink-0"
+                      src={defaultYouTubeThumbnail}
+                      alt="YouTube Thumbnail Preview"
+                      className="w-full h-full object-cover"
                     />
-                  )}
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-1.5 text-xs font-semibold text-blue-700">
-                      <CheckCircle2 size={13} className="text-blue-600 shrink-0" />
-                      <span>Valid Stream Target</span>
+                    <div className="absolute inset-0 bg-linear-to-t from-black/70 via-transparent to-transparent flex items-end p-2.5">
+                      <span className="text-[11px] font-medium text-white/95">
+                        YouTube Standard Thumbnail
+                      </span>
                     </div>
-                    <p className="text-[11px] font-mono text-blue-900 mt-0.5">
-                      Stream Key: {parsedId}
-                    </p>
                   </div>
+                ) : (
+                  <div className="p-4 rounded-xl border border-dashed border-gray-300 text-center text-xs text-gray-400 bg-gray-50/60">
+                    Enter a YouTube link or ID above to preview its cover
+                  </div>
+                )
+              ) : (
+                <div className="rounded-xl border border-[#dadce0] p-3 bg-gray-50/40">
+                  <ThumbnailUploader
+                    onSuccess={(keyOrUrl) => setCustomThumbnailUrl(keyOrUrl)}
+                    existingPreview={customThumbnailUrl || undefined}
+                  />
                 </div>
               )}
             </div>
 
-            {/* Grade Selection */}
+            {/* Target Grade */}
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-[#5f6368]">
                 Target Grade
