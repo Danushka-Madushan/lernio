@@ -68,13 +68,16 @@ export default function ShieldedYouTubePlayer({
   const seekSliderRef = useRef<HTMLDivElement>(null);
   const volumeSliderRef = useRef<HTMLDivElement>(null);
 
-  // Core state
+  // Core state - start cleanly without false buffering and wait for user play
   const [player, setPlayer] = useState<any>(null);
   const [playerReady, setPlayerReady] = useState(false);
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isBuffering, setIsBuffering] = useState(true);
+  const [isBuffering, setIsBuffering] = useState(false);
   const [isEnded, setIsEnded] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Dynamic occlusion bars (fade out after ~2.8s of playing, instantly restore on pause)
+  const [occlusionVisible, setOcclusionVisible] = useState(true);
 
   // Time & Volume
   const [duration, setDuration] = useState(0);
@@ -94,6 +97,8 @@ export default function ShieldedYouTubePlayer({
   const [skipFeedback, setSkipFeedback] = useState<{ side: 'left' | 'right'; count: number } | null>(null);
 
   const hudTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const occlusionTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bufferDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const rafIdRef = useRef<number | null>(null);
   const pollTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastTapRef = useRef<{ time: number; side: string }>({ time: 0, side: '' });
@@ -109,6 +114,20 @@ export default function ShieldedYouTubePlayer({
         setShowHud(false);
       }, 2800);
     }
+  }, []);
+
+  // Schedule auto-fade of occlusion bars after ~2.8s of continuous playback
+  const scheduleOcclusionHide = useCallback(() => {
+    if (occlusionTimerRef.current) clearTimeout(occlusionTimerRef.current);
+    occlusionTimerRef.current = setTimeout(() => {
+      setOcclusionVisible(false);
+    }, 2800);
+  }, []);
+
+  // Immediately restore occlusion bars (for pause, buffer, seek, or end)
+  const showOcclusionImmediately = useCallback(() => {
+    if (occlusionTimerRef.current) clearTimeout(occlusionTimerRef.current);
+    setOcclusionVisible(true);
   }, []);
 
   // Compute 16:9 responsive overscan geometry
@@ -169,6 +188,8 @@ export default function ShieldedYouTubePlayer({
   const handleEndInterception = useCallback((ytPlayer: any) => {
     setIsEnded(true);
     setIsPlaying(false);
+    setIsBuffering(false);
+    showOcclusionImmediately();
     engageCurtain(true);
     if (ytPlayer && typeof ytPlayer.pauseVideo === 'function') {
       try {
@@ -176,17 +197,20 @@ export default function ShieldedYouTubePlayer({
       } catch (_) {}
     }
     revealHud(true);
-  }, [engageCurtain, revealHud]);
+  }, [engageCurtain, revealHud, showOcclusionImmediately]);
 
   // Clean Session Teardown
   const handleCloseSession = useCallback(() => {
     if (closingRef.current) return;
     closingRef.current = true;
 
+    showOcclusionImmediately();
     engageCurtain(true);
     if (rafIdRef.current) cancelAnimationFrame(rafIdRef.current);
     if (pollTimerRef.current) clearInterval(pollTimerRef.current);
     if (hudTimerRef.current) clearTimeout(hudTimerRef.current);
+    if (occlusionTimerRef.current) clearTimeout(occlusionTimerRef.current);
+    if (bufferDebounceRef.current) clearTimeout(bufferDebounceRef.current);
 
     if (player && typeof player.stopVideo === 'function') {
       try {
@@ -205,32 +229,40 @@ export default function ShieldedYouTubePlayer({
     }
 
     if (onClose) onClose();
-  }, [player, engageCurtain, onClose]);
+  }, [player, engageCurtain, onClose, showOcclusionImmediately]);
 
-  // Play / Pause Toggle
+  // Play / Pause Toggle - immediate playback on user trigger
   const togglePlayPause = useCallback(() => {
     if (!player || !playerReady) return;
 
     if (isEnded) {
       setIsEnded(false);
+      showOcclusionImmediately();
       engageCurtain(true);
       player.seekTo(0, true);
       player.playVideo();
+      setIsPlaying(true);
+      scheduleOcclusionHide();
       return;
     }
 
     if (isPlaying) {
-      // SYNCHRONOUS INVARIANT: Paint curtain BEFORE pauseVideo()
+      // Pause: immediately restore occlusion bars and curtain before native YouTube pause renders
       setIsPlaying(false);
+      setIsBuffering(false);
+      showOcclusionImmediately();
       engageCurtain(true);
       revealHud(true);
       player.pauseVideo();
     } else {
-      setIsBuffering(true);
+      // Play: start immediately without waiting for fake buffering states
+      setIsPlaying(true);
+      showOcclusionImmediately();
       enforceMaxQuality(player);
       player.playVideo();
+      scheduleOcclusionHide();
     }
-  }, [player, playerReady, isEnded, isPlaying, engageCurtain, revealHud, enforceMaxQuality]);
+  }, [player, playerReady, isEnded, isPlaying, engageCurtain, revealHud, enforceMaxQuality, showOcclusionImmediately, scheduleOcclusionHide]);
 
   // Skip by delta seconds
   const skipSeconds = useCallback((delta: number) => {
@@ -244,13 +276,18 @@ export default function ShieldedYouTubePlayer({
       setIsEnded(false);
     }
 
+    showOcclusionImmediately();
     setCurrentTime(target);
     player.seekTo(target, true);
 
     setSkipFeedback({ side: delta < 0 ? 'left' : 'right', count: Math.abs(delta) });
     setTimeout(() => setSkipFeedback(null), 550);
+
+    if (isPlaying) {
+      scheduleOcclusionHide();
+    }
     revealHud();
-  }, [player, playerReady, duration, isEnded, revealHud]);
+  }, [player, playerReady, duration, isEnded, isPlaying, revealHud, showOcclusionImmediately, scheduleOcclusionHide]);
 
   // Volume Controller
   const handleVolumeChange = useCallback((newVol: number) => {
@@ -346,13 +383,13 @@ export default function ShieldedYouTubePlayer({
         await loadAPI;
         if (isCancelled || !iframeHostRef.current) return;
 
-        // Initialize YT.Player
+        // Initialize YT.Player without autoplay; wait for user play action
         const ytPlayer = new window.YT.Player(iframeHostRef.current, {
           width: '100%',
           height: '100%',
           videoId: mountVideoId,
           playerVars: {
-            autoplay: 1,
+            autoplay: 0,
             controls: 0,
             disablekb: 1,
             fs: 0,
@@ -368,6 +405,8 @@ export default function ShieldedYouTubePlayer({
               if (isCancelled) return;
               setPlayer(event.target);
               setPlayerReady(true);
+              setIsBuffering(false);
+              showOcclusionImmediately();
 
               // INVARIANT: Isolate iframe from pointer events and keyboard focus
               try {
@@ -380,39 +419,54 @@ export default function ShieldedYouTubePlayer({
               } catch (_) {}
 
               enforceMaxQuality(event.target);
-              event.target.playVideo();
+              // Video is ready in prepared/paused state awaiting user play
             },
             onStateChange: (event: any) => {
               if (isCancelled) return;
               const ytState = event.data;
 
               if (ytState === window.YT.PlayerState.PLAYING) {
+                if (bufferDebounceRef.current) clearTimeout(bufferDebounceRef.current);
                 setIsPlaying(true);
                 setIsBuffering(false);
                 setIsEnded(false);
                 enforceMaxQuality(event.target);
 
-                // Wait 90ms for decoded video frame blit before hiding curtain
+                // Wait 60ms for decoded video frame blit before hiding curtain
                 setTimeout(() => {
                   if (!isCancelled) {
                     engageCurtain(false);
                   }
-                }, 90);
+                }, 60);
+
+                // Auto-fade occlusion bars after 2.8s of smooth playing
+                scheduleOcclusionHide();
                 revealHud();
               } else if (ytState === window.YT.PlayerState.PAUSED) {
+                if (bufferDebounceRef.current) clearTimeout(bufferDebounceRef.current);
                 setIsPlaying(false);
                 setIsBuffering(false);
+                showOcclusionImmediately();
                 engageCurtain(true);
                 revealHud(true);
               } else if (ytState === window.YT.PlayerState.BUFFERING) {
-                setIsBuffering(true);
-                enforceMaxQuality(event.target);
+                showOcclusionImmediately();
+                // Debounce buffering indicator so transient blits don't show a false buffering overlay
+                if (bufferDebounceRef.current) clearTimeout(bufferDebounceRef.current);
+                bufferDebounceRef.current = setTimeout(() => {
+                  if (!isCancelled) {
+                    setIsBuffering(true);
+                    enforceMaxQuality(event.target);
+                  }
+                }, 400);
               } else if (ytState === window.YT.PlayerState.ENDED) {
+                if (bufferDebounceRef.current) clearTimeout(bufferDebounceRef.current);
                 handleEndInterception(event.target);
               }
             },
             onError: () => {
               setError('Could not load live class video stream. Please try again.');
+              showOcclusionImmediately();
               engageCurtain(true);
             },
           },
@@ -420,6 +474,7 @@ export default function ShieldedYouTubePlayer({
       } catch (err: any) {
         if (!isCancelled) {
           setError(err.message || 'Stream initialization error');
+          showOcclusionImmediately();
           engageCurtain(true);
         }
       }
@@ -429,8 +484,10 @@ export default function ShieldedYouTubePlayer({
 
     return () => {
       isCancelled = true;
+      if (occlusionTimerRef.current) clearTimeout(occlusionTimerRef.current);
+      if (bufferDebounceRef.current) clearTimeout(bufferDebounceRef.current);
     };
-  }, [classId, ticket, enforceMaxQuality, engageCurtain, handleEndInterception]);
+  }, [classId, ticket, enforceMaxQuality, engageCurtain, handleEndInterception, showOcclusionImmediately, scheduleOcclusionHide, revealHud]);
 
   // 2. High-Frequency RAF + Interval Poller for Timeline & 60fps Pre-End Interception
   useEffect(() => {
@@ -566,6 +623,7 @@ export default function ShieldedYouTubePlayer({
     if (!seekSliderRef.current || duration <= 0) return;
     e.stopPropagation();
     setIsScrubbingSeek(true);
+    showOcclusionImmediately();
     seekSliderRef.current.setPointerCapture(e.pointerId);
     revealHud(true);
 
@@ -601,6 +659,9 @@ export default function ShieldedYouTubePlayer({
 
     if (player && playerReady) {
       player.seekTo(target, true);
+    }
+    if (isPlaying) {
+      scheduleOcclusionHide();
     }
     revealHud();
   };
@@ -642,13 +703,16 @@ export default function ShieldedYouTubePlayer({
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 w-screen h-[100dvh] z-50 bg-black flex flex-col justify-between overflow-hidden select-none touch-none"
+      className="fixed inset-0 w-screen h-[100dvh] z-50 flex flex-col justify-between overflow-hidden select-none touch-none text-slate-100"
       onContextMenu={(e) => e.preventDefault()}
       onPointerMove={() => revealHud()}
-      style={{ cursor: showHud ? 'default' : 'none' }}
+      style={{
+        background: 'radial-gradient(ellipse 90% 70% at 50% 50%, #0d1322 0%, #06080d 100%)',
+        cursor: showHud ? 'default' : 'none',
+      }}
     >
       {/* ── LAYER 1: LOCKED YOUTUBE EMBED LAYER (1.20x Overscan & Pointer-Events None) ── */}
-      <div className="absolute inset-0 z-0 overflow-hidden bg-black flex items-center justify-center pointer-events-none select-none">
+      <div className="absolute inset-0 z-0 overflow-hidden bg-[#07090e] flex items-center justify-center pointer-events-none select-none">
         <div
           ref={overscanBoxRef}
           className="relative pointer-events-none select-none flex items-center justify-center"
@@ -658,22 +722,27 @@ export default function ShieldedYouTubePlayer({
         </div>
       </div>
 
-      {/* ── LAYER 2: RAZOR-SHARP SOLID #000000 OCCLUSION BARS (Strictly Zero Gradients) ── */}
+      {/* ── LAYER 2: DYNAMIC OCCLUSION BARS (Auto-fade on playing, instant restore on pause) ── */}
       <div
-        className="absolute top-0 inset-x-0 z-10 pointer-events-none bg-black border-b border-[#16161a]"
+        className={`absolute top-0 inset-x-0 z-10 pointer-events-none bg-[#07090e] border-b border-[#1b2336] shadow-[0_10px_30px_rgba(0,0,0,0.5)] transition-opacity duration-700 ease-in-out ${
+          occlusionVisible ? 'opacity-100' : 'opacity-0'
+        }`}
         style={{ height: `max(${currentPreset.vhTop}dvh, ${currentPreset.minTopPx}px)` }}
       />
       <div
-        className="absolute bottom-0 inset-x-0 z-10 pointer-events-none bg-black border-t border-[#16161a]"
+        className={`absolute bottom-0 inset-x-0 z-10 pointer-events-none bg-[#07090e] border-t border-[#1b2336] shadow-[0_-10px_30px_rgba(0,0,0,0.5)] transition-opacity duration-700 ease-in-out ${
+          occlusionVisible ? 'opacity-100' : 'opacity-0'
+        }`}
         style={{ height: `max(${currentPreset.vhBottom}dvh, ${currentPreset.minBottomPx}px)` }}
       />
 
-      {/* ── LAYER 3: SYNCHRONOUS SOLID #000000 CURTAIN (Pause, Buffering, End) ── */}
+      {/* ── LAYER 3: EYE-FRIENDLY AMBIENT CURTAIN (Soft Slate Vignette on Pause/End) ── */}
       <div
         ref={opaqueCurtainRef}
-        className="absolute inset-0 z-15 bg-black pointer-events-none transition-opacity duration-100 opacity-100 flex items-center justify-center"
+        className="absolute inset-0 z-15 pointer-events-none transition-opacity duration-150 opacity-100 flex items-center justify-center bg-[#07090e]"
+        style={{ background: 'radial-gradient(circle at center, #0e1526 0%, #06080d 90%)' }}
       >
-        <div className="absolute inset-0 bg-[#05070B]" />
+        <div className="absolute inset-0 bg-[#07090e]/60" />
       </div>
 
       {/* ── LAYER 4: FULL-BLEED INTERACTION SHIELD (Traps Clicks & Gestures) ── */}
@@ -684,7 +753,7 @@ export default function ShieldedYouTubePlayer({
         {/* Double-tap feedback badges */}
         {skipFeedback && (
           <div
-            className={`absolute top-1/2 -translate-y-1/2 pointer-events-none px-4 py-2 rounded-xl bg-black/60 border border-white/20 backdrop-blur-md text-white font-mono text-xs font-semibold flex items-center gap-1.5 shadow-2xl transition-all ${
+            className={`absolute top-1/2 -translate-y-1/2 pointer-events-none px-4 py-2 rounded-xl bg-slate-900/80 border border-white/20 backdrop-blur-md text-white font-mono text-xs font-semibold flex items-center gap-1.5 shadow-2xl transition-all ${
               skipFeedback.side === 'left' ? 'left-8 sm:left-16' : 'right-8 sm:right-16'
             }`}
           >
@@ -695,49 +764,71 @@ export default function ShieldedYouTubePlayer({
         )}
       </div>
 
-      {/* ── LAYER 5: CENTER GLYPH / STATUS (Lernio Glassmorphism Style) ── */}
+      {/* ── LAYER 5: CENTER GLYPH / STATUS (Eye-Friendly Start & Playback Controls) ── */}
       <div
-        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 pointer-events-none transition-opacity duration-200 ${
-          showHud || !isPlaying || isBuffering ? 'opacity-100' : 'opacity-0'
+        className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-30 transition-opacity duration-200 ${
+          showHud || !isPlaying || isBuffering ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
+        {/* Debounced Buffering Spinner */}
         {isBuffering && (
-          <div className="flex flex-col items-center gap-2.5">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-black/50 border border-white/15 backdrop-blur-md flex items-center justify-center text-white shadow-2xl">
+          <div className="flex flex-col items-center gap-2.5 pointer-events-none">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-slate-900/70 border border-blue-500/30 backdrop-blur-md flex items-center justify-center text-white shadow-2xl">
               <Loader2 size={32} className="animate-spin text-blue-400" />
             </div>
-            <span className="text-[11px] font-mono tracking-wider uppercase text-blue-200 px-3 py-1 rounded-full bg-black/60 border border-white/10">
-              Buffering HD Stream
+            <span className="text-[11px] font-mono tracking-wider uppercase text-blue-200 px-3 py-1 rounded-full bg-slate-900/80 border border-slate-700/60 shadow-lg">
+              Loading Stream
             </span>
           </div>
         )}
 
+        {/* Start / Resuming Play Button (Clean, Inviting, Eye-Friendly) */}
         {!isBuffering && !isPlaying && !isEnded && (
-          <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-black/50 border border-white/20 backdrop-blur-md flex items-center justify-center text-white shadow-2xl transition-transform hover:scale-105">
-            <Play size={32} className="ml-1 fill-white" />
+          <div className="flex flex-col items-center gap-3">
+            <button
+              type="button"
+              onClick={togglePlayPause}
+              aria-label="Play video"
+              className="relative group/play flex items-center justify-center cursor-pointer outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-full"
+            >
+              <div className="absolute -inset-2 rounded-full bg-blue-500/25 blur-md group-hover/play:bg-blue-500/40 transition-all animate-pulse" />
+              <div className="relative w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-blue-600 hover:bg-blue-500 active:bg-blue-700 border border-blue-400/50 backdrop-blur-md flex items-center justify-center text-white shadow-[0_4px_30px_rgba(37,99,235,0.45)] transition-all group-hover/play:scale-105 group-active/play:scale-95">
+                <Play size={32} className="ml-1 fill-white text-white" />
+              </div>
+            </button>
+            <span className="text-xs font-medium text-slate-300 px-3.5 py-1 rounded-full bg-slate-900/80 border border-slate-700/60 shadow-lg backdrop-blur-sm tracking-wide">
+              Click to start class
+            </span>
           </div>
         )}
 
+        {/* Replay Stream Button */}
         {isEnded && (
           <div className="flex flex-col items-center gap-2">
-            <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-blue-600 border border-blue-400 text-white flex items-center justify-center shadow-2xl transition-transform hover:scale-105">
+            <button
+              type="button"
+              onClick={togglePlayPause}
+              aria-label="Replay stream"
+              className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-blue-600 hover:bg-blue-500 border border-blue-400 text-white flex items-center justify-center shadow-[0_4px_30px_rgba(37,99,235,0.45)] transition-transform hover:scale-105 active:scale-95 cursor-pointer"
+            >
               <RotateCcw size={28} />
-            </div>
-            <span className="text-[11px] font-semibold text-white px-3 py-1 rounded-full bg-black/60 border border-white/15">
+            </button>
+            <span className="text-[11px] font-semibold text-slate-200 px-3 py-1 rounded-full bg-slate-900/80 border border-slate-700/60 shadow-lg">
               Replay Stream
             </span>
           </div>
         )}
 
+        {/* Error Notification */}
         {error && (
-          <div className="flex flex-col items-center gap-2 px-6 py-4 rounded-2xl bg-black/80 border border-red-500/40 text-center max-w-sm">
+          <div className="flex flex-col items-center gap-2 px-6 py-4 rounded-2xl bg-slate-950/90 border border-red-500/40 text-center max-w-sm shadow-2xl">
             <AlertCircle size={28} className="text-red-400" />
             <p className="text-xs text-red-200">{error}</p>
           </div>
         )}
       </div>
 
-      {/* ── LAYER 6: TOP HUD BAR (Nested inside Top Black Occlusion Bar) ── */}
+      {/* ── LAYER 6: TOP HUD BAR ── */}
       <div
         className={`relative z-30 px-4 sm:px-6 pt-3 flex items-center justify-between gap-3 transition-opacity duration-200 ${
           showHud ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
@@ -759,7 +850,7 @@ export default function ShieldedYouTubePlayer({
           <button
             type="button"
             onClick={cycleMask}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/25 border border-white/15 text-white text-xs font-mono transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-800/60 hover:bg-slate-700/80 active:bg-slate-700 border border-slate-700/60 text-slate-200 text-xs font-mono transition-colors cursor-pointer"
             title="Cycle Cinema Mask Aspect Ratio"
           >
             <Crop size={14} />
@@ -779,13 +870,13 @@ export default function ShieldedYouTubePlayer({
         </div>
       </div>
 
-      {/* ── LAYER 7: BOTTOM HUD CONTROL DECK (Lernio CustomPlayer Style) ── */}
+      {/* ── LAYER 7: BOTTOM HUD CONTROL DECK (Eye-Friendly Slate Glassmorphism) ── */}
       <div
         className={`relative z-30 px-3 sm:px-6 pb-3 sm:pb-4 transition-opacity duration-200 ${
           showHud ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
         }`}
       >
-        <div className="max-w-5xl mx-auto rounded-2xl bg-black/75 border border-white/15 backdrop-blur-xl px-4 py-2.5 shadow-2xl">
+        <div className="max-w-5xl mx-auto rounded-2xl bg-[#0b101d]/85 border border-slate-700/60 backdrop-blur-xl px-4 py-2.5 shadow-[0_10px_40px_rgba(0,0,0,0.6)]">
           {/* Seek Progress Timeline */}
           <div
             ref={seekSliderRef}
@@ -799,7 +890,7 @@ export default function ShieldedYouTubePlayer({
             {/* Hover tooltip */}
             {hoverSeekTime !== null && (
               <div
-                className="absolute -top-7 -translate-x-1/2 px-2 py-0.5 rounded-md bg-black/90 border border-white/20 text-[11px] font-mono text-white pointer-events-none tabular-nums"
+                className="absolute -top-7 -translate-x-1/2 px-2 py-0.5 rounded-md bg-slate-900/95 border border-slate-700 text-[11px] font-mono text-white pointer-events-none tabular-nums shadow-lg"
                 style={{ left: `${hoverSeekPos}%` }}
               >
                 {formatTimecode(hoverSeekTime)}
@@ -807,20 +898,20 @@ export default function ShieldedYouTubePlayer({
             )}
 
             {/* Track Bar */}
-            <div className="w-full h-1.5 group-hover:h-2 transition-all bg-white/20 rounded-full overflow-hidden relative">
+            <div className="w-full h-1.5 group-hover:h-2 transition-all bg-slate-700/50 rounded-full overflow-hidden relative">
               <div
-                className="absolute inset-y-0 left-0 bg-white/30"
+                className="absolute inset-y-0 left-0 bg-slate-600/60"
                 style={{ width: `${bufferedPct}%` }}
               />
               <div
-                className="absolute inset-y-0 left-0 bg-blue-500"
+                className="absolute inset-y-0 left-0 bg-blue-500 shadow-[0_0_12px_rgba(59,130,246,0.5)]"
                 style={{ width: `${seekPct}%` }}
               />
             </div>
 
             {/* Scrubber Knob */}
             <div
-              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-white shadow-md border border-black/40 pointer-events-none group-hover:scale-125 transition-transform"
+              className="absolute top-1/2 -translate-y-1/2 -translate-x-1/2 w-3.5 h-3.5 rounded-full bg-white shadow-md border border-slate-900 pointer-events-none group-hover:scale-125 transition-transform"
               style={{ left: `${seekPct}%` }}
             />
           </div>
@@ -832,7 +923,7 @@ export default function ShieldedYouTubePlayer({
               <button
                 type="button"
                 onClick={togglePlayPause}
-                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/25 text-white flex items-center justify-center transition-colors cursor-pointer"
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-white flex items-center justify-center transition-colors cursor-pointer border border-slate-700/50"
                 title="Play / Pause (Space)"
               >
                 {isPlaying ? <Pause size={18} /> : <Play size={18} className="ml-0.5 fill-current" />}
@@ -841,7 +932,7 @@ export default function ShieldedYouTubePlayer({
               <button
                 type="button"
                 onClick={() => skipSeconds(-10)}
-                className="px-2.5 h-9 sm:h-10 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/25 text-white text-xs font-mono flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                className="px-2.5 h-9 sm:h-10 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700/50 text-slate-200 text-xs font-mono flex items-center justify-center gap-1 transition-colors cursor-pointer"
                 title="Rewind 10 Seconds"
               >
                 <ChevronLeft size={14} />
@@ -851,16 +942,16 @@ export default function ShieldedYouTubePlayer({
               <button
                 type="button"
                 onClick={() => skipSeconds(10)}
-                className="px-2.5 h-9 sm:h-10 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/25 text-white text-xs font-mono flex items-center justify-center gap-1 transition-colors cursor-pointer"
+                className="px-2.5 h-9 sm:h-10 rounded-xl bg-slate-800/80 hover:bg-slate-700 border border-slate-700/50 text-slate-200 text-xs font-mono flex items-center justify-center gap-1 transition-colors cursor-pointer"
                 title="Forward 10 Seconds"
               >
                 <span>+10s</span>
                 <ChevronRight size={14} />
               </button>
 
-              <div className="px-2.5 h-9 sm:h-10 rounded-xl bg-black/40 border border-white/10 flex items-center gap-1 text-xs font-mono tabular-nums text-white/80">
+              <div className="px-2.5 h-9 sm:h-10 rounded-xl bg-slate-950/60 border border-slate-800 flex items-center gap-1 text-xs font-mono tabular-nums text-slate-300">
                 <span className="text-white font-medium">{formatTimecode(currentTime)}</span>
-                <span className="text-white/40">/</span>
+                <span className="text-slate-500">/</span>
                 <span>{formatTimecode(duration)}</span>
               </div>
             </div>
@@ -868,11 +959,11 @@ export default function ShieldedYouTubePlayer({
             {/* Right Transport: Volume, Speed, Fullscreen */}
             <div className="flex items-center gap-1.5 sm:gap-2">
               {/* Volume Slider */}
-              <div className="flex items-center gap-1.5 px-2.5 h-9 sm:h-10 rounded-xl bg-white/10 border border-white/10">
+              <div className="flex items-center gap-1.5 px-2.5 h-9 sm:h-10 rounded-xl bg-slate-800/80 border border-slate-700/50">
                 <button
                   type="button"
                   onClick={toggleMute}
-                  className="text-white/80 hover:text-white transition-colors cursor-pointer"
+                  className="text-slate-300 hover:text-white transition-colors cursor-pointer"
                   title="Mute / Unmute"
                 >
                   {isMuted || volume === 0 ? (
@@ -892,9 +983,9 @@ export default function ShieldedYouTubePlayer({
                   onPointerUp={handleVolumePointerUp}
                   onPointerCancel={handleVolumePointerUp}
                 >
-                  <div className="w-full h-1 bg-white/20 rounded-full overflow-hidden relative">
+                  <div className="w-full h-1 bg-slate-700 rounded-full overflow-hidden relative">
                     <div
-                      className="absolute inset-y-0 left-0 bg-white"
+                      className="absolute inset-y-0 left-0 bg-blue-400"
                       style={{ width: `${isMuted ? 0 : volume}%` }}
                     />
                   </div>
@@ -909,7 +1000,7 @@ export default function ShieldedYouTubePlayer({
               <button
                 type="button"
                 onClick={cycleSpeed}
-                className="px-2.5 h-9 sm:h-10 rounded-xl bg-white/10 hover:bg-white/20 active:bg-white/25 text-white text-xs font-mono font-semibold transition-colors cursor-pointer"
+                className="px-2.5 h-9 sm:h-10 rounded-xl bg-slate-800/80 hover:bg-slate-700 active:bg-slate-600 text-slate-200 text-xs font-mono font-semibold transition-colors cursor-pointer border border-slate-700/50"
                 title="Playback Speed"
               >
                 {PLAYBACK_SPEEDS[speedIndex]}x
