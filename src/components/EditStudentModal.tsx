@@ -145,33 +145,39 @@ const EditStudentModal = ({
                 <span className="text-[11px] text-[#9aa0a6]">{selectedTeacherIds.length} selected</span>
               </div>
               <div className="max-h-36 overflow-y-auto rounded-lg border border-[#dadce0] bg-white p-1.5 space-y-1">
-                {teachers.map((t) => {
-                  const isChecked = selectedTeacherIds.includes(t.id);
-                  return (
-                    <label
-                      key={t.id}
-                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-md border text-xs cursor-pointer transition-colors ${
-                        isChecked
-                          ? 'border-blue-300 bg-blue-50/70 text-blue-900 font-medium'
-                          : 'border-transparent text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      <div className="flex items-center gap-2 min-w-0">
-                        <input
-                          type="checkbox"
-                          checked={isChecked}
-                          onChange={() => toggleTeacher(t.id)}
-                          disabled={loading || (isChecked && selectedTeacherIds.length === 1)}
-                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
-                        />
-                        <span className="truncate">{t.username}</span>
-                      </div>
-                      <span className="text-[10px] text-gray-500 shrink-0 ml-2">
-                        {t.role === 'ADMIN' ? 'Admin Teacher' : 'Teacher'}
-                      </span>
-                    </label>
-                  );
-                })}
+                {teachers.length === 0 ? (
+                  <div className="py-4 text-center text-xs text-gray-500">
+                    No teachers found.
+                  </div>
+                ) : (
+                  teachers.map((t) => {
+                    const isChecked = selectedTeacherIds.includes(t.id);
+                    return (
+                      <label
+                        key={t.id}
+                        className={`flex items-center justify-between px-2.5 py-1.5 rounded-md border text-xs cursor-pointer transition-colors ${
+                          isChecked
+                            ? 'border-blue-300 bg-blue-50/70 text-blue-900 font-medium'
+                            : 'border-transparent text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 min-w-0">
+                          <input
+                            type="checkbox"
+                            checked={isChecked}
+                            onChange={() => toggleTeacher(t.id)}
+                            disabled={loading || (isChecked && selectedTeacherIds.length === 1)}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                          />
+                          <span className="truncate">{t.username}</span>
+                        </div>
+                        <span className="text-[10px] text-gray-500 shrink-0 ml-2">
+                          {t.role === 'ADMIN' ? 'Admin Teacher' : 'Teacher'}
+                        </span>
+                      </label>
+                    );
+                  })
+                )}
               </div>
               <p className="mt-1 text-[11px] text-[#9aa0a6]">
                 Assigned teachers can see this student and student can switch between their classrooms.

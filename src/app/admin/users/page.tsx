@@ -225,6 +225,8 @@ const UsersAdminPage = () => {
           // Default to admin teacher
           const adminT = tList.find((t) => t.role === 'ADMIN') || tList[0];
           if (adminT) setNewTeacherIds([adminT.id]);
+        } else {
+          console.error('Failed to fetch teachers:', res.status, await res.text());
         }
       }
     } catch {
