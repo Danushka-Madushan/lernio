@@ -1,42 +1,159 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Image from 'next/image';
 import {
+  House,
   Menu,
   X,
   LogOut,
   Loader2,
-  Tv,
+  Calendar,
+  ChevronRight,
+  GraduationCap,
   Award,
-  House,
+  Tv,
   Shield,
+  Users,
 } from 'lucide-react';
+import { Button } from '@heroui/react';
 import { createPortal } from 'react-dom';
+
+/* ─── Types & Helpers ────────────────────────────────────────────────────────── */
+
+interface NavItem {
+  id: string;
+  label: string;
+  icon: React.ElementType;
+  href: string;
+}
+
+interface Meeting {
+  id: string;
+  title: string;
+  scheduledAt: string;
+  grade: string | null;
+  link: string;
+}
+
+function formatDate(dateStr: string) {
+  return new Date(dateStr).toLocaleString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+    timeZone: 'Asia/Colombo',
+  });
+}
+
+function parseZoomLink(link: string): { appLink: string; webLink: string } {
+  try {
+    const url = new URL(link);
+    const match = url.pathname.match(/\/j\/(\d+)/);
+    if (match && match[1]) {
+      const confno = match[1];
+      const pwd = url.searchParams.get('pwd');
+      let appLink = `zoommtg://zoom.us/join?action=join&confno=${confno}`;
+      if (pwd) appLink += `&pwd=${pwd}`;
+      return { appLink, webLink: link };
+    }
+  } catch {
+    // ignore parsing errors
+  }
+  return { appLink: link, webLink: link };
+}
+
+/* ─── Component Props ────────────────────────────────────────────────────────── */
 
 interface LiveClassesMobileNavProps {
   username: string;
   role: 'ADMIN' | 'TEACHER' | 'STUDENT';
+  hasMultipleTeachers?: boolean;
+  activeTeacherName?: string | null;
 }
 
 export default function LiveClassesMobileNav({
   username,
   role,
+  hasMultipleTeachers = false,
+  activeTeacherName,
 }: LiveClassesMobileNavProps) {
   const router = useRouter();
   const pathname = usePathname();
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const [logoutLoading, setLogoutLoading] = useState(false);
+
   const [mounted, setMounted] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [zoomOpen, setZoomOpen] = useState(false);
+  const [meetings, setMeetings] = useState<Meeting[]>([]);
+  const [meetingsLoading, setMeetingsLoading] = useState(false);
+  const [logoutLoading, setLogoutLoading] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
+  // Escape key + scroll lock for drawer
+  useEffect(() => {
+    if (!drawerOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setDrawerOpen(false);
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [drawerOpen]);
+
+  // Scroll lock for zoom modal
+  useEffect(() => {
+    if (!zoomOpen) return;
+    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && setZoomOpen(false);
+    document.addEventListener('keydown', onKey);
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = '';
+    };
+  }, [zoomOpen]);
+
+  // Close drawer on path change
   useEffect(() => {
     setDrawerOpen(false);
   }, [pathname]);
+
+  const fetchMeetings = async () => {
+    if (role !== 'STUDENT') return;
+    setMeetingsLoading(true);
+    try {
+      const res = await fetch('/api/student/meetings');
+      if (res.ok) {
+        const data = await res.json();
+        setMeetings(data.meetings || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch meetings', error);
+    } finally {
+      setMeetingsLoading(false);
+    }
+  };
+
+  const handleZoomOpen = () => {
+    setDrawerOpen(false);
+    setTimeout(() => {
+      setZoomOpen(true);
+      fetchMeetings();
+    }, 180);
+  };
+
+  const handleNavClick = useCallback(
+    (href: string) => {
+      setDrawerOpen(false);
+      router.push(href);
+    },
+    [router]
+  );
 
   const handleLogout = async () => {
     setLogoutLoading(true);
@@ -53,131 +170,296 @@ export default function LiveClassesMobileNav({
     }
   };
 
-  if (!mounted) return null;
-
   const isStaff = role === 'ADMIN' || role === 'TEACHER';
+
+  // Build nav items dynamically
+  const navItems: NavItem[] = [
+    { id: 'liveclasses', label: 'Live Classes', icon: Tv, href: '/liveclasses' },
+    { id: 'home', label: 'Home (Videos)', icon: House, href: '/' },
+    { id: 'exams', label: 'Exams Portal', icon: Award, href: '/exams-portal' },
+  ];
+
+  if (role === 'STUDENT' && hasMultipleTeachers) {
+    navItems.push({
+      id: 'switch-teacher',
+      label: activeTeacherName ? `Class: ${activeTeacherName}` : 'Switch Classroom',
+      icon: Users,
+      href: '/teacher-select',
+    });
+  }
+
+  if (isStaff) {
+    navItems.push({
+      id: 'admin',
+      label: role === 'ADMIN' ? 'Admin Panel' : 'Teacher Panel',
+      icon: Shield,
+      href: '/admin',
+    });
+  }
+
+  if (!mounted) {
+    return (
+      <button
+        type="button"
+        aria-label="Open menu"
+        className="md:hidden flex items-center justify-center w-9 h-9 rounded-xl text-[#5f6368] hover:bg-gray-100 transition-colors"
+      >
+        <Menu size={20} strokeWidth={1.8} />
+      </button>
+    );
+  }
 
   return (
     <>
+      {/* ── Mobile Trigger Button (Header) ────────────────────────────────── */}
       <button
         type="button"
-        aria-label="Open mobile menu"
+        aria-label="Open live classes menu"
         onClick={() => setDrawerOpen(true)}
         className="md:hidden flex items-center justify-center w-9 h-9 text-gray-700 hover:text-blue-600 bg-white hover:bg-gray-50 border border-gray-200 shadow-2xs rounded-xl transition-colors cursor-pointer"
       >
-        <Menu size={18} />
+        <Menu size={18} strokeWidth={2} />
       </button>
 
-      {drawerOpen &&
-        createPortal(
-          <div className="fixed inset-0 z-100 flex md:hidden">
-            {/* Backdrop */}
-            <div
-              className="fixed inset-0 bg-black/40 backdrop-blur-xs transition-opacity"
-              onClick={() => setDrawerOpen(false)}
-            />
+      {/* ── Drawer & Backdrop (Portaled to body) ─────────────────────────── */}
+      {createPortal(
+        <>
+          {/* Backdrop */}
+          <div
+            onClick={() => setDrawerOpen(false)}
+            className={`md:hidden fixed inset-0 z-60 bg-slate-900/40 transition-opacity duration-300 ${
+              drawerOpen ? 'opacity-100 pointer-events-auto' : 'opacity-0 pointer-events-none'
+            }`}
+          />
 
-            {/* Drawer Sheet */}
-            <div className="relative ml-auto w-full max-w-xs h-full bg-white shadow-2xl flex flex-col justify-between overflow-y-auto">
-              <div>
-                {/* Header */}
-                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="relative w-7 h-7">
-                      <Image src="/icon.svg" alt="Lernio" fill className="object-contain" />
-                    </div>
-                    <span className="font-bold text-gray-900 text-sm">Live Classes</span>
+          {/* Left Drawer */}
+          <aside
+            aria-label="Live Classes navigation"
+            className={`md:hidden fixed inset-y-0 left-0 z-70 w-72 bg-white flex flex-col shadow-2xl transition-transform duration-300 ease-in-out ${
+              drawerOpen ? 'translate-x-0' : '-translate-x-full'
+            }`}
+            style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}
+          >
+            {/* Drawer Header */}
+            <div className="relative flex items-center h-14.25 px-4 shrink-0 border-b border-gray-100">
+              <div className="flex items-center gap-2.5">
+                <div className="relative w-7 h-7 shrink-0">
+                  <Image src="/icon.svg" alt="Lernio Logo" fill className="object-contain" />
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <span className="text-base font-bold tracking-tight text-blue-600">Lernio</span>
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                    Live
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(false)}
+                aria-label="Close menu"
+                className="ml-auto w-9 h-9 flex items-center justify-center rounded-xl text-[#9aa0a6] hover:bg-gray-100 hover:text-[#202124] active:bg-gray-200 transition-colors duration-150 focus-visible:outline-none"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Nav Items */}
+            <div className="flex-1 overflow-y-auto px-3 py-3">
+              <nav className="space-y-1">
+                {navItems.map(({ id, label, icon: Icon, href }) => {
+                  const isActive =
+                    href === '/liveclasses'
+                      ? pathname === '/liveclasses' || pathname.startsWith('/liveclasses/')
+                      : href === '/'
+                      ? pathname === '/'
+                      : pathname.startsWith(href);
+
+                  return (
+                    <button
+                      key={id}
+                      type="button"
+                      onClick={() => handleNavClick(href)}
+                      aria-current={isActive ? 'page' : undefined}
+                      className={`flex items-center w-full rounded-xl pr-3 py-3 text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 ${
+                        isActive
+                          ? 'bg-blue-600 text-white shadow-sm shadow-blue-600/25'
+                          : 'text-[#5f6368] hover:bg-[#f8f9fa] hover:text-[#202124] active:bg-gray-100'
+                      }`}
+                    >
+                      <span className="w-14 flex items-center justify-center shrink-0">
+                        <span
+                          className={`flex items-center justify-center w-9 h-9 rounded-lg transition-colors ${
+                            isActive ? 'bg-white/20' : 'bg-gray-100'
+                          }`}
+                        >
+                          <Icon size={18} strokeWidth={isActive ? 2.5 : 1.75} />
+                        </span>
+                      </span>
+                      <span className="flex-1 text-left">{label}</span>
+                      {!isActive && <ChevronRight size={14} className="text-[#9aa0a6] shrink-0" />}
+                    </button>
+                  );
+                })}
+              </nav>
+            </div>
+
+            {/* Zoom button for students */}
+            {role === 'STUDENT' && (
+              <div className="px-3 pb-2">
+                <button
+                  type="button"
+                  onClick={handleZoomOpen}
+                  title="Zoom Meetings"
+                  className="flex items-center justify-center w-full px-3 py-2.5 rounded-xl border border-blue-200 bg-blue-50 hover:bg-blue-100 active:scale-95 active:bg-blue-200 transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-300"
+                >
+                  <Image src="/zoom-logo.svg" alt="Zoom Meetings" width={80} height={18} />
+                </button>
+              </div>
+            )}
+
+            {/* User Profile Card & Logout */}
+            <div className="shrink-0 border-t border-gray-100 px-3 pt-2 pb-3 space-y-1.5">
+              <div className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-linear-to-r from-[#e8f0fe] to-[#f0f4ff] border border-blue-100 mb-2">
+                <div className="flex items-center justify-center w-9 h-9 rounded-full bg-linear-to-br from-blue-500 to-blue-600 shadow-sm shadow-blue-400/30 shrink-0 select-none">
+                  <GraduationCap size={20} className="text-white" />
+                </div>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-1.5">
+                    <span
+                      className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.2 rounded-sm text-white ${
+                        role === 'ADMIN'
+                          ? 'bg-blue-600'
+                          : role === 'TEACHER'
+                          ? 'bg-purple-600'
+                          : 'bg-emerald-600'
+                      }`}
+                    >
+                      {role === 'ADMIN' ? 'Admin' : role === 'TEACHER' ? 'Teacher' : 'Student'}
+                    </span>
+                  </div>
+                  <p className="text-sm font-semibold text-[#202124] truncate mt-0.5">
+                    {username}
+                  </p>
+                </div>
+              </div>
+
+              <button
+                type="button"
+                onClick={handleLogout}
+                disabled={logoutLoading}
+                className="flex items-center justify-center gap-2.5 w-full px-3 py-3 rounded-xl bg-red-500 hover:bg-red-600 active:scale-[0.98] text-white text-sm font-semibold transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400 focus-visible:ring-offset-2 disabled:opacity-60 shadow-sm shadow-rose-500/30"
+              >
+                {logoutLoading ? (
+                  <Loader2 size={17} className="animate-spin" />
+                ) : (
+                  <LogOut size={17} strokeWidth={2} />
+                )}
+                Log out
+              </button>
+            </div>
+          </aside>
+
+          {/* Zoom Modal */}
+          {zoomOpen && (
+            <div
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="live-zoom-modal-title"
+              className="fixed inset-0 z-80 flex items-center justify-center bg-black/40 p-4 backdrop-blur-xs"
+            >
+              <div className="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl ring-1 ring-black/10 animate-in fade-in zoom-in-95 duration-150">
+                <div className="flex items-center justify-between bg-linear-to-r from-blue-500 to-blue-600 px-6 py-4 text-white">
+                  <div className="flex items-center gap-3">
+                    <Image
+                      src="/zoom-logo.svg"
+                      alt="Zoom Meetings"
+                      width={75}
+                      height={17}
+                      className="brightness-0 invert"
+                    />
+                    <span className="text-white/60 text-xs">|</span>
+                    <span
+                      id="live-zoom-modal-title"
+                      className="text-sm font-semibold tracking-wide"
+                    >
+                      Live Classes
+                    </span>
                   </div>
                   <button
                     type="button"
-                    onClick={() => setDrawerOpen(false)}
-                    className="p-1 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100"
+                    onClick={() => setZoomOpen(false)}
+                    className="rounded-full p-1.5 text-white/50 hover:bg-white/15 hover:text-white transition-colors"
                   >
                     <X size={18} />
                   </button>
                 </div>
 
-                {/* User Info */}
-                <div className="p-4 bg-gray-50/60 border-b border-gray-100 flex items-center gap-2.5">
-                  <div className="w-8 h-8 rounded-full bg-blue-100 text-blue-700 font-bold text-xs flex items-center justify-center shrink-0">
-                    {username.substring(0, 2).toUpperCase()}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-semibold text-xs text-gray-900 truncate">{username}</p>
-                    <span className="text-[10px] font-medium text-blue-600 uppercase">
-                      {role === 'ADMIN' ? 'Admin' : role === 'TEACHER' ? 'Teacher' : 'Student'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Nav Links */}
-                <nav className="p-3 space-y-1">
-                  <button
-                    type="button"
-                    onClick={() => router.push('/liveclasses')}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold transition-colors cursor-pointer ${
-                      pathname === '/liveclasses'
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-700 hover:bg-gray-50'
-                    }`}
-                  >
-                    <Tv size={15} className="text-blue-600" />
-                    <span>Live Classes Home</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => router.push('/exams-portal')}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-                  >
-                    <Award size={15} className="text-gray-500" />
-                    <span>Exams Portal</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => router.push('/')}
-                    className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-                  >
-                    <House size={15} className="text-gray-500" />
-                    <span>Videos Portal</span>
-                  </button>
-
-                  {isStaff && (
-                    <button
-                      type="button"
-                      onClick={() => router.push('/admin')}
-                      className="w-full flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-semibold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
-                    >
-                      <Shield size={15} className="text-gray-500" />
-                      <span>Admin Panel</span>
-                    </button>
-                  )}
-                </nav>
-              </div>
-
-              {/* Logout Footer */}
-              <div className="p-4 border-t border-gray-100">
-                <button
-                  type="button"
-                  onClick={handleLogout}
-                  disabled={logoutLoading}
-                  className="w-full flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 text-xs font-semibold transition-colors cursor-pointer"
-                >
-                  {logoutLoading ? (
-                    <Loader2 size={14} className="animate-spin" />
+                <div className="p-6 max-h-[60vh] overflow-y-auto">
+                  {meetingsLoading ? (
+                    <div className="flex flex-col items-center justify-center py-8 text-gray-400 gap-2">
+                      <Loader2 size={24} className="animate-spin text-blue-500" />
+                      <span className="text-xs">Loading meetings...</span>
+                    </div>
+                  ) : meetings.length === 0 ? (
+                    <div className="text-center py-8 text-gray-500">
+                      <Calendar size={32} className="mx-auto text-gray-300 mb-2" />
+                      <p className="text-sm font-medium">No active Zoom meetings right now.</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Check back later or verify with your teacher.
+                      </p>
+                    </div>
                   ) : (
-                    <>
-                      <LogOut size={14} />
-                      <span>Log Out</span>
-                    </>
+                    <div className="space-y-3">
+                      {meetings.map((m) => {
+                        const { appLink, webLink } = parseZoomLink(m.link);
+                        return (
+                          <div
+                            key={m.id}
+                            className="p-3.5 rounded-xl border border-gray-100 bg-[#f8f9fa] flex flex-col gap-2.5"
+                          >
+                            <div>
+                              <div className="flex items-center justify-between">
+                                <h4 className="text-sm font-semibold text-gray-800 line-clamp-1">
+                                  {m.title}
+                                </h4>
+                                {m.grade && (
+                                  <span className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-blue-50 text-blue-600 border border-blue-100">
+                                    {m.grade}
+                                  </span>
+                                )}
+                              </div>
+                              <p className="text-[11px] text-gray-400 mt-0.5">
+                                {formatDate(m.scheduledAt)}
+                              </p>
+                            </div>
+                            <div className="flex items-center gap-2 pt-1 border-t border-gray-200/60">
+                              <a
+                                href={appLink}
+                                className="flex-1 text-center py-1.5 rounded-lg bg-blue-600 text-white text-xs font-semibold hover:bg-blue-700 active:scale-98 transition-all"
+                              >
+                                Join via App
+                              </a>
+                              <a
+                                href={webLink}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="flex-1 text-center py-1.5 rounded-lg bg-white border border-gray-200 text-gray-700 text-xs font-semibold hover:bg-gray-50 active:scale-98 transition-all"
+                              >
+                                Join in Browser
+                              </a>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   )}
-                </button>
+                </div>
               </div>
             </div>
-          </div>,
-          document.body
-        )}
+          )}
+        </>,
+        document.body
+      )}
     </>
   );
 }

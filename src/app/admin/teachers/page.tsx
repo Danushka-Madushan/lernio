@@ -28,6 +28,7 @@ import { ALL_GRADES, GRADE_COLORS, GRADE_LABELS } from '@/lib/constants';
 interface Teacher {
   id: string;
   username: string;
+  nameAlias?: string | null;
   role: 'ADMIN' | 'TEACHER';
   allowedGrades?: Grade[];
   gradeAliases?: Record<string, string> | null;
@@ -53,6 +54,7 @@ const TeachersAdminPage = () => {
   // Create modal state
   const [showAddModal, setShowAddModal] = useState(false);
   const [newUsername, setNewUsername] = useState('');
+  const [newNameAlias, setNewNameAlias] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newAllowedGrades, setNewAllowedGrades] = useState<Grade[]>([...ALL_GRADES]);
   const [newGradeAliases, setNewGradeAliases] = useState<Record<string, string>>({});
@@ -151,6 +153,7 @@ const TeachersAdminPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username: trimmedUsername,
+          nameAlias: newNameAlias.trim() || undefined,
           password: trimmedPassword,
           allowedGrades: newAllowedGrades,
           gradeAliases: newGradeAliases,
@@ -162,6 +165,7 @@ const TeachersAdminPage = () => {
         setSuccess(`Teacher '${trimmedUsername}' created successfully.`);
         setShareInfo({ username: trimmedUsername, password: trimmedPassword });
         setNewUsername('');
+        setNewNameAlias('');
         setNewPassword('');
         setNewAllowedGrades([...ALL_GRADES]);
         setNewGradeAliases({});
@@ -181,7 +185,8 @@ const TeachersAdminPage = () => {
 
   const handleEditTeacher = async (
     allowedGrades: Grade[],
-    gradeAliases: Record<string, string>
+    gradeAliases: Record<string, string>,
+    nameAlias: string | null
   ) => {
     if (!editTarget) return;
     setEditLoading(true);
@@ -191,7 +196,7 @@ const TeachersAdminPage = () => {
       const res = await fetch(`/api/teachers/${editTarget.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ allowedGrades, gradeAliases }),
+        body: JSON.stringify({ allowedGrades, gradeAliases, nameAlias }),
       });
 
       if (res.ok) {
@@ -283,6 +288,7 @@ const TeachersAdminPage = () => {
       {showAddModal && (
         <AddTeacherModal
           username={newUsername}
+          nameAlias={newNameAlias}
           password={newPassword}
           allowedGrades={newAllowedGrades}
           gradeAliases={newGradeAliases}
@@ -291,6 +297,7 @@ const TeachersAdminPage = () => {
           success={success}
           shareInfo={shareInfo}
           onUsernameChange={setNewUsername}
+          onNameAliasChange={setNewNameAlias}
           onPasswordChange={setNewPassword}
           onAllowedGradesChange={setNewAllowedGrades}
           onGradeAliasesChange={setNewGradeAliases}
@@ -299,6 +306,7 @@ const TeachersAdminPage = () => {
             setShowAddModal(false);
             setNewAllowedGrades([...ALL_GRADES]);
             setNewGradeAliases({});
+            setNewNameAlias('');
           }}
           onDismissShareInfo={() => setShareInfo(null)}
         />
@@ -492,21 +500,30 @@ const TeachersAdminPage = () => {
                             key={teacher.id}
                             className="transition-colors duration-100 hover:bg-[#f8f9fa]"
                           >
-                            {/* Username with avatar */}
+                            {/* Username with avatar & display alias */}
                             <td className="py-3.5">
                               <div className="flex items-center gap-3">
                                 <div
-                                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
+                                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
                                     teacher.role === 'ADMIN'
                                       ? 'bg-blue-100 text-blue-600'
                                       : 'bg-purple-100 text-purple-700'
                                   }`}
                                 >
-                                  {teacher.username.charAt(0).toUpperCase()}
+                                  {(teacher.nameAlias || teacher.username).charAt(0).toUpperCase()}
                                 </div>
-                                <span className="font-mono text-[13px] font-medium text-[#202124]">
-                                  {teacher.username}
-                                </span>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[13px] font-medium text-[#202124] truncate">
+                                      {teacher.nameAlias || teacher.username}
+                                    </span>
+                                  </div>
+                                  {teacher.nameAlias && (
+                                    <span className="font-mono text-[11px] text-[#5f6368] block">
+                                      @{teacher.username}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </td>
 

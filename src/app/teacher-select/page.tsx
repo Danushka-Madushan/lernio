@@ -26,6 +26,8 @@ export default async function TeacherSelectPage() {
         select: {
           id: true,
           username: true,
+          nameAlias: true,
+          role: true,
           allowedGrades: true,
           gradeAliases: true,
         },
@@ -39,6 +41,8 @@ export default async function TeacherSelectPage() {
     .filter(Boolean) as Array<{
       id: string;
       username: string;
+      nameAlias?: string | null;
+      role: string;
       allowedGrades: any[];
       gradeAliases: Record<string, string> | null;
     }>;

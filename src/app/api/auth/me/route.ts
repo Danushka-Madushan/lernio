@@ -37,6 +37,8 @@ export async function GET() {
           select: {
             id: true,
             username: true,
+            nameAlias: true,
+            role: true,
             allowedGrades: true,
             gradeAliases: true,
           },
@@ -56,6 +58,11 @@ export async function GET() {
       gradeAliases = (activeEnrollment.teacher.gradeAliases as Record<string, string>) || {};
     }
 
+    const activeTeacherName = activeEnrollment?.teacher
+      ? activeEnrollment.teacher.nameAlias ||
+        (activeEnrollment.teacher.role === 'ADMIN' ? 'Admin Teacher' : activeEnrollment.teacher.username)
+      : null;
+
     return NextResponse.json({
       user: {
         id: user.id,
@@ -63,7 +70,13 @@ export async function GET() {
         role: user.role,
         teacherId: activeEnrollment?.teacherId || user.teacherId || null,
         activeTeacherId: activeEnrollment?.teacherId || null,
-        teachers: enrollments.map((e) => e.teacher),
+        activeTeacherName,
+        teachers: enrollments.map((e) => ({
+          ...e.teacher,
+          displayName:
+            e.teacher.nameAlias ||
+            (e.teacher.role === 'ADMIN' ? 'Admin Teacher' : e.teacher.username),
+        })),
         allowedGrades,
         gradeAliases,
       },

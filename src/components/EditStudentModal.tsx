@@ -12,6 +12,7 @@ type AccessMode = 'GRADE' | 'CUSTOM';
 interface TeacherOption {
   id: string;
   username: string;
+  nameAlias?: string | null;
   role: string;
   allowedGrades?: Grade[];
   gradeAliases?: Record<string, string> | null;
@@ -28,6 +29,7 @@ interface Student {
   teacher?: {
     id: string;
     username: string;
+    nameAlias?: string | null;
     allowedGrades?: Grade[];
     gradeAliases?: Record<string, string> | null;
   } | null;
@@ -169,7 +171,9 @@ const EditStudentModal = ({
                             disabled={loading || (isChecked && selectedTeacherIds.length === 1)}
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                           />
-                          <span className="truncate">{t.username}</span>
+                          <span className="truncate">
+                            {t.nameAlias ? `${t.nameAlias} (${t.username})` : t.username}
+                          </span>
                         </div>
                         <span className="text-[10px] text-gray-500 shrink-0 ml-2">
                           {t.role === 'ADMIN' ? 'Admin Teacher' : 'Teacher'}
@@ -193,7 +197,7 @@ const EditStudentModal = ({
                 <div className="flex flex-wrap gap-1 mt-1">
                   {(student.teachers && student.teachers.length > 0 ? student.teachers : student.teacher ? [student.teacher] : []).map((t) => (
                     <span key={t.id} className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-[11px]">
-                      {t.username}
+                      {t.nameAlias || t.username}
                     </span>
                   ))}
                 </div>

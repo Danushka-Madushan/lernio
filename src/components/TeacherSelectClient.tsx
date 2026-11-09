@@ -10,6 +10,8 @@ import { Users, GraduationCap, CheckCircle2, ChevronRight, Loader2, BookOpen } f
 interface TeacherItem {
   id: string;
   username: string;
+  nameAlias?: string | null;
+  role?: string;
   allowedGrades: Grade[];
   gradeAliases: Record<string, string> | null;
 }
@@ -123,6 +125,10 @@ export default function TeacherSelectClient({
                 teacher.gradeAliases
               );
 
+              const displayName =
+                teacher.nameAlias ||
+                (teacher.role === 'ADMIN' ? 'Admin Teacher' : teacher.username);
+
               return (
                 <button
                   key={teacher.id}
@@ -138,7 +144,7 @@ export default function TeacherSelectClient({
                   <div>
                     <div className="flex items-center justify-between mb-3">
                       <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white font-semibold text-lg flex items-center justify-center shadow-xs">
-                        {teacher.username.charAt(0).toUpperCase()}
+                        {displayName.charAt(0).toUpperCase()}
                       </div>
                       {isSelected && (
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-medium bg-blue-50 text-blue-700 border border-blue-200">
@@ -148,9 +154,21 @@ export default function TeacherSelectClient({
                       )}
                     </div>
 
-                    <h2 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
-                      {teacher.username}
-                    </h2>
+                    <div className="flex items-center gap-2">
+                      <h2 className="text-lg font-semibold text-gray-900 group-hover:text-blue-600 transition-colors">
+                        {displayName}
+                      </h2>
+                      {teacher.role === 'ADMIN' && (
+                        <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                          Admin
+                        </span>
+                      )}
+                    </div>
+                    {teacher.nameAlias && (
+                      <p className="text-xs text-gray-400 font-mono mt-0.5">
+                        @{teacher.username}
+                      </p>
+                    )}
 
                     {/* Grades list */}
                     <div className="mt-3 flex flex-wrap gap-1.5">

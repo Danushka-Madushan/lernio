@@ -27,9 +27,16 @@ export async function PUT(
 
   try {
     const body = await request.json();
-    const { password, allowedGrades, gradeAliases } = body;
+    const { password, allowedGrades, gradeAliases, nameAlias } = body;
 
     const updateData: any = {};
+
+    if (nameAlias !== undefined) {
+      updateData.nameAlias =
+        typeof nameAlias === 'string' && nameAlias.trim().length > 0
+          ? nameAlias.trim()
+          : null;
+    }
 
     if (password !== undefined) {
       if (password.length < 4) {
@@ -91,6 +98,7 @@ export async function PUT(
       select: {
         id: true,
         username: true,
+        nameAlias: true,
         role: true,
         allowedGrades: true,
         gradeAliases: true,

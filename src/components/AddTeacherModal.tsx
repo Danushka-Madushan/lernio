@@ -15,6 +15,7 @@ interface ShareInfo {
 
 const AddTeacherModal = ({
   username,
+  nameAlias = '',
   password,
   allowedGrades,
   gradeAliases,
@@ -23,6 +24,7 @@ const AddTeacherModal = ({
   success,
   shareInfo,
   onUsernameChange,
+  onNameAliasChange,
   onPasswordChange,
   onAllowedGradesChange,
   onGradeAliasesChange,
@@ -31,6 +33,7 @@ const AddTeacherModal = ({
   onDismissShareInfo,
 }: {
   username: string;
+  nameAlias?: string;
   password: string;
   allowedGrades: Grade[];
   gradeAliases: Record<string, string>;
@@ -39,6 +42,7 @@ const AddTeacherModal = ({
   success: string;
   shareInfo: ShareInfo | null;
   onUsernameChange: (v: string) => void;
+  onNameAliasChange?: (v: string) => void;
   onPasswordChange: (v: string) => void;
   onAllowedGradesChange: (grades: Grade[]) => void;
   onGradeAliasesChange: (aliases: Record<string, string>) => void;
@@ -133,6 +137,20 @@ const AddTeacherModal = ({
               <p className="mt-1 text-[11px] text-[#9aa0a6]">
                 Used by the teacher to log into the staff portal.
               </p>
+            </div>
+
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">
+                Display Name / Teacher Alias <span className="font-normal text-[#9aa0a6]">(optional)</span>
+              </label>
+              <input
+                type="text"
+                value={nameAlias}
+                onChange={(e) => onNameAliasChange?.(e.target.value)}
+                disabled={creating}
+                placeholder="e.g. Science with David (shown to students)"
+                className="w-full rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-purple-500/20"
+              />
             </div>
 
             <div>

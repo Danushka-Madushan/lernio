@@ -39,6 +39,7 @@ type AccessMode = 'GRADE' | 'CUSTOM';
 interface TeacherOption {
   id: string;
   username: string;
+  nameAlias?: string | null;
   role: string;
   allowedGrades?: Grade[];
   gradeAliases?: Record<string, string> | null;
@@ -217,6 +218,7 @@ const UsersAdminPage = () => {
           const tList: TeacherOption[] = (data.teachers || []).map((t: any) => ({
             id: t.id,
             username: t.username,
+            nameAlias: t.nameAlias,
             role: t.role,
             allowedGrades: t.allowedGrades,
             gradeAliases: t.gradeAliases,

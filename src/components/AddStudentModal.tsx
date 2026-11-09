@@ -20,6 +20,7 @@ interface ShareInfo {
 interface TeacherOption {
   id: string;
   username: string;
+  nameAlias?: string | null;
   role: string;
   allowedGrades?: Grade[];
   gradeAliases?: Record<string, string> | null;
@@ -168,7 +169,9 @@ const AddStudentModal = ({
                               disabled={creating || (isChecked && teacherIds.length === 1)}
                               className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
                             />
-                            <span className="truncate">{t.username}</span>
+                            <span className="truncate">
+                              {t.nameAlias ? `${t.nameAlias} (${t.username})` : t.username}
+                            </span>
                           </div>
                           <span className="text-[10px] text-gray-500 shrink-0 ml-2">
                             {t.role === 'ADMIN' ? 'Admin Teacher' : 'Teacher'}

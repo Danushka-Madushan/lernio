@@ -23,7 +23,7 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
       where: { studentId: user.id },
       include: {
         teacher: {
-          select: { id: true, username: true },
+          select: { id: true, username: true, nameAlias: true, role: true },
         },
       },
       orderBy: { createdAt: 'asc' },
@@ -37,10 +37,15 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
       }
       const activeTeacher = enrollments.find((e) => e.teacherId === activeTeacherId);
       if (activeTeacher) {
-        activeTeacherName = activeTeacher.teacher.username;
+        activeTeacherName =
+          activeTeacher.teacher.nameAlias ||
+          (activeTeacher.teacher.role === 'ADMIN' ? 'Admin Teacher' : activeTeacher.teacher.username);
       }
     } else if (enrollments.length === 1) {
-      activeTeacherName = enrollments[0].teacher.username;
+      const single = enrollments[0].teacher;
+      activeTeacherName =
+        single.nameAlias ||
+        (single.role === 'ADMIN' ? 'Admin Teacher' : single.username);
     }
   }
 

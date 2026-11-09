@@ -34,6 +34,7 @@ export async function GET(request: Request) {
       select: {
         id: true,
         username: true,
+        nameAlias: true,
         role: true,
         allowedGrades: true,
         gradeAliases: true,
@@ -79,7 +80,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { username, password, allowedGrades, gradeAliases } = body;
+    const { username, password, allowedGrades, gradeAliases, nameAlias } = body;
 
     if (!username || !password || username.trim().length < 3 || password.length < 4) {
       return NextResponse.json(
@@ -128,6 +129,7 @@ export async function POST(request: Request) {
     const newTeacher = await db.user.create({
       data: {
         username: trimmedUsername,
+        nameAlias: typeof nameAlias === 'string' && nameAlias.trim().length > 0 ? nameAlias.trim() : null,
         hashedPassword,
         role: 'TEACHER',
         allowedGrades: resolvedAllowedGrades,
@@ -136,6 +138,7 @@ export async function POST(request: Request) {
       select: {
         id: true,
         username: true,
+        nameAlias: true,
         role: true,
         allowedGrades: true,
         gradeAliases: true,

@@ -9,6 +9,8 @@ import { ALL_GRADES, GRADE_COLORS, GRADE_LABELS } from '@/lib/constants';
 interface TeacherTarget {
   id: string;
   username: string;
+  role?: string;
+  nameAlias?: string | null;
   allowedGrades?: Grade[];
   gradeAliases?: Record<string, string> | null;
 }
@@ -21,9 +23,14 @@ const EditTeacherModal = ({
 }: {
   teacher: TeacherTarget;
   loading: boolean;
-  onConfirm: (allowedGrades: Grade[], gradeAliases: Record<string, string>) => void;
+  onConfirm: (
+    allowedGrades: Grade[],
+    gradeAliases: Record<string, string>,
+    nameAlias: string | null
+  ) => void;
   onCancel: () => void;
 }) => {
+  const [nameAlias, setNameAlias] = useState(teacher.nameAlias || '');
   const [allowedGrades, setAllowedGrades] = useState<Grade[]>(
     teacher.allowedGrades && teacher.allowedGrades.length > 0
       ? teacher.allowedGrades
@@ -65,7 +72,7 @@ const EditTeacherModal = ({
 
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    onConfirm(allowedGrades, gradeAliases);
+    onConfirm(allowedGrades, gradeAliases, nameAlias.trim() || null);
   };
 
   return (
@@ -82,9 +89,9 @@ const EditTeacherModal = ({
             <div className="flex items-center gap-2.5">
               <Pencil size={16} className="text-white" />
               <div>
-                <span className="text-[15px] font-semibold text-white">Edit Teacher Grades & Aliases</span>
+                <span className="text-[15px] font-semibold text-white">Edit Teacher Profile & Grades</span>
                 <p className="text-[12px] text-purple-200">
-                  Configure allowed grades and class aliases for <span className="font-mono font-medium text-white">{teacher.username}</span>
+                  Configure display name, allowed grades and class aliases for <span className="font-mono font-medium text-white">{teacher.username}</span>
                 </p>
               </div>
             </div>
@@ -103,6 +110,39 @@ const EditTeacherModal = ({
         {/* Content */}
         <div className="max-h-[75vh] overflow-y-auto px-6 py-5 space-y-5">
           <form id="edit-teacher-form" onSubmit={handleSave} className="space-y-4">
+            {/* Display Name / Name Alias */}
+            <div className="rounded-xl border border-purple-100 bg-purple-50/50 p-3.5 space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-semibold text-[#202124]">
+                  {teacher.role === 'ADMIN'
+                    ? 'Admin Name Alias / Display Name'
+                    : 'Display Name / Teacher Alias (Optional)'}
+                </label>
+                {teacher.role === 'ADMIN' && (
+                  <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-blue-100 text-blue-700">
+                    Admin
+                  </span>
+                )}
+              </div>
+              <p className="text-[11px] text-[#5f6368]">
+                {teacher.role === 'ADMIN'
+                  ? 'Name displayed to students in classroom selection and course headers instead of raw "admin" (e.g. "Main Academy", "Head Teacher", or personal name).'
+                  : 'Alternative display name shown to students instead of the login username.'}
+              </p>
+              <input
+                type="text"
+                value={nameAlias}
+                onChange={(e) => setNameAlias(e.target.value)}
+                disabled={loading}
+                placeholder={
+                  teacher.role === 'ADMIN'
+                    ? 'e.g. Main Academy, Mr. Perera'
+                    : 'e.g. Science with David'
+                }
+                className="w-full rounded-lg border border-[#dadce0] bg-white px-3 py-2 text-xs text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:border-purple-600 focus:ring-2 focus:ring-purple-500/20"
+              />
+            </div>
+
             {/* Allowed Grades */}
             <div>
               <div className="mb-2 flex items-center justify-between">
