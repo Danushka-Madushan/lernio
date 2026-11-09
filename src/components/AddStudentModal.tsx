@@ -1,11 +1,11 @@
 "use client";
 
 import { Grade } from '@/generated/client/enums';
-import { BookOpen, ChevronDown, Clock, Loader2, Lock, Plus, RefreshCw, UserPlus, X } from 'lucide-react';
+import { BookOpen, ChevronDown, Clock, Loader2, Lock, Plus, RefreshCw, UserPlus, X, CheckSquare, Square } from 'lucide-react';
 import CopyButton from './CopyButton';
 import UsernameInput from './UsernameInput';
 import { generatePassword } from '@/lib/utils';
-import { getTeacherGrades } from '@/lib/constants';
+import { ALL_GRADES, getTeacherGrades } from '@/lib/constants';
 import DateTimePicker from './DateTimePicker';
 import ShareCredentialsCard from './ShareCredentialsCard';
 import { Button } from '@heroui/react';
@@ -20,6 +20,7 @@ interface ShareInfo {
 interface TeacherOption {
   id: string;
   username: string;
+  nameAlias?: string | null;
   role: string;
   allowedGrades?: Grade[];
   gradeAliases?: Record<string, string> | null;
@@ -27,16 +28,16 @@ interface TeacherOption {
 
 const AddStudentModal = ({
   usernamePrefix, usernameSuffix, password, grade, accessMode, activeFrom, activeTo,
-  teacherId, teachers,
+  teacherIds = [], teachers,
   creating, error, success, shareInfo,
   onPrefixChange, onSuffixChange, onSuffixBulkSet, onPasswordChange,
   onGradeChange, onAccessModeChange, onActiveFromChange, onActiveToChange,
-  onTeacherChange,
+  onTeacherIdsChange,
   onSubmit, onCancel, onDismissShareInfo,
 }: {
   usernamePrefix: string; usernameSuffix: string[]; password: string;
   grade: Grade | ''; accessMode: AccessMode; activeFrom: string; activeTo: string;
-  teacherId: string; teachers: TeacherOption[];
+  teacherIds: string[]; teachers: TeacherOption[];
   creating: boolean; error: string; success: string; shareInfo: ShareInfo | null;
   onPrefixChange: (v: string) => void;
   onSuffixChange: (i: number, v: string) => void;
@@ -46,7 +47,7 @@ const AddStudentModal = ({
   onAccessModeChange: (v: AccessMode) => void;
   onActiveFromChange: (v: string) => void;
   onActiveToChange: (v: string) => void;
-  onTeacherChange: (v: string) => void;
+  onTeacherIdsChange: (ids: string[]) => void;
   onSubmit: (e: React.FormEvent) => void;
   onCancel: () => void;
   onDismissShareInfo: () => void;
@@ -56,10 +57,28 @@ const AddStudentModal = ({
       ? `${usernamePrefix}-${usernameSuffix.join('')}`
       : '';
 
-  const selectedTeacher = teachers.find((t) => t.id === teacherId);
-  const teacherGradeOptions = selectedTeacher
-    ? getTeacherGrades(selectedTeacher.allowedGrades, selectedTeacher.gradeAliases as Record<string, string>)
-    : getTeacherGrades();
+  const selectedTeachers = teachers.filter((t) => teacherIds.includes(t.id));
+  const combinedAllowedGrades = selectedTeachers.reduce<Grade[]>((acc, t) => {
+    if (!t.allowedGrades || t.allowedGrades.length === 0) {
+      return ALL_GRADES;
+    }
+    return Array.from(new Set([...acc, ...t.allowedGrades]));
+  }, []);
+
+  const teacherGradeOptions = getTeacherGrades(
+    combinedAllowedGrades.length > 0 ? combinedAllowedGrades : ALL_GRADES,
+    selectedTeachers[0]?.gradeAliases as Record<string, string>
+  );
+
+  const toggleTeacher = (id: string) => {
+    if (teacherIds.includes(id)) {
+      if (teacherIds.length > 1) {
+        onTeacherIdsChange(teacherIds.filter((tid) => tid !== id));
+      }
+    } else {
+      onTeacherIdsChange([...teacherIds, id]);
+    }
+  };
 
   return (
     <div role="dialog" aria-modal="true"
@@ -119,27 +138,51 @@ const AddStudentModal = ({
               </div>
 
               <div>
-                <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">
-                  Assigned Teacher <span className="text-red-500">*</span>
-                </label>
-                <div className="relative">
-                  <select
-                    value={teacherId}
-                    onChange={(e) => onTeacherChange(e.target.value)}
-                    disabled={creating}
-                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
-                    required
-                  >
-                    {teachers.map((t) => (
-                      <option key={t.id} value={t.id}>
-                        {t.username} {t.role === 'ADMIN' ? '(Admin Teacher)' : '(Teacher)'}
-                      </option>
-                    ))}
-                  </select>
-                  <ChevronDown size={13} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
+                <div className="mb-1.5 flex items-center justify-between">
+                  <label className="text-xs font-medium text-[#5f6368]">
+                    Assigned Teacher(s) <span className="text-red-500">*</span>
+                  </label>
+                  <span className="text-[11px] text-[#9aa0a6]">{teacherIds.length} selected</span>
+                </div>
+                <div className="max-h-36 overflow-y-auto rounded-lg border border-[#dadce0] bg-white p-1.5 space-y-1">
+                  {teachers.length === 0 ? (
+                    <div className="py-4 text-center text-xs text-gray-500">
+                      No teachers found. Please add a teacher account first.
+                    </div>
+                  ) : (
+                    teachers.map((t) => {
+                      const isChecked = teacherIds.includes(t.id);
+                      return (
+                        <label
+                          key={t.id}
+                          className={`flex items-center justify-between px-2.5 py-1.5 rounded-md border text-xs cursor-pointer transition-colors ${
+                            isChecked
+                              ? 'border-blue-300 bg-blue-50/70 text-blue-900 font-medium'
+                              : 'border-transparent text-gray-700 hover:bg-gray-50'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <input
+                              type="checkbox"
+                              checked={isChecked}
+                              onChange={() => toggleTeacher(t.id)}
+                              disabled={creating || (isChecked && teacherIds.length === 1)}
+                              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                            />
+                            <span className="truncate">
+                              {t.nameAlias ? `${t.nameAlias} (${t.username})` : t.username}
+                            </span>
+                          </div>
+                          <span className="text-[10px] text-gray-500 shrink-0 ml-2">
+                            {t.role === 'ADMIN' ? 'Admin Teacher' : 'Teacher'}
+                          </span>
+                        </label>
+                      );
+                    })
+                  )}
                 </div>
                 <p className="mt-1 text-[11px] text-[#9aa0a6]">
-                  This student will only see videos and meetings from this teacher.
+                  Select one or more teachers. The student can switch between their classrooms.
                 </p>
               </div>
 

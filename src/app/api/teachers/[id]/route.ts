@@ -27,9 +27,16 @@ export async function PUT(
 
   try {
     const body = await request.json();
-    const { password, allowedGrades, gradeAliases } = body;
+    const { password, allowedGrades, gradeAliases, nameAlias } = body;
 
     const updateData: any = {};
+
+    if (nameAlias !== undefined) {
+      updateData.nameAlias =
+        typeof nameAlias === 'string' && nameAlias.trim().length > 0
+          ? nameAlias.trim()
+          : null;
+    }
 
     if (password !== undefined) {
       if (password.length < 4) {
@@ -91,6 +98,7 @@ export async function PUT(
       select: {
         id: true,
         username: true,
+        nameAlias: true,
         role: true,
         allowedGrades: true,
         gradeAliases: true,
@@ -251,10 +259,39 @@ export async function DELETE(
 
     // ─── 4. Atomic Database Cleanup ────────────────────────────────────
     await db.$transaction(async (tx) => {
-      // Reassign assigned students to current admin so students are not left orphaned
-      await tx.user.updateMany({
+      // Reassign assigned students in StudentTeacher so students are not left orphaned without any teacher
+      const enrolledStudentIds = (
+        await tx.studentTeacher.findMany({
+          where: { teacherId: id },
+          select: { studentId: true },
+        })
+      ).map((e) => e.studentId);
+
+      for (const sId of enrolledStudentIds) {
+        // If student only had this teacher, ensure they are enrolled with admin
+        const otherCount = await tx.studentTeacher.count({
+          where: { studentId: sId, teacherId: { not: id } },
+        });
+        if (otherCount === 0) {
+          await tx.studentTeacher.upsert({
+            where: {
+              studentId_teacherId: {
+                studentId: sId,
+                teacherId: adminUser.id,
+              },
+            },
+            create: {
+              studentId: sId,
+              teacherId: adminUser.id,
+            },
+            update: {},
+          });
+        }
+      }
+
+      // Remove the teacher's StudentTeacher links
+      await tx.studentTeacher.deleteMany({
         where: { teacherId: id },
-        data: { teacherId: adminUser.id },
       });
 
       // Reassign exams and exam groups to current admin so student exam history and marks remain intact

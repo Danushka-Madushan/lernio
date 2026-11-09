@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import ResumableUploader from '@/components/ResumableUploader';
 import ThumbnailUploader from '@/components/ThumbnailUploader';
-import { Plus, Loader2, CheckCircle2, Film, ArrowLeft } from 'lucide-react';
+import { Plus, Loader2, CheckCircle2, Film, ArrowLeft, Globe, Lock, ChevronDown } from 'lucide-react';
 import { Grade } from '@/generated/client/enums';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -216,35 +216,44 @@ const VideoUploadPage = () => {
                       <span className="font-normal text-[#9aa0a6]">(optional)</span>
                     )}
                   </label>
-                  <select
-                    id="upload-grade"
-                    value={grade}
-                    onChange={(e) => setGrade(e.target.value as Grade | '')}
-                    disabled={saving}
-                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc]  focus:ring-2 focus:ring-blue-500/20"
-                  >
-                    <option value="">- No grade -</option>
-                    {gradeOptions.map((opt) => (
-                      <option key={opt.value} value={opt.value}>
-                        {opt.label}
-                      </option>
-                    ))}
-                  </select>
+                  <div className="relative">
+                    <select
+                      id="upload-grade"
+                      value={grade}
+                      onChange={(e) => setGrade(e.target.value as Grade | '')}
+                      disabled={saving}
+                      className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 pr-8 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
+                    >
+                      <option value="">- No grade -</option>
+                      {gradeOptions.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
+                  </div>
                 </div>
                 <div>
                   <label className="mb-1.5 block text-xs font-medium text-[#5f6368]" htmlFor="upload-visibility">
                     Visibility <span className="text-red-500">*</span>
                   </label>
-                  <select
-                    id="upload-visibility"
-                    value={visibility}
-                    onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'GRADE')}
-                    disabled={saving}
-                    className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc]  focus:ring-2 focus:ring-blue-500/20"
-                  >
-                    <option value="PUBLIC">🌐 Public - All students can see</option>
-                    <option value="GRADE">🔒 Grade Only - Matching grade required</option>
-                  </select>
+                  <div className="relative">
+                    <div className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[#5f6368]">
+                      {visibility === 'PUBLIC' ? <Globe size={15} /> : <Lock size={15} />}
+                    </div>
+                    <select
+                      id="upload-visibility"
+                      value={visibility}
+                      onChange={(e) => setVisibility(e.target.value as 'PUBLIC' | 'GRADE')}
+                      disabled={saving}
+                      className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white pl-9 pr-8 py-2.5 text-sm text-[#202124] outline-none transition-all duration-150 hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
+                    >
+                      <option value="PUBLIC">Public - All students can see</option>
+                      <option value="GRADE">Grade Only - Matching grade required</option>
+                    </select>
+                    <ChevronDown size={14} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]" />
+                  </div>
                 </div>
               </div>
 

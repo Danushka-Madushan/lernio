@@ -21,6 +21,7 @@ import TeacherDeleteConfirmModal from '@/components/TeacherDeleteConfirmModal';
 import AddTeacherModal from '@/components/AddTeacherModal';
 import EditTeacherModal from '@/components/EditTeacherModal';
 import ShareCredentialsCard from '@/components/ShareCredentialsCard';
+import RowActionsDropdown from '@/components/RowActionsDropdown';
 import { triggerUnauthorized } from '@/lib/utils';
 import { Grade } from '@/generated/client/enums';
 import { ALL_GRADES, GRADE_COLORS, GRADE_LABELS } from '@/lib/constants';
@@ -28,6 +29,7 @@ import { ALL_GRADES, GRADE_COLORS, GRADE_LABELS } from '@/lib/constants';
 interface Teacher {
   id: string;
   username: string;
+  nameAlias?: string | null;
   role: 'ADMIN' | 'TEACHER';
   allowedGrades?: Grade[];
   gradeAliases?: Record<string, string> | null;
@@ -53,6 +55,7 @@ const TeachersAdminPage = () => {
   // Create modal state
   const [showAddModal, setShowAddModal] = useState(false);
   const [newUsername, setNewUsername] = useState('');
+  const [newNameAlias, setNewNameAlias] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [newAllowedGrades, setNewAllowedGrades] = useState<Grade[]>([...ALL_GRADES]);
   const [newGradeAliases, setNewGradeAliases] = useState<Record<string, string>>({});
@@ -151,6 +154,7 @@ const TeachersAdminPage = () => {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           username: trimmedUsername,
+          nameAlias: newNameAlias.trim() || undefined,
           password: trimmedPassword,
           allowedGrades: newAllowedGrades,
           gradeAliases: newGradeAliases,
@@ -162,6 +166,7 @@ const TeachersAdminPage = () => {
         setSuccess(`Teacher '${trimmedUsername}' created successfully.`);
         setShareInfo({ username: trimmedUsername, password: trimmedPassword });
         setNewUsername('');
+        setNewNameAlias('');
         setNewPassword('');
         setNewAllowedGrades([...ALL_GRADES]);
         setNewGradeAliases({});
@@ -181,7 +186,8 @@ const TeachersAdminPage = () => {
 
   const handleEditTeacher = async (
     allowedGrades: Grade[],
-    gradeAliases: Record<string, string>
+    gradeAliases: Record<string, string>,
+    nameAlias: string | null
   ) => {
     if (!editTarget) return;
     setEditLoading(true);
@@ -191,7 +197,7 @@ const TeachersAdminPage = () => {
       const res = await fetch(`/api/teachers/${editTarget.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ allowedGrades, gradeAliases }),
+        body: JSON.stringify({ allowedGrades, gradeAliases, nameAlias }),
       });
 
       if (res.ok) {
@@ -283,6 +289,7 @@ const TeachersAdminPage = () => {
       {showAddModal && (
         <AddTeacherModal
           username={newUsername}
+          nameAlias={newNameAlias}
           password={newPassword}
           allowedGrades={newAllowedGrades}
           gradeAliases={newGradeAliases}
@@ -291,6 +298,7 @@ const TeachersAdminPage = () => {
           success={success}
           shareInfo={shareInfo}
           onUsernameChange={setNewUsername}
+          onNameAliasChange={setNewNameAlias}
           onPasswordChange={setNewPassword}
           onAllowedGradesChange={setNewAllowedGrades}
           onGradeAliasesChange={setNewGradeAliases}
@@ -299,6 +307,7 @@ const TeachersAdminPage = () => {
             setShowAddModal(false);
             setNewAllowedGrades([...ALL_GRADES]);
             setNewGradeAliases({});
+            setNewNameAlias('');
           }}
           onDismissShareInfo={() => setShareInfo(null)}
         />
@@ -450,30 +459,31 @@ const TeachersAdminPage = () => {
               ) : (
                 <div className="overflow-x-auto p-4">
                   <table className="w-full border-collapse text-left text-sm">
+                    {/* Table Headers */}
                     <thead>
                       <tr className="border-b border-[#e8eaed]">
-                        <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                        <th className="py-2.5 px-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
                           Teacher
                         </th>
-                        <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                        <th className="py-2.5 px-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                           Role
                         </th>
-                        <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
-                          Allowed Grades & Aliases
+                        <th className="py-2.5 px-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                          Grades & Aliases
                         </th>
-                        <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                        <th className="py-2.5 px-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                           Students
                         </th>
-                        <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                        <th className="py-2.5 px-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                           Videos
                         </th>
-                        <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                        <th className="py-2.5 px-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                           Meetings
                         </th>
-                        <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                        <th className="py-2.5 px-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                           Registered
                         </th>
-                        <th className="py-2.5 text-right text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                        <th className="py-2.5 px-3 text-right text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                           Actions
                         </th>
                       </tr>
@@ -492,32 +502,39 @@ const TeachersAdminPage = () => {
                             key={teacher.id}
                             className="transition-colors duration-100 hover:bg-[#f8f9fa]"
                           >
-                            {/* Username with avatar */}
+                            {/* Username with avatar & display alias */}
                             <td className="py-3.5">
                               <div className="flex items-center gap-3">
                                 <div
-                                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-medium ${
-                                    teacher.role === 'ADMIN'
-                                      ? 'bg-blue-100 text-blue-600'
-                                      : 'bg-purple-100 text-purple-700'
-                                  }`}
+                                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${teacher.role === 'ADMIN'
+                                    ? 'bg-blue-100 text-blue-600'
+                                    : 'bg-purple-100 text-purple-700'
+                                    }`}
                                 >
-                                  {teacher.username.charAt(0).toUpperCase()}
+                                  {(teacher.nameAlias || teacher.username).charAt(0).toUpperCase()}
                                 </div>
-                                <span className="font-mono text-[13px] font-medium text-[#202124]">
-                                  {teacher.username}
-                                </span>
+                                <div className="min-w-0">
+                                  <div className="flex items-center gap-1.5">
+                                    <span className="text-[13px] font-medium text-[#202124] truncate">
+                                      {teacher.nameAlias || teacher.username}
+                                    </span>
+                                  </div>
+                                  {teacher.nameAlias && (
+                                    <span className="font-mono text-[11px] text-[#5f6368] block">
+                                      @{teacher.username}
+                                    </span>
+                                  )}
+                                </div>
                               </div>
                             </td>
 
                             {/* Role badge */}
-                            <td className="py-3.5">
+                            <td className="py-3.5 px-3 whitespace-nowrap">
                               <span
-                                className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
-                                  teacher.role === 'ADMIN'
-                                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                    : 'bg-purple-50 text-purple-700 border border-purple-200'
-                                }`}
+                                className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium ${teacher.role === 'ADMIN'
+                                  ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                  : 'bg-purple-50 text-purple-700 border border-purple-200'
+                                  }`}
                               >
                                 {teacher.role === 'ADMIN' ? 'Admin (Primary)' : 'Teacher'}
                               </span>
@@ -579,36 +596,34 @@ const TeachersAdminPage = () => {
 
                             {/* Actions */}
                             <td className="py-3.5 text-right">
-                              <div className="inline-flex items-center gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() => setEditTarget(teacher)}
-                                  title="Edit Grades & Aliases"
-                                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-100"
-                                >
-                                  <Pencil size={13} />
-                                  <span>Edit</span>
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setResetTarget(teacher)}
-                                  title="Reset Password"
-                                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-purple-600 transition-colors hover:bg-purple-100"
-                                >
-                                  <Key size={13} />
-                                  <span>Reset</span>
-                                </button>
-                                {teacher.role !== 'ADMIN' && (
-                                  <button
-                                    type="button"
-                                    onClick={() => setDeleteTarget(teacher)}
-                                    title="Delete Teacher"
-                                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-red-100"
-                                  >
-                                    <Trash size={13} />
-                                    <span>Delete</span>
-                                  </button>
-                                )}
+                              <div className="inline-flex justify-end">
+                                <RowActionsDropdown
+                                  items={[
+                                    {
+                                      id: 'edit',
+                                      label: 'Edit Grades & Aliases',
+                                      icon: <Pencil size={13} className="text-blue-600" />,
+                                      onClick: () => setEditTarget(teacher),
+                                    },
+                                    {
+                                      id: 'reset',
+                                      label: 'Reset Password',
+                                      icon: <Key size={13} className="text-purple-600" />,
+                                      onClick: () => setResetTarget(teacher),
+                                    },
+                                    ...(teacher.role !== 'ADMIN'
+                                      ? [
+                                          {
+                                            id: 'delete',
+                                            label: 'Delete Teacher',
+                                            icon: <Trash size={13} className="text-red-500" />,
+                                            variant: 'danger' as const,
+                                            onClick: () => setDeleteTarget(teacher),
+                                          },
+                                        ]
+                                      : []),
+                                  ]}
+                                />
                               </div>
                             </td>
                           </tr>

@@ -45,7 +45,6 @@ export async function GET(request: Request, context: RouteContext) {
           grade: true,
           activeFrom: true,
           activeTo: true,
-          teacherId: true,
         },
       });
 
@@ -53,9 +52,19 @@ export async function GET(request: Request, context: RouteContext) {
         return NextResponse.json({ error: 'Student record not found' }, { status: 404 });
       }
 
-      // Teacher isolation check
-      if (liveClass.teacherId !== studentRecord.teacherId) {
-        return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+      // Teacher isolation check: live class must belong to one of student's assigned teachers
+      if (liveClass.teacherId) {
+        const isEnrolled = await db.studentTeacher.findUnique({
+          where: {
+            studentId_teacherId: {
+              studentId: user.id,
+              teacherId: liveClass.teacherId,
+            },
+          },
+        });
+        if (!isEnrolled) {
+          return NextResponse.json({ error: 'Access denied' }, { status: 403 });
+        }
       }
 
       // Grade visibility check

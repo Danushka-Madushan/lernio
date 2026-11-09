@@ -34,13 +34,14 @@ export async function GET(request: Request) {
       select: {
         id: true,
         username: true,
+        nameAlias: true,
         role: true,
         allowedGrades: true,
         gradeAliases: true,
         createdAt: true,
         _count: {
           select: {
-            students: true,
+            studentEnrollments: true,
             videos: true,
             meetings: true,
           },
@@ -52,7 +53,15 @@ export async function GET(request: Request) {
       ],
     });
 
-    return NextResponse.json({ teachers });
+    const mappedTeachers = teachers.map((t) => ({
+      ...t,
+      _count: {
+        ...t._count,
+        students: t._count.studentEnrollments,
+      },
+    }));
+
+    return NextResponse.json({ teachers: mappedTeachers });
   } catch (error: unknown) {
     console.error('List teachers error:', error);
     return NextResponse.json({ error: 'Failed to retrieve teachers' }, { status: 500 });
@@ -71,7 +80,7 @@ export async function POST(request: Request) {
 
   try {
     const body = await request.json();
-    const { username, password, allowedGrades, gradeAliases } = body;
+    const { username, password, allowedGrades, gradeAliases, nameAlias } = body;
 
     if (!username || !password || username.trim().length < 3 || password.length < 4) {
       return NextResponse.json(
@@ -120,6 +129,7 @@ export async function POST(request: Request) {
     const newTeacher = await db.user.create({
       data: {
         username: trimmedUsername,
+        nameAlias: typeof nameAlias === 'string' && nameAlias.trim().length > 0 ? nameAlias.trim() : null,
         hashedPassword,
         role: 'TEACHER',
         allowedGrades: resolvedAllowedGrades,
@@ -128,13 +138,14 @@ export async function POST(request: Request) {
       select: {
         id: true,
         username: true,
+        nameAlias: true,
         role: true,
         allowedGrades: true,
         gradeAliases: true,
         createdAt: true,
         _count: {
           select: {
-            students: true,
+            studentEnrollments: true,
             videos: true,
             meetings: true,
           },
@@ -142,7 +153,15 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({ success: true, teacher: newTeacher });
+    const mappedTeacher = {
+      ...newTeacher,
+      _count: {
+        ...newTeacher._count,
+        students: newTeacher._count.studentEnrollments,
+      },
+    };
+
+    return NextResponse.json({ success: true, teacher: mappedTeacher });
   } catch (error: unknown) {
     console.error('Create teacher error:', error);
     return NextResponse.json({ error: 'Failed to create teacher account' }, { status: 500 });

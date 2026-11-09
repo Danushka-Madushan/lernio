@@ -35,6 +35,7 @@ enum AccessMode {
 model User {
   id             String     @id @default(uuid())
   username       String     @unique
+  nameAlias      String?
   hashedPassword String
   role           Role       @default(STUDENT)
   grade          Grade?
@@ -43,9 +44,8 @@ model User {
   activeFrom     DateTime?
   activeTo       DateTime?
   accessMode     AccessMode @default(GRADE)
-  teacherId      String?
-  teacher        User?      @relation("TeacherStudents", fields: [teacherId], references: [id], onDelete: SetNull)
-  students       User[]     @relation("TeacherStudents")
+  teacherEnrollments StudentTeacher[] @relation("StudentToTeacherAssignments")
+  studentEnrollments StudentTeacher[] @relation("TeacherToStudentAssignments")
   createdAt      DateTime   @default(now())
   updatedAt      DateTime   @updatedAt
 
@@ -225,4 +225,17 @@ model YouTubeClass {
   viewsCount  Int             @default(0)
   createdAt   DateTime        @default(now())
   updatedAt   DateTime        @updatedAt
+}
+
+model StudentTeacher {
+  id        String   @id @default(uuid())
+  studentId String
+  teacherId String
+  student   User     @relation("StudentToTeacherAssignments", fields: [studentId], references: [id], onDelete: Cascade)
+  teacher   User     @relation("TeacherToStudentAssignments", fields: [teacherId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([studentId, teacherId])
+  @@index([studentId])
+  @@index([teacherId])
 }

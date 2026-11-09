@@ -1,11 +1,13 @@
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import { verifyToken } from '@/lib/jwt';
+import { db } from '@/lib/db';
 import Link from 'next/link';
 import Image from 'next/image';
 import StudentMeetingsNav from '@/components/StudentMeetingsNav';
 import MobileDrawerNav from '@/components/MobileDrawerNav';
 import UserMenuDropdown from '@/components/UserMenuDropdown';
-import { Award, Tv } from 'lucide-react';
+import { Award, Tv, Users } from 'lucide-react';
 
 const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   const cookieStore = await cookies();
@@ -13,6 +15,39 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
   const user = token ? await verifyToken(token) : null;
 
   const isStudent = user?.role === 'STUDENT';
+  let hasMultipleTeachers = false;
+  let activeTeacherName: string | null = null;
+
+  if (isStudent && user) {
+    const enrollments = await db.studentTeacher.findMany({
+      where: { studentId: user.id },
+      include: {
+        teacher: {
+          select: { id: true, username: true, nameAlias: true, role: true },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    if (enrollments.length > 1) {
+      hasMultipleTeachers = true;
+      const activeTeacherId = cookieStore.get('active_teacher_id')?.value;
+      if (!activeTeacherId) {
+        redirect('/teacher-select');
+      }
+      const activeTeacher = enrollments.find((e) => e.teacherId === activeTeacherId);
+      if (activeTeacher) {
+        activeTeacherName =
+          activeTeacher.teacher.nameAlias ||
+          (activeTeacher.teacher.role === 'ADMIN' ? 'Admin Teacher' : activeTeacher.teacher.username);
+      }
+    } else if (enrollments.length === 1) {
+      const single = enrollments[0].teacher;
+      activeTeacherName =
+        single.nameAlias ||
+        (single.role === 'ADMIN' ? 'Admin Teacher' : single.username);
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8f9fa] text-[#202124]">
@@ -80,9 +115,25 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
                   </Link>
                 )}
 
+                {/* Switch Classroom Link for Students with Multiple Teachers */}
+                {isStudent && hasMultipleTeachers && (
+                  <Link
+                    href="/teacher-select"
+                    className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 font-medium text-xs rounded-full border border-indigo-200 transition-colors focus-visible:ring-2 focus-visible:ring-indigo-500/40 outline-none shadow-2xs"
+                    title="Switch Classroom"
+                  >
+                    <Users size={14} className="text-indigo-600" />
+                    <span>{activeTeacherName ? `Class: ${activeTeacherName}` : 'Switch Class'}</span>
+                  </Link>
+                )}
+
                 {/* Consolidated User Dropdown */}
                 <div className="hidden sm:flex items-center">
-                  <UserMenuDropdown user={user} />
+                  <UserMenuDropdown
+                    user={user}
+                    hasMultipleTeachers={hasMultipleTeachers}
+                    activeTeacherName={activeTeacherName}
+                  />
                 </div>
               </>
             )}
@@ -95,7 +146,14 @@ const DashboardLayout = async ({ children }: { children: React.ReactNode }) => {
       </main>
 
       {/* Universal mobile drawer navigation for all authenticated roles */}
-      {user && <MobileDrawerNav username={user.username} role={user.role} />}
+      {user && (
+        <MobileDrawerNav
+          username={user.username}
+          role={user.role}
+          hasMultipleTeachers={hasMultipleTeachers}
+          activeTeacherName={activeTeacherName}
+        />
+      )}
     </div>
   );
 };

@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Tv, ArrowLeft } from 'lucide-react';
+import { db } from '@/lib/db';
 import UserMenuDropdown from '@/components/UserMenuDropdown';
 import LiveClassesMobileNav from '@/components/liveclasses/LiveClassesMobileNav';
 
@@ -21,6 +22,39 @@ export default async function LiveClassesLayout({
   }
 
   const isStaff = user.role === 'ADMIN' || user.role === 'TEACHER';
+
+  let hasMultipleTeachers = false;
+  let activeTeacherName: string | null = null;
+
+  if (user.role === 'STUDENT') {
+    const enrollments = await db.studentTeacher.findMany({
+      where: { studentId: user.id },
+      include: {
+        teacher: {
+          select: { id: true, username: true, nameAlias: true, role: true },
+        },
+      },
+      orderBy: { createdAt: 'asc' },
+    });
+
+    if (enrollments.length > 1) {
+      hasMultipleTeachers = true;
+      const activeTeacherCookie = cookieStore.get('active_teacher_id')?.value;
+      const activeTeacher =
+        (activeTeacherCookie && enrollments.find((e) => e.teacherId === activeTeacherCookie)) ||
+        enrollments[0];
+      if (activeTeacher) {
+        activeTeacherName =
+          activeTeacher.teacher.nameAlias ||
+          (activeTeacher.teacher.role === 'ADMIN' ? 'Admin Teacher' : activeTeacher.teacher.username);
+      }
+    } else if (enrollments.length === 1) {
+      const single = enrollments[0].teacher;
+      activeTeacherName =
+        single.nameAlias ||
+        (single.role === 'ADMIN' ? 'Admin Teacher' : single.username);
+    }
+  }
 
   return (
     <div className="min-h-screen flex flex-col bg-[#f8f9fa] text-[#202124]">
@@ -98,11 +132,20 @@ export default async function LiveClassesLayout({
 
             {/* Consolidated User Dropdown (Desktop) */}
             <div className="hidden md:block">
-              <UserMenuDropdown user={user} />
+              <UserMenuDropdown
+                user={user}
+                hasMultipleTeachers={hasMultipleTeachers}
+                activeTeacherName={activeTeacherName}
+              />
             </div>
 
             {/* Mobile Drawer Trigger (Mobile-only) */}
-            <LiveClassesMobileNav username={user.username} role={user.role} />
+            <LiveClassesMobileNav
+              username={user.username}
+              role={user.role}
+              hasMultipleTeachers={hasMultipleTeachers}
+              activeTeacherName={activeTeacherName}
+            />
           </div>
         </div>
       </header>

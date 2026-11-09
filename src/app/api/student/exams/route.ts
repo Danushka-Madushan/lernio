@@ -15,10 +15,19 @@ export async function GET(request: Request) {
   }
 
   try {
+    const activeTeacherId = cookieStore.get('active_teacher_id')?.value;
+    const whereClause: any = {
+      studentId: user.id,
+    };
+
+    if (activeTeacherId) {
+      whereClause.exam = {
+        teacherId: activeTeacherId,
+      };
+    }
+
     const studentMarks = await db.examMark.findMany({
-      where: {
-        studentId: user.id,
-      },
+      where: whereClause,
       include: {
         exam: {
           include: {

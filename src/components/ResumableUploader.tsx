@@ -605,7 +605,7 @@ const ResumableUploader = ({ onSuccess }: ResumableUploaderProps) => {
     if (shouldFix && file.size > MAX_PROCESSABLE_BYTES) {
       shouldFix = false;
       setError(
-        `⚠️ Video is larger than 2 GB - skipping streaming optimization. ` +
+        `Video is larger than 2 GB - skipping streaming optimization. ` +
         `Progressive playback may be limited for this video.`,
       );
     }
@@ -807,8 +807,9 @@ const ResumableUploader = ({ onSuccess }: ResumableUploaderProps) => {
 
         {/* ── General error ─────────────────────────────────────────────── */}
         {error && (
-          <div className="rounded-lg border border-[#fad2cf] bg-[#fce8e6] p-2.5 text-[10px] text-[#c5221f]">
-            {error}
+          <div className="flex items-start gap-1.5 rounded-lg border border-[#fad2cf] bg-[#fce8e6] p-2.5 text-[10px] text-[#c5221f]">
+            <AlertTriangle size={12} className="mt-0.5 shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 

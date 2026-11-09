@@ -71,7 +71,6 @@ export async function verifyVideoAccess(
         activeFrom: true,
         activeTo: true,
         accessMode: true,
-        teacherId: true,
       },
     });
 
@@ -83,9 +82,20 @@ export async function verifyVideoAccess(
       return { allowed: false, reason: 'account_inactive' };
     }
 
-    // Must belong to the student's assigned teacher
-    if (!student.teacherId || video.teacherId !== student.teacherId) {
-      return { allowed: false, reason: 'forbidden' };
+    // Must belong to one of the student's assigned teachers
+    if (video.teacherId) {
+      const isEnrolledWithTeacher = await db.studentTeacher.findUnique({
+        where: {
+          studentId_teacherId: {
+            studentId: user.id,
+            teacherId: video.teacherId,
+          },
+        },
+      });
+
+      if (!isEnrolledWithTeacher) {
+        return { allowed: false, reason: 'forbidden' };
+      }
     }
 
     // CUSTOM mode: must be in customVideoAccess

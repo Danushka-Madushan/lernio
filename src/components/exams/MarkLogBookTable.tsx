@@ -271,13 +271,14 @@ export default function MarkLogBookTable({
                   <button
                     type="button"
                     onClick={() => handleAbsentToggle(idx)}
-                    className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors ${
+                    className={`px-2.5 py-1 text-xs font-medium rounded-lg border transition-colors inline-flex items-center gap-1.5 ${
                       student.isAbsent
                         ? 'bg-amber-500 text-white border-amber-600'
                         : 'bg-gray-100 text-gray-600 border-gray-200 hover:bg-gray-200'
                     }`}
                   >
-                    {student.isAbsent ? 'Absent ✓' : 'Mark Absent'}
+                    {student.isAbsent && <Check size={12} className="stroke-[2.5]" />}
+                    <span>{student.isAbsent ? 'Absent' : 'Mark Absent'}</span>
                   </button>
 
                   {/* Status Tag */}

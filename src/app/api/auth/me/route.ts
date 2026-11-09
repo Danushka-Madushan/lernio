@@ -29,24 +29,58 @@ export async function GET() {
       gradeAliases = (dbUser.gradeAliases as Record<string, string>) || {};
     }
   } else if (user.role === 'STUDENT') {
-    const student = await db.user.findUnique({
-      where: { id: user.id },
-      select: {
-        teacherId: true,
+    const activeTeacherCookie = cookieStore.get('active_teacher_id')?.value;
+    const enrollments = await db.studentTeacher.findMany({
+      where: { studentId: user.id },
+      include: {
         teacher: {
           select: {
+            id: true,
+            username: true,
+            nameAlias: true,
+            role: true,
             allowedGrades: true,
             gradeAliases: true,
           },
         },
       },
+      orderBy: { createdAt: 'asc' },
     });
-    if (student?.teacher) {
-      if (student.teacher.allowedGrades && student.teacher.allowedGrades.length > 0) {
-        allowedGrades = student.teacher.allowedGrades;
+
+    const activeEnrollment =
+      (activeTeacherCookie && enrollments.find((e) => e.teacherId === activeTeacherCookie)) ||
+      enrollments[0];
+
+    if (activeEnrollment?.teacher) {
+      if (activeEnrollment.teacher.allowedGrades && activeEnrollment.teacher.allowedGrades.length > 0) {
+        allowedGrades = activeEnrollment.teacher.allowedGrades;
       }
-      gradeAliases = (student.teacher.gradeAliases as Record<string, string>) || {};
+      gradeAliases = (activeEnrollment.teacher.gradeAliases as Record<string, string>) || {};
     }
+
+    const activeTeacherName = activeEnrollment?.teacher
+      ? activeEnrollment.teacher.nameAlias ||
+        (activeEnrollment.teacher.role === 'ADMIN' ? 'Admin Teacher' : activeEnrollment.teacher.username)
+      : null;
+
+    return NextResponse.json({
+      user: {
+        id: user.id,
+        username: user.username,
+        role: user.role,
+        teacherId: activeEnrollment?.teacherId || user.teacherId || null,
+        activeTeacherId: activeEnrollment?.teacherId || null,
+        activeTeacherName,
+        teachers: enrollments.map((e) => ({
+          ...e.teacher,
+          displayName:
+            e.teacher.nameAlias ||
+            (e.teacher.role === 'ADMIN' ? 'Admin Teacher' : e.teacher.username),
+        })),
+        allowedGrades,
+        gradeAliases,
+      },
+    });
   }
 
   return NextResponse.json({

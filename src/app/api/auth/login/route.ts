@@ -67,12 +67,29 @@ export async function POST(request: Request) {
       }
     }
 
+    // Check if student has multiple teachers requiring selection
+    let needsTeacherSelect = false;
+    let singleTeacherId: string | null = null;
+
+    if (user.role === 'STUDENT') {
+      const enrollments = await db.studentTeacher.findMany({
+        where: { studentId: user.id },
+        select: { teacherId: true },
+      });
+
+      if (enrollments.length > 1) {
+        needsTeacherSelect = true;
+      } else if (enrollments.length === 1) {
+        singleTeacherId = enrollments[0].teacherId;
+      }
+    }
+
     // Generate JWT token
     const token = await signToken({
       id: user.id,
       username: user.username,
       role: user.role,
-      teacherId: user.teacherId,
+      teacherId: singleTeacherId,
     });
 
     const response = NextResponse.json({
@@ -81,11 +98,12 @@ export async function POST(request: Request) {
         id: user.id,
         username: user.username,
         role: user.role,
-        teacherId: user.teacherId,
+        teacherId: singleTeacherId,
       },
+      needsTeacherSelect,
     });
 
-    // Set cookie
+    // Set session cookie
     response.cookies.set('session_token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
@@ -93,6 +111,20 @@ export async function POST(request: Request) {
       path: '/',
       maxAge: 60 * 60 * 24 * 7, // 7 days
     });
+
+    // If single teacher, set active_teacher_id cookie automatically
+    if (singleTeacherId) {
+      response.cookies.set('active_teacher_id', singleTeacherId, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24 * 30,
+      });
+    } else if (needsTeacherSelect) {
+      // Clear previous active teacher cookie to force selection screen
+      response.cookies.delete('active_teacher_id');
+    }
 
     return response;
   } catch (error: unknown) {

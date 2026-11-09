@@ -17,6 +17,7 @@ import {
   ShieldAlert,
   Calendar,
   UserCheck,
+  Pencil,
 } from 'lucide-react';
 import { Button } from '@heroui/react';
 import { Grade } from '@/generated/client/enums';
@@ -29,6 +30,7 @@ import EditStudentModal from '@/components/EditStudentModal';
 import CustomVideoPickerModal from '@/components/CustomVideoPickerModal';
 import AddStudentModal from '@/components/AddStudentModal';
 import StatCard from '@/components/StatCard';
+import RowActionsDropdown, { RowActionItem } from '@/components/RowActionsDropdown';
 import { generatePassword, getAccountStatus, triggerUnauthorized } from '@/lib/utils';
 import AccountStatusBadge from '@/components/AccountStatusBadge';
 
@@ -39,6 +41,7 @@ type AccessMode = 'GRADE' | 'CUSTOM';
 interface TeacherOption {
   id: string;
   username: string;
+  nameAlias?: string | null;
   role: string;
   allowedGrades?: Grade[];
   gradeAliases?: Record<string, string> | null;
@@ -58,6 +61,7 @@ interface Student {
     allowedGrades?: Grade[];
     gradeAliases?: Record<string, string> | null;
   } | null;
+  teachers?: TeacherOption[];
   createdAt: string;
 }
 
@@ -110,7 +114,7 @@ const UsersAdminPage = () => {
   const [newAccessMode, setNewAccessMode] = useState<AccessMode>('GRADE');
   const [newActiveFrom, setNewActiveFrom] = useState('');
   const [newActiveTo, setNewActiveTo] = useState('');
-  const [newTeacherId, setNewTeacherId] = useState('');
+  const [newTeacherIds, setNewTeacherIds] = useState<string[]>([]);
   const [creating, setCreating] = useState(false);
 
   // Share credentials card
@@ -157,12 +161,8 @@ const UsersAdminPage = () => {
     return getTeacherGrades(currentUserAllowedGrades, currentUserAliases);
   }, [isAdmin, teacherFilter, teachers, currentUserAllowedGrades, currentUserAliases]);
 
-  const handleTeacherChange = (teacherId: string) => {
-    setNewTeacherId(teacherId);
-    const selected = teachers.find((t) => t.id === teacherId);
-    if (selected?.allowedGrades && newGrade && !selected.allowedGrades.includes(newGrade as Grade)) {
-      setNewGrade('');
-    }
+  const handleTeacherIdsChange = (ids: string[]) => {
+    setNewTeacherIds(ids);
   };
 
   const activeStudents = useMemo(
@@ -181,7 +181,7 @@ const UsersAdminPage = () => {
         const matchSearch = s.username.toLowerCase().includes(q);
         const matchGrade = gradeFilter ? s.grade === gradeFilter : true;
         const matchTeacher = teacherFilter
-          ? s.teacherId === teacherFilter || s.teacher?.id === teacherFilter
+          ? s.teachers?.some((t) => t.id === teacherFilter) || s.teacherId === teacherFilter || s.teacher?.id === teacherFilter
           : true;
         return matchSearch && matchGrade && matchTeacher;
       });
@@ -220,6 +220,7 @@ const UsersAdminPage = () => {
           const tList: TeacherOption[] = (data.teachers || []).map((t: any) => ({
             id: t.id,
             username: t.username,
+            nameAlias: t.nameAlias,
             role: t.role,
             allowedGrades: t.allowedGrades,
             gradeAliases: t.gradeAliases,
@@ -227,7 +228,9 @@ const UsersAdminPage = () => {
           setTeachers(tList);
           // Default to admin teacher
           const adminT = tList.find((t) => t.role === 'ADMIN') || tList[0];
-          if (adminT) setNewTeacherId(adminT.id);
+          if (adminT) setNewTeacherIds([adminT.id]);
+        } else {
+          console.error('Failed to fetch teachers:', res.status, await res.text());
         }
       }
     } catch {
@@ -306,7 +309,7 @@ const UsersAdminPage = () => {
           activeFrom: newActiveFrom || null,
           activeTo: newActiveTo || null,
           accessMode: newAccessMode,
-          teacherId: newTeacherId || undefined,
+          teacherIds: newTeacherIds.length > 0 ? newTeacherIds : undefined,
         }),
       });
       const data = await res.json();
@@ -320,6 +323,8 @@ const UsersAdminPage = () => {
         setNewActiveFrom('');
         setNewActiveTo('');
         setNewAccessMode('GRADE');
+        const adminT = teachers.find((t) => t.role === 'ADMIN') || teachers[0];
+        if (adminT) setNewTeacherIds([adminT.id]);
         setShowAddModal(false);
         fetchStudents();
       } else if (res.status === 401) {
@@ -406,7 +411,7 @@ const UsersAdminPage = () => {
     activeTo: string,
     accessMode: AccessMode,
     grade: Grade | '',
-    teacherId?: string
+    teacherIds?: string[]
   ) => {
     if (!editTarget) return;
     setEditLoading(true);
@@ -419,7 +424,7 @@ const UsersAdminPage = () => {
           activeTo: activeTo || null,
           accessMode,
           grade: grade || null,
-          ...(isAdmin && teacherId !== undefined ? { teacherId } : {}),
+          ...(isAdmin && teacherIds !== undefined ? { teacherIds } : {}),
         }),
       });
       if (res.ok) {
@@ -525,7 +530,20 @@ const UsersAdminPage = () => {
       {/* Teacher (for Admin) */}
       {isAdmin && (
         <td className="py-3.5">
-          {student.teacher ? (
+          {student.teachers && student.teachers.length > 0 ? (
+            <div className="flex flex-wrap gap-1 max-w-45">
+              {student.teachers.map((t) => (
+                <span
+                  key={t.id}
+                  className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-medium text-purple-700 border border-purple-100 truncate"
+                  title={t.username}
+                >
+                  <UserCheck size={10} className="shrink-0" />
+                  <span className="truncate max-w-27.5">{t.username}</span>
+                </span>
+              ))}
+            </div>
+          ) : student.teacher ? (
             <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2.5 py-1 text-[11px] font-medium text-purple-700 border border-purple-100">
               <UserCheck size={11} /> {student.teacher.username}
             </span>
@@ -539,7 +557,7 @@ const UsersAdminPage = () => {
       <td className="py-3.5">
         {student.grade ? (
           <span
-            className={`inline-block max-w-[130px] sm:max-w-[160px] truncate align-middle rounded-full px-2.5 py-1 text-[11px] font-medium ${GRADE_COLORS[student.grade]}`}
+            className={`inline-block max-w-32.5 sm:max-w-40 truncate align-middle rounded-full px-2.5 py-1 text-[11px] font-medium ${GRADE_COLORS[student.grade]}`}
             title={getGradeLabel(
               student.grade,
               (student.teacher?.gradeAliases as Record<string, string>) || currentUserAliases
@@ -574,62 +592,58 @@ const UsersAdminPage = () => {
 
       {/* Actions */}
       <td className="py-3.5 text-right">
-        <div className="inline-flex items-center gap-1">
-          {student.accessMode === 'CUSTOM' && (
-            <button
-              type="button"
-              onClick={() => setCustomVideoTarget(student)}
-              title="Manage Videos"
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-purple-700 transition-colors hover:bg-purple-100"
-            >
-              <Film size={13} />
-              <span>Videos</span>
-            </button>
-          )}
-          {isAdmin ? (
-            <>
-              <button
-                type="button"
-                onClick={() => setEditTarget(student)}
-                title="Edit Student"
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-blue-500 transition-colors hover:bg-blue-100"
-              >
-                <span>Edit</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleOpenShareReset(student)}
-                title="Share Credentials"
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-green-700 transition-colors hover:bg-green-100"
-              >
-                <Share2 size={13} />
-                <span>Share</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setResetTarget(student)}
-                title="Reset Password"
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-blue-500 transition-colors hover:bg-blue-100"
-              >
-                <Key size={13} />
-                <span>Reset</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setDeleteTarget(student)}
-                title="Delete Student"
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-red-100"
-              >
-                <Trash size={13} />
-                <span>Delete</span>
-              </button>
-            </>
-          ) : (
-            student.accessMode !== 'CUSTOM' && (
-              <span className="text-[11px] text-[#9aa0a6] px-2 py-1">View only</span>
-            )
-          )}
-        </div>
+        {(() => {
+          const actionItems: RowActionItem[] = [];
+
+          if (student.accessMode === 'CUSTOM') {
+            actionItems.push({
+              id: 'videos',
+              label: 'Manage Videos',
+              icon: <Film size={13} className="text-purple-700" />,
+              onClick: () => setCustomVideoTarget(student),
+            });
+          }
+
+          if (isAdmin) {
+            actionItems.push(
+              {
+                id: 'edit',
+                label: 'Edit Student',
+                icon: <Pencil size={13} className="text-blue-500" />,
+                onClick: () => setEditTarget(student),
+              },
+              {
+                id: 'share',
+                label: 'Share Credentials',
+                icon: <Share2 size={13} className="text-green-700" />,
+                onClick: () => handleOpenShareReset(student),
+              },
+              {
+                id: 'reset',
+                label: 'Reset Password',
+                icon: <Key size={13} className="text-blue-500" />,
+                onClick: () => setResetTarget(student),
+              },
+              {
+                id: 'delete',
+                label: 'Delete Student',
+                icon: <Trash size={13} className="text-red-500" />,
+                variant: 'danger',
+                onClick: () => setDeleteTarget(student),
+              }
+            );
+          }
+
+          if (actionItems.length === 0) {
+            return <span className="text-[11px] text-[#9aa0a6] px-2 py-1">View only</span>;
+          }
+
+          return (
+            <div className="inline-flex justify-end">
+              <RowActionsDropdown items={actionItems} />
+            </div>
+          );
+        })()}
       </td>
     </tr>
   );
@@ -648,7 +662,7 @@ const UsersAdminPage = () => {
           accessMode={newAccessMode}
           activeFrom={newActiveFrom}
           activeTo={newActiveTo}
-          teacherId={newTeacherId}
+          teacherIds={newTeacherIds}
           teachers={teachers}
           creating={creating}
           error={error}
@@ -664,7 +678,7 @@ const UsersAdminPage = () => {
           onAccessModeChange={setNewAccessMode}
           onActiveFromChange={setNewActiveFrom}
           onActiveToChange={setNewActiveTo}
-          onTeacherChange={handleTeacherChange}
+          onTeacherIdsChange={handleTeacherIdsChange}
           onSubmit={handleCreateStudent}
           onCancel={() => setShowAddModal(false)}
           onDismissShareInfo={() => setShareInfo(null)}
@@ -904,7 +918,7 @@ const UsersAdminPage = () => {
                               Assigned Teacher
                             </th>
                           )}
-                          <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368] min-w-[120px]">
+                          <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368] min-w-30">
                             Grade
                           </th>
                           <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
@@ -973,7 +987,7 @@ const UsersAdminPage = () => {
                                   Teacher
                                 </th>
                               )}
-                              <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368] min-w-[120px]">
+                              <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368] min-w-30">
                                 Grade
                               </th>
                               <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
@@ -1005,7 +1019,18 @@ const UsersAdminPage = () => {
                                 </td>
                                 {isAdmin && (
                                   <td className="py-3.5">
-                                    {student.teacher ? (
+                                    {student.teachers && student.teachers.length > 0 ? (
+                                      <div className="flex flex-wrap gap-1 max-w-45">
+                                        {student.teachers.map((t) => (
+                                          <span
+                                            key={t.id}
+                                            className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-medium text-purple-700"
+                                          >
+                                            {t.username}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    ) : student.teacher ? (
                                       <span className="inline-flex items-center gap-1 rounded-full bg-purple-50 px-2 py-0.5 text-[11px] font-medium text-purple-700">
                                         {student.teacher.username}
                                       </span>
@@ -1017,7 +1042,7 @@ const UsersAdminPage = () => {
                                 <td className="py-3.5">
                                   {student.grade ? (
                                     <span
-                                      className={`inline-block max-w-[130px] sm:max-w-[160px] truncate align-middle rounded-full px-2.5 py-1 text-[11px] font-medium ${GRADE_COLORS[student.grade]}`}
+                                      className={`inline-block max-w-32.5 sm:max-w-40 truncate align-middle rounded-full px-2.5 py-1 text-[11px] font-medium ${GRADE_COLORS[student.grade]}`}
                                       title={getGradeLabel(
                                         student.grade,
                                         (student.teacher?.gradeAliases as Record<string, string>) || currentUserAliases
@@ -1039,29 +1064,29 @@ const UsersAdminPage = () => {
                                   {formatDate(student.activeTo)}
                                 </td>
                                 <td className="py-3.5 text-right">
-                                  <div className="inline-flex items-center gap-1">
-                                    {isAdmin ? (
-                                      <>
-                                        <button
-                                          type="button"
-                                          onClick={() => setEditTarget(student)}
-                                          className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1.5 text-xs font-medium text-blue-500 transition-colors hover:bg-[#c2d7fa]"
-                                        >
-                                          <span>Edit / Reactivate</span>
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => setDeleteTarget(student)}
-                                          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-[#fce8e6]"
-                                        >
-                                          <Trash size={13} />
-                                          <span>Delete</span>
-                                        </button>
-                                      </>
-                                    ) : (
-                                      <span className="text-[11px] text-[#9aa0a6] px-2 py-1">View only</span>
-                                    )}
-                                  </div>
+                                  {isAdmin ? (
+                                    <div className="inline-flex justify-end">
+                                      <RowActionsDropdown
+                                        items={[
+                                          {
+                                            id: 'edit',
+                                            label: 'Edit / Reactivate',
+                                            icon: <Pencil size={13} className="text-blue-500" />,
+                                            onClick: () => setEditTarget(student),
+                                          },
+                                          {
+                                            id: 'delete',
+                                            label: 'Delete Student',
+                                            icon: <Trash size={13} className="text-red-500" />,
+                                            variant: 'danger',
+                                            onClick: () => setDeleteTarget(student),
+                                          },
+                                        ]}
+                                      />
+                                    </div>
+                                  ) : (
+                                    <span className="text-[11px] text-[#9aa0a6] px-2 py-1">View only</span>
+                                  )}
                                 </td>
                               </tr>
                             ))}

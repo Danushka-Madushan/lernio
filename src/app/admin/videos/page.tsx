@@ -23,6 +23,7 @@ import CloudflareR2Widget from '@/components/CloudflareR2Widget';
 import { GRADE_LABELS, getGradeLabel, getTeacherGrades } from '@/lib/constants';
 import EditVideoModal from '@/components/EditVideoModal';
 import VideoDeleteConfirmModal from '@/components/VideoDeleteConfirmModal';
+import RowActionsDropdown from '@/components/RowActionsDropdown';
 import { triggerUnauthorized } from '@/lib/utils';
 
 interface TeacherOption {
@@ -165,13 +166,13 @@ const VideosAdminPage = () => {
           prev.map((v) =>
             v.id === editTarget.id
               ? {
-                  ...v,
-                  title: data.title,
-                  description: data.description,
-                  grade: data.grade,
-                  cloudflareR2ThumbnailKey: data.cloudflareR2ThumbnailKey,
-                  visibility: data.visibility,
-                }
+                ...v,
+                title: data.title,
+                description: data.description,
+                grade: data.grade,
+                cloudflareR2ThumbnailKey: data.cloudflareR2ThumbnailKey,
+                visibility: data.visibility,
+              }
               : v
           )
         );
@@ -326,11 +327,10 @@ const VideosAdminPage = () => {
           {/* Toast */}
           {toast && (
             <div
-              className={`rounded-lg border px-3.5 py-2.5 text-[13px] leading-5 ${
-                toast.type === 'ok'
-                  ? 'border-[#ceead6] bg-[#e6f4ea] text-[#137333]'
-                  : 'border-[#fad2cf] bg-[#fce8e6] text-[#c5221f]'
-              }`}
+              className={`rounded-lg border px-3.5 py-2.5 text-[13px] leading-5 ${toast.type === 'ok'
+                ? 'border-[#ceead6] bg-[#e6f4ea] text-[#137333]'
+                : 'border-[#fad2cf] bg-[#fce8e6] text-[#c5221f]'
+                }`}
             >
               {toast.msg}
             </div>
@@ -360,29 +360,29 @@ const VideosAdminPage = () => {
                 <table className="w-full border-collapse text-left text-xs">
                   <thead>
                     <tr className="border-b border-[#e8eaed] bg-[#f8f9fa]">
-                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] min-w-[200px] max-w-xs md:max-w-sm">
+                      <th className="px-3 py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
                         Lesson Title
                       </th>
                       {isAdmin && (
-                        <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] w-[140px] whitespace-nowrap">
+                        <th className="px-3 py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                           Teacher
                         </th>
                       )}
-                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] w-[150px] whitespace-nowrap">
+                      <th className="px-3 py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                         Grade
                       </th>
-                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
+                      <th className="px-3 py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                         Visibility
                       </th>
-                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
+                      <th className="px-3 py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                         <span className="flex items-center gap-1">
                           <Eye size={11} /> Views
                         </span>
                       </th>
-                      <th className="px-4 py-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
+                      <th className="px-3 py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                         Published
                       </th>
-                      <th className="px-4 py-3 text-right text-xs font-medium uppercase tracking-wide text-[#5f6368] w-[140px] whitespace-nowrap">
+                      <th className="px-3 py-2.5 text-right text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                         Actions
                       </th>
                     </tr>
@@ -393,9 +393,10 @@ const VideosAdminPage = () => {
                         key={video.id}
                         className="group transition-colors duration-100 hover:bg-[#f8f9fa]"
                       >
-                        <td className="min-w-[200px] max-w-xs md:max-w-sm px-4 py-3">
-                          <div className="flex items-center space-x-3">
-                            <div className="relative w-28 sm:w-30 shrink-0 aspect-video overflow-hidden rounded-md border border-[#e8eaed] bg-[#202124]">
+                        {/* Lesson Title & Compact Thumbnail */}
+                        <td className="px-3 py-3">
+                          <div className="flex items-center gap-2.5">
+                            <div className="relative w-20 sm:w-24 shrink-0 aspect-video overflow-hidden rounded-md border border-[#e8eaed] bg-[#202124]">
                               <VideoThumbnail
                                 videoId={video.id}
                                 title={video.title}
@@ -404,7 +405,7 @@ const VideosAdminPage = () => {
                                 showGrade={false}
                               />
                             </div>
-                            <div className="min-w-0 flex-1">
+                            <div className="min-w-0 flex-1 max-w-50 sm:max-w-xs">
                               <span
                                 className={`block truncate font-medium text-[#202124] ${notoSans.className}`}
                                 title={video.title}
@@ -423,12 +424,12 @@ const VideosAdminPage = () => {
                           </div>
                         </td>
 
-                        {/* Teacher column (Admin only) */}
+                        {/* Teacher Column */}
                         {isAdmin && (
-                          <td className="px-4 py-3 whitespace-nowrap">
+                          <td className="px-3 py-3 whitespace-nowrap">
                             {video.teacher ? (
                               <span
-                                className="inline-flex max-w-[130px] sm:max-w-[140px] truncate items-center gap-1 rounded-full bg-purple-50 px-2.5 py-1 text-[11px] font-medium text-purple-700 border border-purple-100"
+                                className="inline-flex max-w-30 truncate items-center gap-1 rounded-full bg-purple-50 px-2.5 py-1 text-[11px] font-medium text-purple-700 border border-purple-100"
                                 title={video.teacher.username}
                               >
                                 <UserCheck size={11} className="shrink-0" />
@@ -441,7 +442,7 @@ const VideosAdminPage = () => {
                         )}
 
                         {/* Grade badge */}
-                        <td className="px-4 py-3 whitespace-nowrap">
+                        <td className="px-3 py-3 whitespace-nowrap">
                           {video.grade ? (() => {
                             const vTeacher = video.teacherId
                               ? teachers.find((t) => t.id === video.teacherId)
@@ -450,7 +451,7 @@ const VideosAdminPage = () => {
                             const gradeLabel = getGradeLabel(video.grade, vAliases);
                             return (
                               <span
-                                className="inline-block max-w-[130px] sm:max-w-[150px] truncate align-middle rounded-full bg-[#e8f0fe] px-2.5 py-1 text-[11px] font-medium text-blue-600"
+                                className="inline-block max-w-30 truncate align-middle rounded-full bg-[#e8f0fe] px-2.5 py-1 text-[11px] font-medium text-blue-600"
                                 title={gradeLabel}
                               >
                                 {gradeLabel}
@@ -461,8 +462,8 @@ const VideosAdminPage = () => {
                           )}
                         </td>
 
-                        {/* Visibility badge */}
-                        <td className="px-4 py-3 whitespace-nowrap">
+                        {/* Visibility */}
+                        <td className="px-3 py-3 whitespace-nowrap">
                           {video.visibility === 'PUBLIC' ? (
                             <span className="inline-flex items-center gap-1 rounded-full bg-[#e6f4ea] px-2.5 py-1 text-[11px] font-medium text-[#137333]">
                               <Globe size={10} />
@@ -477,12 +478,12 @@ const VideosAdminPage = () => {
                         </td>
 
                         {/* Views */}
-                        <td className="px-4 py-3 whitespace-nowrap text-[#5f6368]">
+                        <td className="px-3 py-3 whitespace-nowrap text-[#5f6368]">
                           {video.viewsCount.toLocaleString()}
                         </td>
 
-                        {/* Date */}
-                        <td className="px-4 py-3 whitespace-nowrap text-[#5f6368]">
+                        {/* Published Date */}
+                        <td className="px-3 py-3 whitespace-nowrap text-[#5f6368]">
                           {new Date(video.createdAt).toLocaleDateString('en-GB', {
                             day: '2-digit',
                             month: 'short',
@@ -491,24 +492,25 @@ const VideosAdminPage = () => {
                         </td>
 
                         {/* Actions */}
-                        <td className="px-4 py-3 text-right whitespace-nowrap min-w-[140px]">
-                          <div className="flex items-center justify-end gap-1 shrink-0">
-                            <button
-                              onClick={() => setEditTarget(video)}
-                              className="flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-blue-500 transition-colors hover:bg-blue-100"
-                              title="Edit video metadata"
-                            >
-                              <Pencil size={11} />
-                              Edit
-                            </button>
-                            <button
-                              onClick={() => setDeleteTarget(video)}
-                              className="flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-[11px] font-medium text-red-500 transition-colors hover:bg-red-100"
-                              title="Delete video"
-                            >
-                              <Trash2 size={11} />
-                              Delete
-                            </button>
+                        <td className="px-3 py-3 text-right whitespace-nowrap">
+                          <div className="flex justify-end">
+                            <RowActionsDropdown
+                              items={[
+                                {
+                                  id: 'edit',
+                                  label: 'Edit Video',
+                                  icon: <Pencil size={13} className="text-blue-500" />,
+                                  onClick: () => setEditTarget(video),
+                                },
+                                {
+                                  id: 'delete',
+                                  label: 'Delete Video',
+                                  icon: <Trash2 size={13} className="text-red-500" />,
+                                  variant: 'danger',
+                                  onClick: () => setDeleteTarget(video),
+                                },
+                              ]}
+                            />
                           </div>
                         </td>
                       </tr>

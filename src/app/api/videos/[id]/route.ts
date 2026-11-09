@@ -68,7 +68,6 @@ export async function GET(
           activeFrom: true,
           activeTo: true,
           accessMode: true,
-          teacherId: true,
         },
       });
 
@@ -84,9 +83,19 @@ export async function GET(
         );
       }
 
-      // Strict Teacher isolation: video must belong to student's assigned teacher
-      if (!studentRecord.teacherId || video.teacherId !== studentRecord.teacherId) {
-        return NextResponse.json({ error: 'Access denied to this video' }, { status: 403 });
+      // Teacher isolation: video must belong to one of student's assigned teachers
+      if (video.teacherId) {
+        const isEnrolled = await db.studentTeacher.findUnique({
+          where: {
+            studentId_teacherId: {
+              studentId: user.id,
+              teacherId: video.teacherId,
+            },
+          },
+        });
+        if (!isEnrolled) {
+          return NextResponse.json({ error: 'Access denied to this video' }, { status: 403 });
+        }
       }
 
       // Access mode check

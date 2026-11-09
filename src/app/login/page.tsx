@@ -145,7 +145,11 @@ const LoginPage = () => {
         toast.close(loadingId);
         toast.success('Logged in successfully');
 
-        router.push(callbackUrl);
+        if (data.needsTeacherSelect) {
+          router.push('/teacher-select');
+        } else {
+          router.push(callbackUrl);
+        }
         router.refresh();
       } catch (err: any) {
         toast.close(loadingId);

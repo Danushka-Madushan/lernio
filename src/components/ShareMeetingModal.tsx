@@ -1,7 +1,7 @@
 "use client";
 
 import { notoSans } from '@/lib/fonts';
-import { Video, X } from 'lucide-react';
+import { Video, X, Calendar, Clock } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 import CopyButton from './CopyButton';
 import WhatsAppButton from './WhatsAppButton';
@@ -33,8 +33,8 @@ const buildMeetingShareMessage = (title: string, scheduledAt: string, joinUrl: s
     timeZone: 'Asia/Colombo',
   });
   return [
-    `📅 *Class: ${title}*`,
-    `📆 ${date}`,
+    `*Class: ${title}*`,
+    `Schedule: ${date}`,
     '',
     'Join Zoom Meeting:',
     joinUrl,
@@ -68,6 +68,27 @@ const ShareMeetingModal = ({ meeting, onClose }: { meeting: Meeting; onClose: ()
           </button>
         </div>
         <div className="px-5 py-5 space-y-3 bg-white">
+          <div className="flex items-center gap-3 text-xs text-[#5f6368] bg-[#f8f9fa] border border-[#dadce0] rounded-lg px-3 py-2">
+            <span className="inline-flex items-center gap-1.5 font-medium text-[#202124]">
+              <Calendar size={13} className="text-blue-600" />
+              {new Date(meeting.scheduledAt).toLocaleDateString('en-GB', {
+                weekday: 'short',
+                day: '2-digit',
+                month: 'short',
+                year: 'numeric',
+                timeZone: 'Asia/Colombo',
+              })}
+            </span>
+            <span className="inline-flex items-center gap-1.5 text-[#5f6368]">
+              <Clock size={13} className="text-blue-600" />
+              {new Date(meeting.scheduledAt).toLocaleTimeString('en-GB', {
+                hour: '2-digit',
+                minute: '2-digit',
+                timeZone: 'Asia/Colombo',
+              })}
+            </span>
+          </div>
+
           <div className="relative overflow-hidden rounded-xl border border-[#c7d2fe] bg-[#eef2ff]">
             <div className="absolute left-3 top-3 z-10 flex items-center gap-2">
               <CopyButton text={message} label="Copy" variant="solid" tiny />

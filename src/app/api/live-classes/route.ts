@@ -27,7 +27,6 @@ export async function GET(request: Request) {
           grade: true,
           activeFrom: true,
           activeTo: true,
-          teacherId: true,
         },
       });
 
@@ -43,15 +42,42 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: 'Account inactive' }, { status: 403 });
       }
 
-      // Strict Teacher Isolation: student only sees classes from their assigned teacher
-      if (!studentRecord.teacherId) {
+      // Resolve active teacher from cookie or student's enrollments
+      const activeTeacherCookie = cookieStore.get('active_teacher_id')?.value;
+      let effectiveTeacherId: string | null = null;
+
+      if (activeTeacherCookie) {
+        const match = await db.studentTeacher.findUnique({
+          where: {
+            studentId_teacherId: {
+              studentId: user.id,
+              teacherId: activeTeacherCookie,
+            },
+          },
+        });
+        if (match) {
+          effectiveTeacherId = activeTeacherCookie;
+        }
+      }
+
+      if (!effectiveTeacherId) {
+        const firstEnrollment = await db.studentTeacher.findFirst({
+          where: { studentId: user.id },
+          select: { teacherId: true },
+          orderBy: { createdAt: 'asc' },
+        });
+        effectiveTeacherId = firstEnrollment?.teacherId || null;
+      }
+
+      // Strict Teacher Isolation: student only sees classes from their active/assigned teacher
+      if (!effectiveTeacherId) {
         return NextResponse.json({ classes: [] });
       }
 
       // Query classes matching teacher and grade visibility
       const classes = await db.youTubeClass.findMany({
         where: {
-          teacherId: studentRecord.teacherId,
+          teacherId: effectiveTeacherId,
           OR: [
             { visibility: VideoVisibility.PUBLIC },
             {

@@ -18,6 +18,7 @@ import {
   Award,
   Tv,
   Shield,
+  Users,
 } from 'lucide-react';
 import { Button } from '@heroui/react';
 import { createPortal } from 'react-dom';
@@ -74,9 +75,16 @@ function parseZoomLink(link: string): { appLink: string; webLink: string } {
 interface Props {
   username: string;
   role?: 'ADMIN' | 'TEACHER' | 'STUDENT';
+  hasMultipleTeachers?: boolean;
+  activeTeacherName?: string | null;
 }
 
-const MobileDrawerNav = ({ username, role = 'STUDENT' }: Props) => {
+const MobileDrawerNav = ({
+  username,
+  role = 'STUDENT',
+  hasMultipleTeachers = false,
+  activeTeacherName,
+}: Props) => {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -175,6 +183,15 @@ const MobileDrawerNav = ({ username, role = 'STUDENT' }: Props) => {
     { id: 'liveclasses', label: 'Live Classes', icon: Tv, href: '/liveclasses' },
     { id: 'exams', label: 'Exams Portal', icon: Award, href: '/exams-portal' },
   ];
+
+  if (role === 'STUDENT' && hasMultipleTeachers) {
+    navItems.push({
+      id: 'switch-teacher',
+      label: activeTeacherName ? `Class: ${activeTeacherName}` : 'Switch Classroom',
+      icon: Users,
+      href: '/teacher-select',
+    });
+  }
 
   if (role === 'ADMIN' || role === 'TEACHER') {
     navItems.push({

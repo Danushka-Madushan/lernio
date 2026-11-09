@@ -127,7 +127,6 @@ export async function GET(request: Request) {
         activeFrom: true,
         activeTo: true,
         accessMode: true,
-        teacherId: true,
       },
     });
 
@@ -143,8 +142,35 @@ export async function GET(request: Request) {
       );
     }
 
+    // Resolve active teacher from cookie or student's enrollments
+    const activeTeacherCookie = cookieStore.get('active_teacher_id')?.value;
+    let effectiveTeacherId: string | null = null;
+
+    if (activeTeacherCookie) {
+      const match = await db.studentTeacher.findUnique({
+        where: {
+          studentId_teacherId: {
+            studentId: user.id,
+            teacherId: activeTeacherCookie,
+          },
+        },
+      });
+      if (match) {
+        effectiveTeacherId = activeTeacherCookie;
+      }
+    }
+
+    if (!effectiveTeacherId) {
+      const firstEnrollment = await db.studentTeacher.findFirst({
+        where: { studentId: user.id },
+        select: { teacherId: true },
+        orderBy: { createdAt: 'asc' },
+      });
+      effectiveTeacherId = firstEnrollment?.teacherId || null;
+    }
+
     // If student has no assigned teacher, return empty list
-    if (!studentRecord.teacherId) {
+    if (!effectiveTeacherId) {
       return NextResponse.json({ videos: [] });
     }
 
@@ -156,7 +182,7 @@ export async function GET(request: Request) {
         where: {
           userId: user.id,
           video: {
-            teacherId: studentRecord.teacherId,
+            teacherId: effectiveTeacherId,
           },
         },
         include: {
@@ -176,7 +202,7 @@ export async function GET(request: Request) {
     } else {
       // GRADE mode: scoped strictly to assigned teacher!
       const whereClause: any = {
-        teacherId: studentRecord.teacherId,
+        teacherId: effectiveTeacherId,
         OR: [
           { visibility: VideoVisibility.PUBLIC },
           ...(studentRecord.grade

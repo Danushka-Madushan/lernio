@@ -19,6 +19,8 @@ import {
   FileSpreadsheet,
   House,
   Shield,
+  Tv,
+  Users,
 } from 'lucide-react';
 import { Button } from '@heroui/react';
 import { createPortal } from 'react-dom';
@@ -73,9 +75,16 @@ function parseZoomLink(link: string): { appLink: string; webLink: string } {
 interface ExamsMobileNavProps {
   username: string;
   role: 'ADMIN' | 'TEACHER' | 'STUDENT';
+  hasMultipleTeachers?: boolean;
+  activeTeacherName?: string | null;
 }
 
-export default function ExamsMobileNav({ username, role }: ExamsMobileNavProps) {
+export default function ExamsMobileNav({
+  username,
+  role,
+  hasMultipleTeachers = false,
+  activeTeacherName,
+}: ExamsMobileNavProps) {
   const pathname = usePathname();
   const router = useRouter();
 
@@ -172,18 +181,29 @@ export default function ExamsMobileNav({ username, role }: ExamsMobileNavProps) 
     ? [
         { id: 'exams-list', label: 'Exams List', icon: FileSpreadsheet, href: '/exams-portal' },
         { id: 'exam-groups', label: 'Exam Groups', icon: Layers, href: '/exams-portal/groups' },
+        { id: 'liveclasses', label: 'Live Classes', icon: Tv, href: '/liveclasses' },
+        { id: 'videos', label: 'Home (Videos)', icon: House, href: '/' },
         {
           id: 'admin',
           label: role === 'ADMIN' ? 'Admin Panel' : 'Teacher Panel',
           icon: Shield,
           href: '/admin',
         },
-        { id: 'videos', label: 'Home (Videos)', icon: House, href: '/' },
       ]
     : [
         { id: 'exams', label: 'Exams Portal', icon: Award, href: '/exams-portal' },
+        { id: 'liveclasses', label: 'Live Classes', icon: Tv, href: '/liveclasses' },
         { id: 'videos', label: 'Home (Videos)', icon: House, href: '/' },
       ];
+
+  if (role === 'STUDENT' && hasMultipleTeachers) {
+    navItems.push({
+      id: 'switch-teacher',
+      label: activeTeacherName ? `Class: ${activeTeacherName}` : 'Switch Classroom',
+      icon: Users,
+      href: '/teacher-select',
+    });
+  }
 
   if (!mounted) {
     return (

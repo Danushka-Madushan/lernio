@@ -111,7 +111,7 @@ export default function ShieldedYouTubePlayer({
     if (!pinOpen) {
       hudTimerRef.current = setTimeout(() => {
         setShowHud(false);
-      }, 2800);
+      }, 3800);
     }
   }, []);
 
@@ -120,7 +120,7 @@ export default function ShieldedYouTubePlayer({
     if (occlusionTimerRef.current) clearTimeout(occlusionTimerRef.current);
     occlusionTimerRef.current = setTimeout(() => {
       setOcclusionVisible(false);
-    }, 2800);
+    }, 3800);
   }, []);
 
   // Immediately restore occlusion bars (for pause, buffer, seek, or end)
@@ -134,6 +134,7 @@ export default function ShieldedYouTubePlayer({
     if (!overscanBoxRef.current) return;
     const vw = window.innerWidth || 1280;
     const vh = window.innerHeight || 720;
+    const isMobile = vw <= 768;
     const viewportAspect = vw / vh;
     const targetAspect = 16 / 9;
 
@@ -148,9 +149,23 @@ export default function ShieldedYouTubePlayer({
       boxH = vw / targetAspect;
     }
 
-    overscanBoxRef.current.style.width = `${Math.ceil(boxW)}px`;
-    overscanBoxRef.current.style.height = `${Math.ceil(boxH)}px`;
-    overscanBoxRef.current.style.transform = 'scale(1.20)';
+    if (isMobile) {
+      // On mobile: avoid CSS scale transform which causes mobile viewport zoom / panning.
+      // Instead, physically oversize the dimensions by 20% and let parent overflow:hidden clip it.
+      const overscanW = Math.ceil(boxW * 1.0);
+      const overscanH = Math.ceil(boxH * 1.0);
+      overscanBoxRef.current.style.width = `${overscanW}px`;
+      overscanBoxRef.current.style.height = `${overscanH}px`;
+      overscanBoxRef.current.style.transform = 'none';
+      overscanBoxRef.current.style.maxWidth = 'none';
+      overscanBoxRef.current.style.maxHeight = 'none';
+    } else {
+      overscanBoxRef.current.style.width = `${Math.ceil(boxW)}px`;
+      overscanBoxRef.current.style.height = `${Math.ceil(boxH)}px`;
+      overscanBoxRef.current.style.transform = 'scale(1.0)';
+      overscanBoxRef.current.style.maxWidth = '';
+      overscanBoxRef.current.style.maxHeight = '';
+    }
   }, []);
 
   // Synchronous Curtain Engagement
@@ -702,7 +717,7 @@ export default function ShieldedYouTubePlayer({
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 w-screen h-dvh z-50 flex flex-col justify-between overflow-hidden select-none touch-none text-slate-100"
+      className="fixed inset-0 w-screen h-dvh max-h-dvh z-50 flex flex-col justify-between overflow-hidden select-none touch-none text-slate-100"
       onContextMenu={(e) => e.preventDefault()}
       onPointerMove={() => revealHud()}
       style={{
@@ -714,8 +729,8 @@ export default function ShieldedYouTubePlayer({
       <div className="absolute inset-0 z-0 overflow-hidden bg-[#07090e] flex items-center justify-center pointer-events-none select-none">
         <div
           ref={overscanBoxRef}
-          className="relative pointer-events-none select-none flex items-center justify-center"
-          style={{ width: '100vw', height: '100dvh', transform: 'scale(1.20)' }}
+          className="relative pointer-events-none select-none flex items-center justify-center shrink-0"
+          style={{ width: '100%', height: '100%' }}
         >
           <div ref={iframeHostRef} className="w-full h-full pointer-events-none select-none" />
         </div>
