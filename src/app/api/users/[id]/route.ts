@@ -201,7 +201,7 @@ export async function DELETE(
   try {
     const student = await db.user.findUnique({
       where: { id },
-      select: { id: true, role: true, teacherId: true },
+      select: { id: true, role: true },
     });
 
     if (!student || student.role !== 'STUDENT') {

@@ -183,7 +183,9 @@ export async function POST(request: Request) {
           id: { in: studentIds },
           role: 'STUDENT',
           grade: grade as Grade,
-          ...(user.role === 'TEACHER' ? { teacherId: user.id } : {}),
+          ...(user.role === 'TEACHER'
+            ? { teacherEnrollments: { some: { teacherId: user.id } } }
+            : {}),
         },
         select: { id: true },
       });
@@ -193,7 +195,9 @@ export async function POST(request: Request) {
         where: {
           role: 'STUDENT',
           grade: grade as Grade,
-          ...(user.role === 'TEACHER' ? { teacherId: user.id } : {}),
+          ...(user.role === 'TEACHER'
+            ? { teacherEnrollments: { some: { teacherId: user.id } } }
+            : {}),
         },
         select: { id: true },
       });

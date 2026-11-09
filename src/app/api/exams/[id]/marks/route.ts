@@ -57,12 +57,7 @@ export async function GET(request: Request, { params }: Params) {
         role: 'STUDENT',
         grade: exam.grade,
         ...(user.role === 'TEACHER'
-          ? {
-              OR: [
-                { teacherEnrollments: { some: { teacherId: user.id } } },
-                { teacherId: user.id },
-              ],
-            }
+          ? { teacherEnrollments: { some: { teacherId: user.id } } }
           : {}),
       },
       select: {

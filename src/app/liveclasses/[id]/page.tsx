@@ -43,7 +43,6 @@ export default async function LiveClassWatchPage({
         grade: true,
         activeFrom: true,
         activeTo: true,
-        teacherId: true,
       },
     });
 
@@ -57,9 +56,19 @@ export default async function LiveClassWatchPage({
       redirect('/login?error=account_inactive');
     }
 
-    // Strict Teacher Isolation
-    if (liveClass.teacherId !== studentRecord.teacherId) {
-      notFound();
+    // Teacher Isolation: live class must belong to one of student's assigned teachers
+    if (liveClass.teacherId) {
+      const isEnrolled = await db.studentTeacher.findUnique({
+        where: {
+          studentId_teacherId: {
+            studentId: user.id,
+            teacherId: liveClass.teacherId,
+          },
+        },
+      });
+      if (!isEnrolled) {
+        notFound();
+      }
     }
 
     // Grade visibility

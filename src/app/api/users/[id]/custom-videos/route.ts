@@ -20,14 +20,20 @@ export async function GET(
   try {
     const student = await db.user.findUnique({
       where: { id },
-      select: { id: true, role: true, teacherId: true },
+      select: {
+        id: true,
+        role: true,
+        teacherEnrollments: { select: { teacherId: true } },
+      },
     });
 
     if (!student || student.role !== 'STUDENT') {
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
     }
 
-    if (user.role === 'TEACHER' && student.teacherId !== user.id) {
+    const studentTeacherIds = student.teacherEnrollments.map((e) => e.teacherId);
+
+    if (user.role === 'TEACHER' && !studentTeacherIds.includes(user.id)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -50,7 +56,12 @@ export async function GET(
     const videoIds = customAccess.map((ca) => ca.videoId);
     const videos = customAccess.map((ca) => ca.video);
 
-    return NextResponse.json({ videoIds, videos, teacherId: student.teacherId });
+    return NextResponse.json({
+      videoIds,
+      videos,
+      teacherId: studentTeacherIds[0] || null,
+      teacherIds: studentTeacherIds,
+    });
   } catch (error: unknown) {
     console.error('Get custom videos error:', error);
     return NextResponse.json({ error: 'Failed to retrieve custom video list' }, { status: 500 });
@@ -74,14 +85,20 @@ export async function PUT(
   try {
     const student = await db.user.findUnique({
       where: { id },
-      select: { id: true, role: true, teacherId: true },
+      select: {
+        id: true,
+        role: true,
+        teacherEnrollments: { select: { teacherId: true } },
+      },
     });
 
     if (!student || student.role !== 'STUDENT') {
       return NextResponse.json({ error: 'Student not found' }, { status: 404 });
     }
 
-    if (user.role === 'TEACHER' && student.teacherId !== user.id) {
+    const studentTeacherIds = student.teacherEnrollments.map((e) => e.teacherId);
+
+    if (user.role === 'TEACHER' && !studentTeacherIds.includes(user.id)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -91,17 +108,20 @@ export async function PUT(
       return NextResponse.json({ error: 'videoIds must be an array' }, { status: 400 });
     }
 
-    // If student has an assigned teacher, only assign videos from that teacher
+    // Only assign videos from student's enrolled teachers (or current teacher if user is TEACHER)
     let allowedVideoIds = videoIds;
-    if (videoIds.length > 0 && student.teacherId) {
-      const validVideos = await db.video.findMany({
-        where: {
-          id: { in: videoIds },
-          teacherId: student.teacherId,
-        },
-        select: { id: true },
-      });
-      allowedVideoIds = validVideos.map((v) => v.id);
+    if (videoIds.length > 0) {
+      const validTeacherIds = user.role === 'TEACHER' ? [user.id] : studentTeacherIds;
+      if (validTeacherIds.length > 0) {
+        const validVideos = await db.video.findMany({
+          where: {
+            id: { in: videoIds },
+            teacherId: { in: validTeacherIds },
+          },
+          select: { id: true },
+        });
+        allowedVideoIds = validVideos.map((v) => v.id);
+      }
     }
 
     // Replace all custom video access entries for this user atomically

@@ -71,7 +71,6 @@ export async function verifyVideoAccess(
         activeFrom: true,
         activeTo: true,
         accessMode: true,
-        teacherId: true,
       },
     });
 
@@ -84,19 +83,19 @@ export async function verifyVideoAccess(
     }
 
     // Must belong to one of the student's assigned teachers
-    const isEnrolledWithTeacher = video.teacherId
-      ? await db.studentTeacher.findUnique({
-          where: {
-            studentId_teacherId: {
-              studentId: user.id,
-              teacherId: video.teacherId,
-            },
+    if (video.teacherId) {
+      const isEnrolledWithTeacher = await db.studentTeacher.findUnique({
+        where: {
+          studentId_teacherId: {
+            studentId: user.id,
+            teacherId: video.teacherId,
           },
-        })
-      : null;
+        },
+      });
 
-    if (!isEnrolledWithTeacher && video.teacherId !== student.teacherId) {
-      return { allowed: false, reason: 'forbidden' };
+      if (!isEnrolledWithTeacher) {
+        return { allowed: false, reason: 'forbidden' };
+      }
     }
 
     // CUSTOM mode: must be in customVideoAccess
