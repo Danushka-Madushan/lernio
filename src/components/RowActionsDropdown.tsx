@@ -143,7 +143,7 @@ export default function RowActionsDropdown({
               right: `${menuCoords.right}px`,
               zIndex: 9999,
             }}
-            className="min-w-[170px] py-1 bg-white rounded-xl border border-[#dadce0] shadow-[0_4px_16px_rgba(0,0,0,0.12)] transition-all animate-in fade-in zoom-in-95 duration-100"
+            className="min-w-42.5 py-1 bg-white rounded-xl border border-[#dadce0] shadow-[0_4px_16px_rgba(0,0,0,0.12)] transition-all animate-in fade-in zoom-in-95 duration-100"
             onClick={(e) => e.stopPropagation()}
           >
             {items.map((item) => (
