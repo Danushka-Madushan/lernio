@@ -239,13 +239,13 @@ const LoginPage = () => {
               type="submit"
               size="lg"
             >
-              {loading ? (
+              {({ isPending }) => (
                 <>
-                  <Loader2 size={16} className="animate-spin" />
-                  <span>Logging in...</span>
+                  {isPending ? (
+                    <Loader2 size={18} className="animate-spin" />
+                  ) : null}
+                  <span>{isPending ? 'Logging in...' : 'Log in'}</span>
                 </>
-              ) : (
-                <span>Log in</span>
               )}
             </Button>
             <Button

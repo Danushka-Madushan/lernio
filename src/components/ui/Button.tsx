@@ -11,6 +11,7 @@ export interface ButtonProps
   isPending?: boolean;
   isIconOnly?: boolean;
   fullWidth?: boolean;
+  autoSpinner?: boolean;
   onPress?: (e: React.MouseEvent<HTMLButtonElement>) => void;
   children?: React.ReactNode | ((props: { isPending: boolean }) => React.ReactNode);
 }
@@ -24,6 +25,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       isPending = false,
       isIconOnly = false,
       fullWidth = false,
+      autoSpinner = false,
       onPress,
       onClick,
       disabled,
@@ -83,7 +85,7 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         } ${variantClasses} ${sizeClasses} ${className}`}
         {...props}
       >
-        {isPending && typeof children !== 'function' && (
+        {autoSpinner && isPending && typeof children !== 'function' && (
           <Loader2 size={size === 'lg' ? 18 : 14} className="animate-spin shrink-0" />
         )}
         {content}
