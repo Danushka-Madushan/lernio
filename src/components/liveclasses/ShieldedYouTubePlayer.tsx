@@ -111,7 +111,7 @@ export default function ShieldedYouTubePlayer({
     if (!pinOpen) {
       hudTimerRef.current = setTimeout(() => {
         setShowHud(false);
-      }, 2800);
+      }, 3800);
     }
   }, []);
 
@@ -120,7 +120,7 @@ export default function ShieldedYouTubePlayer({
     if (occlusionTimerRef.current) clearTimeout(occlusionTimerRef.current);
     occlusionTimerRef.current = setTimeout(() => {
       setOcclusionVisible(false);
-    }, 2800);
+    }, 3800);
   }, []);
 
   // Immediately restore occlusion bars (for pause, buffer, seek, or end)
@@ -152,8 +152,8 @@ export default function ShieldedYouTubePlayer({
     if (isMobile) {
       // On mobile: avoid CSS scale transform which causes mobile viewport zoom / panning.
       // Instead, physically oversize the dimensions by 20% and let parent overflow:hidden clip it.
-      const overscanW = Math.ceil(boxW * 1.20);
-      const overscanH = Math.ceil(boxH * 1.20);
+      const overscanW = Math.ceil(boxW * 1.0);
+      const overscanH = Math.ceil(boxH * 1.0);
       overscanBoxRef.current.style.width = `${overscanW}px`;
       overscanBoxRef.current.style.height = `${overscanH}px`;
       overscanBoxRef.current.style.transform = 'none';
@@ -162,7 +162,7 @@ export default function ShieldedYouTubePlayer({
     } else {
       overscanBoxRef.current.style.width = `${Math.ceil(boxW)}px`;
       overscanBoxRef.current.style.height = `${Math.ceil(boxH)}px`;
-      overscanBoxRef.current.style.transform = 'scale(1.20)';
+      overscanBoxRef.current.style.transform = 'scale(1.0)';
       overscanBoxRef.current.style.maxWidth = '';
       overscanBoxRef.current.style.maxHeight = '';
     }

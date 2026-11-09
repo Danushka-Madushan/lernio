@@ -527,7 +527,7 @@ const UsersAdminPage = () => {
       {isAdmin && (
         <td className="py-3.5">
           {student.teachers && student.teachers.length > 0 ? (
-            <div className="flex flex-wrap gap-1 max-w-[180px]">
+            <div className="flex flex-wrap gap-1 max-w-45">
               {student.teachers.map((t) => (
                 <span
                   key={t.id}
@@ -535,7 +535,7 @@ const UsersAdminPage = () => {
                   title={t.username}
                 >
                   <UserCheck size={10} className="shrink-0" />
-                  <span className="truncate max-w-[110px]">{t.username}</span>
+                  <span className="truncate max-w-27.5">{t.username}</span>
                 </span>
               ))}
             </div>
@@ -553,7 +553,7 @@ const UsersAdminPage = () => {
       <td className="py-3.5">
         {student.grade ? (
           <span
-            className={`inline-block max-w-[130px] sm:max-w-[160px] truncate align-middle rounded-full px-2.5 py-1 text-[11px] font-medium ${GRADE_COLORS[student.grade]}`}
+            className={`inline-block max-w-32.5 sm:max-w-40 truncate align-middle rounded-full px-2.5 py-1 text-[11px] font-medium ${GRADE_COLORS[student.grade]}`}
             title={getGradeLabel(
               student.grade,
               (student.teacher?.gradeAliases as Record<string, string>) || currentUserAliases
@@ -918,7 +918,7 @@ const UsersAdminPage = () => {
                               Assigned Teacher
                             </th>
                           )}
-                          <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368] min-w-[120px]">
+                          <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368] min-w-30">
                             Grade
                           </th>
                           <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
@@ -987,7 +987,7 @@ const UsersAdminPage = () => {
                                   Teacher
                                 </th>
                               )}
-                              <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368] min-w-[120px]">
+                              <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368] min-w-30">
                                 Grade
                               </th>
                               <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
@@ -1020,7 +1020,7 @@ const UsersAdminPage = () => {
                                 {isAdmin && (
                                   <td className="py-3.5">
                                     {student.teachers && student.teachers.length > 0 ? (
-                                      <div className="flex flex-wrap gap-1 max-w-[180px]">
+                                      <div className="flex flex-wrap gap-1 max-w-45">
                                         {student.teachers.map((t) => (
                                           <span
                                             key={t.id}
@@ -1042,7 +1042,7 @@ const UsersAdminPage = () => {
                                 <td className="py-3.5">
                                   {student.grade ? (
                                     <span
-                                      className={`inline-block max-w-[130px] sm:max-w-[160px] truncate align-middle rounded-full px-2.5 py-1 text-[11px] font-medium ${GRADE_COLORS[student.grade]}`}
+                                      className={`inline-block max-w-32.5 sm:max-w-40 truncate align-middle rounded-full px-2.5 py-1 text-[11px] font-medium ${GRADE_COLORS[student.grade]}`}
                                       title={getGradeLabel(
                                         student.grade,
                                         (student.teacher?.gradeAliases as Record<string, string>) || currentUserAliases
