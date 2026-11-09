@@ -1,6 +1,6 @@
 // ─── MeetingSettingsPanel ──────────────────────────────────────────────────────
 
-import { Switch } from '@heroui/react';
+import Switch from '@/components/ui/Switch';
 import RecurrencePanel from './RecurrencePanel';
 
 // 1=Daily, 2=Weekly, 3=Monthly
@@ -49,36 +49,16 @@ function MeetingSettingsPanel({
       {/* Switches in 2-col grid */}
       <div className="grid grid-cols-2 items-center gap-x-4 gap-y-2.5">
         <Switch isSelected={hostVideo} onChange={onHostVideoChange} isDisabled={disabled}>
-          <Switch.Content>
-            <Switch.Control>
-              <Switch.Thumb />
-            </Switch.Control>
-            Host Video
-          </Switch.Content>
+          Host Video
         </Switch>
         <Switch isSelected={participantVideo} onChange={onParticipantVideoChange} isDisabled={disabled}>
-          <Switch.Content>
-            <Switch.Control>
-              <Switch.Thumb />
-            </Switch.Control>
-            Student Video
-          </Switch.Content>
+          Student Video
         </Switch>
         <Switch isSelected={waitingRoom} onChange={onWaitingRoomChange} isDisabled={disabled}>
-          <Switch.Content>
-            <Switch.Control>
-              <Switch.Thumb />
-            </Switch.Control>
-            Waiting Room
-          </Switch.Content>
+          Waiting Room
         </Switch>
         <Switch isSelected={isRecurring} onChange={onIsRecurringChange} isDisabled={disabled}>
-          <Switch.Content>
-            <Switch.Control>
-              <Switch.Thumb />
-            </Switch.Control>
-            Repeat
-          </Switch.Content>
+          Repeat
         </Switch>
       </div>
 

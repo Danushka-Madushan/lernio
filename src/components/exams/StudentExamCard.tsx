@@ -5,7 +5,7 @@ import { Grade } from '@/generated/client/enums';
 import { getGradeLabel } from '@/lib/constants';
 import { evaluateStudentMark } from '@/lib/exams';
 import { ChevronRight, Calendar, User, CheckCircle2, AlertCircle, Layers } from 'lucide-react';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 
 interface StudentExamCardProps {
   exam: {

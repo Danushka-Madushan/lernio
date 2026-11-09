@@ -16,7 +16,7 @@ import {
   Loader2,
   Video,
 } from 'lucide-react';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import { Grade } from '@/generated/client/enums';
 import { GRADE_LABELS } from '@/lib/constants';
 import { getYouTubeThumbnail } from '@/lib/youtube';

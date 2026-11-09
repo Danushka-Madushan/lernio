@@ -5,7 +5,7 @@ import { Check, ChevronDown, Loader2, Video, X } from 'lucide-react';
 import { useState } from 'react';
 import DateTimePicker from './DateTimePicker';
 import MeetingSettingsPanel from './MeetingSettingsPanel';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import { notoSans } from '@/lib/fonts';
 import { GRADE_LABELS } from '@/lib/constants';
 

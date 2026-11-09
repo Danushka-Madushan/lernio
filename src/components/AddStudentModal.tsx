@@ -8,7 +8,7 @@ import { generatePassword } from '@/lib/utils';
 import { ALL_GRADES, getTeacherGrades } from '@/lib/constants';
 import DateTimePicker from './DateTimePicker';
 import ShareCredentialsCard from './ShareCredentialsCard';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 
 type AccessMode = 'GRADE' | 'CUSTOM';
 

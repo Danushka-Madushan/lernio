@@ -3,7 +3,7 @@ import { Grade } from '@/generated/client/enums';
 import { Check, ChevronDown, Loader2, Pencil, X } from 'lucide-react';
 import { useState } from 'react';
 import ThumbnailUploader from './ThumbnailUploader';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 
 // ─── EditVideoModal ───────────────────────────────────────────────────────────
 interface Video {

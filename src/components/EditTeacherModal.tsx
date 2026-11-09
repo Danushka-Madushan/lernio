@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Check, CheckSquare, Info, Loader2, Pencil, RotateCcw, Square, X } from 'lucide-react';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import { Grade } from '@/generated/client/enums';
 import { ALL_GRADES, GRADE_COLORS, GRADE_LABELS } from '@/lib/constants';
 

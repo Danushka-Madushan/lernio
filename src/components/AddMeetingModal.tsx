@@ -3,7 +3,7 @@
 import { ChevronDown, Loader2, Plus, Video, X } from 'lucide-react';
 import DateTimePicker from './DateTimePicker';
 import MeetingSettingsPanel from './MeetingSettingsPanel';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import { notoSans } from '@/lib/fonts';
 import { Grade } from '@/generated/client/enums';
 import { GRADE_LABELS } from '@/lib/constants';

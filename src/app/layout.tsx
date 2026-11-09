@@ -1,15 +1,17 @@
-import type { Metadata } from "next";
-import "./globals.css";
+import type { Metadata } from 'next';
+import './globals.css';
 import { headers } from 'next/headers';
 import { Suspense } from 'react';
-import { isRTL, Toast } from '@heroui/react';
 import { ClientProviders } from './provider';
 import { inter } from '@/lib/fonts';
 import NavigationLoader from '@/components/NavigationLoader';
 
+const isRTL = (lang: string) =>
+  ['ar', 'he', 'fa', 'ur'].some((prefix) => lang.toLowerCase().startsWith(prefix));
+
 export const metadata: Metadata = {
-  title: "Lernio",
-  description: "Secure, closed-ecosystem educational video hosting for tuition classes."
+  title: 'Lernio',
+  description: 'Secure, closed-ecosystem educational video hosting for tuition classes.',
 };
 
 export default async function RootLayout({
@@ -21,14 +23,12 @@ export default async function RootLayout({
   const lang = acceptLanguage?.split(/[,;]/)[0] || 'en-US';
 
   return (
-    <html lang={lang} dir={isRTL(lang) ? 'rtl' : 'ltr'}  className={inter.className}>
-      
+    <html lang={lang} dir={isRTL(lang) ? 'rtl' : 'ltr'} className={inter.className}>
       <body className="min-h-full flex flex-col bg-surface-muted">
         <ClientProviders lang={lang}>
           <Suspense fallback={null}>
             <NavigationLoader />
           </Suspense>
-          <Toast.Provider />
           {children}
         </ClientProviders>
       </body>

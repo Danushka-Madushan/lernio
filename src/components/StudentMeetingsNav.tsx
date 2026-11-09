@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Image from 'next/image';
 import { Loader2, Video, MonitorUp, Globe, X, Calendar } from 'lucide-react';
-import { Button, Link } from '@heroui/react';
+import Button from '@/components/ui/Button';
 
 interface Meeting {
   id: string;

@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Video, X, Loader2, Sparkles, AlertCircle, ImagePlus, Check } from 'lucide-react';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import { Grade } from '@/generated/client/enums';
 import { GRADE_LABELS } from '@/lib/constants';
 import { extractYouTubeId, getYouTubeThumbnail } from '@/lib/youtube';

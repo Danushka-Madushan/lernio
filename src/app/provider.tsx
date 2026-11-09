@@ -1,12 +1,13 @@
 // app/provider.tsx
-"use client";
+'use client';
 
-import {I18nProvider} from '@heroui/react';
+import React from 'react';
 
-export function ClientProviders({lang, children}: {lang: string; children: React.ReactNode}) {
-  return (
-    <I18nProvider locale={lang}>
-      {children}
-    </I18nProvider>
-  );
+export function ClientProviders({
+  children,
+}: {
+  lang?: string;
+  children: React.ReactNode;
+}) {
+  return <>{children}</>;
 }

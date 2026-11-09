@@ -2,25 +2,25 @@
 
 import { useState, useCallback, useRef, useMemo, FormEvent, ChangeEvent, KeyboardEvent, ClipboardEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { BrushCleaning, GraduationCap, ShieldCheck } from 'lucide-react';
-import { Button } from '@heroui/react/button';
-import { Spinner } from '@heroui/react/spinner';
-import { Form, Tabs, Key, toast } from '@heroui/react';
+import { BrushCleaning, GraduationCap, ShieldCheck, AlertCircle, Loader2 } from 'lucide-react';
 import Image from 'next/image';
 import { CredentialFields } from '@/components/CredentialFields';
+import Button from '@/components/ui/Button';
 
 const DIGIT_COUNT = 4;
+type LoginRoleKey = 'student' | 'staff';
 
 const LoginPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams?.get('callbackUrl') || '/';
 
-  const [activeKey, setActiveKey] = useState<Key>('student');
+  const [activeKey, setActiveKey] = useState<LoginRoleKey>('student');
   const [username, setUsername] = useState('');
   const [digits, setDigits] = useState<string[]>(Array(DIGIT_COUNT).fill(''));
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const digitRefs = useRef<Array<HTMLInputElement | null>>([]);
 
@@ -28,10 +28,11 @@ const LoginPage = () => {
     setUsername('');
     setPassword('');
     setDigits(Array(DIGIT_COUNT).fill(''));
+    setErrorMessage('');
   }, []);
 
   const handleSelectionChange = useCallback(
-    (key: Key) => {
+    (key: LoginRoleKey) => {
       setActiveKey(key);
       resetForm();
     },
@@ -47,7 +48,7 @@ const LoginPage = () => {
 
   const handleDigitChange = useCallback(
     (index: number) => (e: ChangeEvent<HTMLInputElement>) => {
-      // Keep only the last typed digit; strips anything non-numeric
+      setErrorMessage('');
       const value = e.target.value.replace(/\D/g, '').slice(-1);
 
       setDigits((prev) => {
@@ -82,6 +83,7 @@ const LoginPage = () => {
 
   const handleDigitPaste = useCallback((e: ClipboardEvent<HTMLInputElement>) => {
     e.preventDefault();
+    setErrorMessage('');
     const pasted = e.clipboardData.getData('text').replace(/\D/g, '').slice(0, DIGIT_COUNT);
     if (!pasted) return;
 
@@ -107,27 +109,23 @@ const LoginPage = () => {
   const onSubmit = useCallback(
     async (e: FormEvent<HTMLFormElement>) => {
       e.preventDefault();
+      setErrorMessage('');
 
       const trimmedUsername = username.trim();
       const studentId = digits.join('');
 
       if (!trimmedUsername || !password.trim()) {
-        toast.danger('Please fill in all fields.');
+        setErrorMessage('Please fill in all fields.');
         return;
       }
       if (activeKey === 'student' && studentId.length !== DIGIT_COUNT) {
-        toast.danger('Please enter all 4 digits of your student ID.');
+        setErrorMessage('Please enter all 4 digits of your student ID.');
         return;
       }
 
       const fullUsername = activeKey === 'student' ? `${trimmedUsername}-${studentId}` : trimmedUsername;
 
       setLoading(true);
-
-      const loadingId = toast('Logging in...', {
-        isLoading: true,
-        timeout: 0,
-      });
 
       try {
         const res = await fetch('/api/auth/login', {
@@ -142,9 +140,6 @@ const LoginPage = () => {
           throw new Error(data.error || 'Invalid credentials');
         }
 
-        toast.close(loadingId);
-        toast.success('Logged in successfully');
-
         if (data.needsTeacherSelect) {
           router.push('/teacher-select');
         } else {
@@ -152,8 +147,7 @@ const LoginPage = () => {
         }
         router.refresh();
       } catch (err: any) {
-        toast.close(loadingId);
-        toast.danger(err.message || 'An error occurred during login.');
+        setErrorMessage(err.message || 'An error occurred during login.');
       } finally {
         setLoading(false);
       }
@@ -183,63 +177,89 @@ const LoginPage = () => {
           </h1>
         </div>
 
-        <Tabs onSelectionChange={handleSelectionChange} defaultSelectedKey="student" orientation="horizontal" variant="primary">
-          <Tabs.ListContainer className="w-fit mx-auto">
-            <Tabs.List aria-label="sections">
-              <Tabs.Tab id="student">
-                <GraduationCap className={activeKey === 'student' ? 'text-blue-500' : 'text-slate-500'} size={20} />
-                <Tabs.Indicator />
-              </Tabs.Tab>
-              <Tabs.Tab id="staff">
-                <ShieldCheck className={activeKey === 'staff' ? 'text-blue-500' : 'text-slate-500'} size={20} />
-                <Tabs.Indicator />
-              </Tabs.Tab>
-            </Tabs.List>
-          </Tabs.ListContainer>
+        {/* Role Switcher Tabs */}
+        <div className="flex w-full max-w-70 mx-auto mb-6 rounded-xl bg-[#f1f3f4] p-1 border border-[#dadce0]">
+          <button
+            type="button"
+            onClick={() => handleSelectionChange('student')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
+              activeKey === 'student'
+                ? 'bg-white text-blue-600 shadow-xs'
+                : 'text-[#5f6368] hover:text-[#202124]'
+            }`}
+          >
+            <GraduationCap size={17} />
+            <span>Student</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => handleSelectionChange('staff')}
+            className={`flex-1 flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-semibold transition-all ${
+              activeKey === 'staff'
+                ? 'bg-white text-blue-600 shadow-xs'
+                : 'text-[#5f6368] hover:text-[#202124]'
+            }`}
+          >
+            <ShieldCheck size={17} />
+            <span>Staff</span>
+          </button>
+        </div>
 
-          {/* autoComplete="off" on the form itself is the first line of defense against
-            browsers/managers trying to be "helpful" with grouped fields */}
-          <Form className="flex w-full flex-col gap-2" onSubmit={onSubmit} autoComplete="off">
-            <Tabs.Panel id="student">
-              <CredentialFields
-                variant="student"
-                loading={loading}
-                username={username}
-                password={password}
-                onUsernameChange={setUsername}
-                onPasswordChange={setPassword}
-                digitProps={digitProps}
-              />
-            </Tabs.Panel>
+        {/* Error message alert */}
+        {errorMessage && (
+          <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-600 animate-in fade-in duration-150">
+            <AlertCircle size={15} className="shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+        )}
 
-            <Tabs.Panel id="staff">
-              <CredentialFields
-                variant="staff"
-                loading={loading}
-                username={username}
-                password={password}
-                onUsernameChange={setUsername}
-                onPasswordChange={setPassword}
-              />
-            </Tabs.Panel>
+        {/* Login Form */}
+        <form className="flex w-full flex-col gap-5" onSubmit={onSubmit} autoComplete="off">
+          <CredentialFields
+            variant={activeKey}
+            loading={loading}
+            username={username}
+            password={password}
+            onUsernameChange={(v) => {
+              setUsername(v);
+              setErrorMessage('');
+            }}
+            onPasswordChange={(v) => {
+              setPassword(v);
+              setErrorMessage('');
+            }}
+            digitProps={activeKey === 'student' ? digitProps : undefined}
+          />
 
-            <div className="flex items-center justify-between gap-2">
-              <Button isDisabled={loading} isPending={loading} fullWidth type="submit" size="lg">
-                {({ isPending }) => (
-                  <>
-                    {isPending ? <Spinner color="current" size="sm" /> : null}
-                    {isPending ? 'Logging in...' : 'Log in'}
-                  </>
-                )}
-              </Button>
-              <div className="w-fit">
-                <Button onPress={resetForm} isIconOnly type="reset" size="lg" variant="danger">
-                  <BrushCleaning />
-                </Button>
-              </div>
-            </div>
-          </Form>
-        </Tabs>
+          <div className="flex items-center justify-between gap-2.5 pt-2">
+            <Button
+              isDisabled={loading}
+              isPending={loading}
+              fullWidth
+              type="submit"
+              size="lg"
+            >
+              {loading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Logging in...</span>
+                </>
+              ) : (
+                <span>Log in</span>
+              )}
+            </Button>
+            <Button
+              onPress={resetForm}
+              isIconOnly
+              type="button"
+              size="lg"
+              variant="danger"
+              title="Clear fields"
+            >
+              <BrushCleaning size={18} />
+            </Button>
+          </div>
+        </form>
       </div>
     </div>
   );

@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import { Copy, Check, LogOut, Loader2 } from 'lucide-react';
 import { useState } from 'react';
 

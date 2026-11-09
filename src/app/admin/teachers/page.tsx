@@ -14,7 +14,7 @@ import {
   UserCheck,
   Pencil,
 } from 'lucide-react';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import StatCard from '@/components/StatCard';
 import ResetPasswordModal from '@/components/ResetPasswordModal';
 import TeacherDeleteConfirmModal from '@/components/TeacherDeleteConfirmModal';

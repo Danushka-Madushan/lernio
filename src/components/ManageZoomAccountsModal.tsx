@@ -4,7 +4,7 @@ import { useState } from 'react';
 import ConfirmDeleteModal from './ZoomAccountmDeleteConfirmModal';
 import { Check, Loader2, Plus, Settings, Trash2, UserCircle2, X } from 'lucide-react';
 import ZoomScopesInfoButton from './ZoomScopesInfoButton';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import AccountAvatar from './AccountAvatar';
 
 interface ZoomAccount {

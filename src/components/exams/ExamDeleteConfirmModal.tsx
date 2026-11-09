@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import { AlertTriangle, Loader2, Trash2, X } from 'lucide-react';
 
 interface ExamTarget {

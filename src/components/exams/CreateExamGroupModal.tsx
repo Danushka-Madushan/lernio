@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import { X, Layers, Loader2 } from 'lucide-react';
 
 interface CreateExamGroupModalProps {

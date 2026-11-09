@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect, useMemo } from 'react';
 import { getStudentColor, evaluateStudentMark, getStudentDisplayNumber } from '@/lib/exams';
 import { Sparkles, TrendingUp, AlertCircle, CheckCircle2 } from 'lucide-react';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 
 export interface ChartMarkItem {
   id: string;

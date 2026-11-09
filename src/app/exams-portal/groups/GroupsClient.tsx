@@ -5,7 +5,7 @@ import Link from 'next/link';
 import CreateExamGroupModal from '@/components/exams/CreateExamGroupModal';
 import ExamGroupDeleteConfirmModal from '@/components/exams/ExamGroupDeleteConfirmModal';
 import LoadingScreen from '@/components/LoadingScreen';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import {
   Layers,
   Plus,

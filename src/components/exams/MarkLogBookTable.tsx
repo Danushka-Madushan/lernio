@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import { Check, Loader2, Save, UserX, AlertCircle, CheckCircle2, RotateCcw } from 'lucide-react';
 import { getStudentColor, evaluateStudentMark } from '@/lib/exams';
 

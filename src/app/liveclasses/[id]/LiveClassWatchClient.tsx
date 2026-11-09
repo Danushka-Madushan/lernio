@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Play, Tv, Sparkles, ShieldCheck } from 'lucide-react';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import ShieldedYouTubePlayer from '@/components/liveclasses/ShieldedYouTubePlayer';
 
 interface LiveClassWatchClientProps {

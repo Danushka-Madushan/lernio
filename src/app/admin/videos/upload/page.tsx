@@ -8,7 +8,7 @@ import { Grade } from '@/generated/client/enums';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { notoSans } from '@/lib/fonts';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import { ALL_GRADES, getTeacherGrades } from '@/lib/constants';
 
 const VideoUploadPage = () => {
