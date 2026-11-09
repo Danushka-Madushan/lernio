@@ -458,30 +458,31 @@ const TeachersAdminPage = () => {
               ) : (
                 <div className="overflow-x-auto p-4">
                   <table className="w-full border-collapse text-left text-sm">
+                    {/* Table Headers */}
                     <thead>
                       <tr className="border-b border-[#e8eaed]">
-                        <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                        <th className="py-2.5 px-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
                           Teacher
                         </th>
-                        <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                        <th className="py-2.5 px-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                           Role
                         </th>
-                        <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
-                          Allowed Grades & Aliases
+                        <th className="py-2.5 px-3 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                          Grades & Aliases
                         </th>
-                        <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                        <th className="py-2.5 px-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                           Students
                         </th>
-                        <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                        <th className="py-2.5 px-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                           Videos
                         </th>
-                        <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                        <th className="py-2.5 px-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                           Meetings
                         </th>
-                        <th className="py-2.5 text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                        <th className="py-2.5 px-3 text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                           Registered
                         </th>
-                        <th className="py-2.5 text-right text-xs font-medium uppercase tracking-wide text-[#5f6368]">
+                        <th className="py-2.5 px-3 text-right text-xs font-medium uppercase tracking-wide text-[#5f6368] whitespace-nowrap">
                           Actions
                         </th>
                       </tr>
@@ -504,11 +505,10 @@ const TeachersAdminPage = () => {
                             <td className="py-3.5">
                               <div className="flex items-center gap-3">
                                 <div
-                                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${
-                                    teacher.role === 'ADMIN'
-                                      ? 'bg-blue-100 text-blue-600'
-                                      : 'bg-purple-100 text-purple-700'
-                                  }`}
+                                  className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-xs font-semibold ${teacher.role === 'ADMIN'
+                                    ? 'bg-blue-100 text-blue-600'
+                                    : 'bg-purple-100 text-purple-700'
+                                    }`}
                                 >
                                   {(teacher.nameAlias || teacher.username).charAt(0).toUpperCase()}
                                 </div>
@@ -528,13 +528,12 @@ const TeachersAdminPage = () => {
                             </td>
 
                             {/* Role badge */}
-                            <td className="py-3.5">
+                            <td className="py-3.5 px-3 whitespace-nowrap">
                               <span
-                                className={`rounded-full px-2.5 py-1 text-[11px] font-medium ${
-                                  teacher.role === 'ADMIN'
-                                    ? 'bg-blue-50 text-blue-700 border border-blue-200'
-                                    : 'bg-purple-50 text-purple-700 border border-purple-200'
-                                }`}
+                                className={`inline-flex items-center whitespace-nowrap rounded-full px-2.5 py-1 text-[11px] font-medium ${teacher.role === 'ADMIN'
+                                  ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                                  : 'bg-purple-50 text-purple-700 border border-purple-200'
+                                  }`}
                               >
                                 {teacher.role === 'ADMIN' ? 'Admin (Primary)' : 'Teacher'}
                               </span>
