@@ -179,12 +179,12 @@ lernio/
 
 ### 2. Installation
 
-Clone the repository and install project dependencies:
+Clone the repository and install project dependencies using `pnpm`:
 
 ```bash
 git clone https://github.com/Danushka-Madushan/lernio.git
 cd lernio
-npm install
+pnpm install
 ```
 
 ---
@@ -229,10 +229,10 @@ Generate the Prisma Client and synchronize database schema definitions:
 
 ```bash
 # Generate the Prisma TypeScript client
-npx prisma generate
+pnpm exec prisma generate
 
 # Apply schema migrations to your PostgreSQL instance
-npx prisma db push
+pnpm exec prisma db push
 ```
 
 #### Legacy Tenant Backfill (Optional)
@@ -249,7 +249,7 @@ node prisma/migration.tenant.js
 Start the local development server:
 
 ```bash
-npm run dev
+pnpm dev
 ```
 
 Visit [http://localhost:3000](http://localhost:3000) in your browser.
@@ -276,12 +276,12 @@ Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
 | Command | Action |
 | :--- | :--- |
-| `npm run dev` | Boots Next.js development server with hot-reloading |
-| `npm run build` | Compiles production bundle with Turbopack and static optimization |
-| `npm run start` | Launches compiled production server |
-| `npm run lint` | Runs ESLint analysis across TypeScript & JSX files |
-| `npx tsc --noEmit` | Runs full static TypeScript type checks across all code |
-| `npx prisma studio` | Opens Prisma Studio GUI to inspect and manipulate database records |
+| `pnpm dev` | Boots Next.js development server with hot-reloading |
+| `pnpm build` | Compiles production bundle with Turbopack and static optimization |
+| `pnpm start` | Launches compiled production server |
+| `pnpm lint` | Runs Oxlint analysis across TypeScript & JSX files |
+| `pnpm exec tsc --noEmit` | Runs full static TypeScript type checks across all code |
+| `pnpm exec prisma studio` | Opens Prisma Studio GUI to inspect and manipulate database records |
 
 ---
 
@@ -289,9 +289,9 @@ Visit [http://localhost:3000](http://localhost:3000) in your browser.
 
 1. **Static Analysis & Build Verification**:
    ```bash
-   npx tsc --noEmit
-   npm run lint
-   npm run build
+   pnpm exec tsc --noEmit
+   pnpm lint
+   pnpm build
    ```
 2. **Deploy to Hosting Provider**:
    - Easily deploy to **Vercel**, **AWS Amplify**, or a self-hosted **Docker / Node.js** container.
