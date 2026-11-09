@@ -17,6 +17,7 @@ import {
   ShieldAlert,
   Calendar,
   UserCheck,
+  Pencil,
 } from 'lucide-react';
 import { Button } from '@heroui/react';
 import { Grade } from '@/generated/client/enums';
@@ -29,6 +30,7 @@ import EditStudentModal from '@/components/EditStudentModal';
 import CustomVideoPickerModal from '@/components/CustomVideoPickerModal';
 import AddStudentModal from '@/components/AddStudentModal';
 import StatCard from '@/components/StatCard';
+import RowActionsDropdown, { RowActionItem } from '@/components/RowActionsDropdown';
 import { generatePassword, getAccountStatus, triggerUnauthorized } from '@/lib/utils';
 import AccountStatusBadge from '@/components/AccountStatusBadge';
 
@@ -590,62 +592,58 @@ const UsersAdminPage = () => {
 
       {/* Actions */}
       <td className="py-3.5 text-right">
-        <div className="inline-flex items-center gap-1">
-          {student.accessMode === 'CUSTOM' && (
-            <button
-              type="button"
-              onClick={() => setCustomVideoTarget(student)}
-              title="Manage Videos"
-              className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-purple-700 transition-colors hover:bg-purple-100"
-            >
-              <Film size={13} />
-              <span>Videos</span>
-            </button>
-          )}
-          {isAdmin ? (
-            <>
-              <button
-                type="button"
-                onClick={() => setEditTarget(student)}
-                title="Edit Student"
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-blue-500 transition-colors hover:bg-blue-100"
-              >
-                <span>Edit</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => handleOpenShareReset(student)}
-                title="Share Credentials"
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-green-700 transition-colors hover:bg-green-100"
-              >
-                <Share2 size={13} />
-                <span>Share</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setResetTarget(student)}
-                title="Reset Password"
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-blue-500 transition-colors hover:bg-blue-100"
-              >
-                <Key size={13} />
-                <span>Reset</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setDeleteTarget(student)}
-                title="Delete Student"
-                className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-red-100"
-              >
-                <Trash size={13} />
-                <span>Delete</span>
-              </button>
-            </>
-          ) : (
-            student.accessMode !== 'CUSTOM' && (
-              <span className="text-[11px] text-[#9aa0a6] px-2 py-1">View only</span>
-            )
-          )}
-        </div>
+        {(() => {
+          const actionItems: RowActionItem[] = [];
+
+          if (student.accessMode === 'CUSTOM') {
+            actionItems.push({
+              id: 'videos',
+              label: 'Manage Videos',
+              icon: <Film size={13} className="text-purple-700" />,
+              onClick: () => setCustomVideoTarget(student),
+            });
+          }
+
+          if (isAdmin) {
+            actionItems.push(
+              {
+                id: 'edit',
+                label: 'Edit Student',
+                icon: <Pencil size={13} className="text-blue-500" />,
+                onClick: () => setEditTarget(student),
+              },
+              {
+                id: 'share',
+                label: 'Share Credentials',
+                icon: <Share2 size={13} className="text-green-700" />,
+                onClick: () => handleOpenShareReset(student),
+              },
+              {
+                id: 'reset',
+                label: 'Reset Password',
+                icon: <Key size={13} className="text-blue-500" />,
+                onClick: () => setResetTarget(student),
+              },
+              {
+                id: 'delete',
+                label: 'Delete Student',
+                icon: <Trash size={13} className="text-red-500" />,
+                variant: 'danger',
+                onClick: () => setDeleteTarget(student),
+              }
+            );
+          }
+
+          if (actionItems.length === 0) {
+            return <span className="text-[11px] text-[#9aa0a6] px-2 py-1">View only</span>;
+          }
+
+          return (
+            <div className="inline-flex justify-end">
+              <RowActionsDropdown items={actionItems} />
+            </div>
+          );
+        })()}
       </td>
     </tr>
   );
@@ -1066,29 +1064,29 @@ const UsersAdminPage = () => {
                                   {formatDate(student.activeTo)}
                                 </td>
                                 <td className="py-3.5 text-right">
-                                  <div className="inline-flex items-center gap-1">
-                                    {isAdmin ? (
-                                      <>
-                                        <button
-                                          type="button"
-                                          onClick={() => setEditTarget(student)}
-                                          className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1.5 text-xs font-medium text-blue-500 transition-colors hover:bg-[#c2d7fa]"
-                                        >
-                                          <span>Edit / Reactivate</span>
-                                        </button>
-                                        <button
-                                          type="button"
-                                          onClick={() => setDeleteTarget(student)}
-                                          className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-[#fce8e6]"
-                                        >
-                                          <Trash size={13} />
-                                          <span>Delete</span>
-                                        </button>
-                                      </>
-                                    ) : (
-                                      <span className="text-[11px] text-[#9aa0a6] px-2 py-1">View only</span>
-                                    )}
-                                  </div>
+                                  {isAdmin ? (
+                                    <div className="inline-flex justify-end">
+                                      <RowActionsDropdown
+                                        items={[
+                                          {
+                                            id: 'edit',
+                                            label: 'Edit / Reactivate',
+                                            icon: <Pencil size={13} className="text-blue-500" />,
+                                            onClick: () => setEditTarget(student),
+                                          },
+                                          {
+                                            id: 'delete',
+                                            label: 'Delete Student',
+                                            icon: <Trash size={13} className="text-red-500" />,
+                                            variant: 'danger',
+                                            onClick: () => setDeleteTarget(student),
+                                          },
+                                        ]}
+                                      />
+                                    </div>
+                                  ) : (
+                                    <span className="text-[11px] text-[#9aa0a6] px-2 py-1">View only</span>
+                                  )}
                                 </td>
                               </tr>
                             ))}

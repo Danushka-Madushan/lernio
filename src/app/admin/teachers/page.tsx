@@ -21,6 +21,7 @@ import TeacherDeleteConfirmModal from '@/components/TeacherDeleteConfirmModal';
 import AddTeacherModal from '@/components/AddTeacherModal';
 import EditTeacherModal from '@/components/EditTeacherModal';
 import ShareCredentialsCard from '@/components/ShareCredentialsCard';
+import RowActionsDropdown from '@/components/RowActionsDropdown';
 import { triggerUnauthorized } from '@/lib/utils';
 import { Grade } from '@/generated/client/enums';
 import { ALL_GRADES, GRADE_COLORS, GRADE_LABELS } from '@/lib/constants';
@@ -595,36 +596,34 @@ const TeachersAdminPage = () => {
 
                             {/* Actions */}
                             <td className="py-3.5 text-right">
-                              <div className="inline-flex items-center gap-1">
-                                <button
-                                  type="button"
-                                  onClick={() => setEditTarget(teacher)}
-                                  title="Edit Grades & Aliases"
-                                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-blue-600 transition-colors hover:bg-blue-100"
-                                >
-                                  <Pencil size={13} />
-                                  <span>Edit</span>
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setResetTarget(teacher)}
-                                  title="Reset Password"
-                                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-purple-600 transition-colors hover:bg-purple-100"
-                                >
-                                  <Key size={13} />
-                                  <span>Reset</span>
-                                </button>
-                                {teacher.role !== 'ADMIN' && (
-                                  <button
-                                    type="button"
-                                    onClick={() => setDeleteTarget(teacher)}
-                                    title="Delete Teacher"
-                                    className="inline-flex cursor-pointer items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium text-red-500 transition-colors hover:bg-red-100"
-                                  >
-                                    <Trash size={13} />
-                                    <span>Delete</span>
-                                  </button>
-                                )}
+                              <div className="inline-flex justify-end">
+                                <RowActionsDropdown
+                                  items={[
+                                    {
+                                      id: 'edit',
+                                      label: 'Edit Grades & Aliases',
+                                      icon: <Pencil size={13} className="text-blue-600" />,
+                                      onClick: () => setEditTarget(teacher),
+                                    },
+                                    {
+                                      id: 'reset',
+                                      label: 'Reset Password',
+                                      icon: <Key size={13} className="text-purple-600" />,
+                                      onClick: () => setResetTarget(teacher),
+                                    },
+                                    ...(teacher.role !== 'ADMIN'
+                                      ? [
+                                          {
+                                            id: 'delete',
+                                            label: 'Delete Teacher',
+                                            icon: <Trash size={13} className="text-red-500" />,
+                                            variant: 'danger' as const,
+                                            onClick: () => setDeleteTarget(teacher),
+                                          },
+                                        ]
+                                      : []),
+                                  ]}
+                                />
                               </div>
                             </td>
                           </tr>
