@@ -4,7 +4,7 @@ import { Loader2, Plus, RefreshCw, RotateCcw, UserCheck, X, CheckSquare, Square 
 import CopyButton from './CopyButton';
 import { generatePassword } from '@/lib/utils';
 import ShareCredentialsCard from './ShareCredentialsCard';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import { Grade } from '@/generated/client/enums';
 import { ALL_GRADES, GRADE_COLORS, GRADE_LABELS } from '@/lib/constants';
 

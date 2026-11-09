@@ -1,7 +1,7 @@
 'use client';
 
 import { Trash2, X, AlertTriangle, Loader2 } from 'lucide-react';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 
 interface LiveClass {
   id: string;

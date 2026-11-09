@@ -19,7 +19,7 @@ import {
   UserCheck,
   Pencil,
 } from 'lucide-react';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import { Grade } from '@/generated/client/enums';
 import { ALL_GRADES, GRADE_COLORS, GRADE_LABELS, getGradeLabel, getTeacherGrades } from '@/lib/constants';
 import ShareCredentialsCard from '@/components/ShareCredentialsCard';

@@ -8,7 +8,7 @@ import CreateExamModal from '@/components/exams/CreateExamModal';
 import CreateExamGroupModal from '@/components/exams/CreateExamGroupModal';
 import ExamDeleteConfirmModal from '@/components/exams/ExamDeleteConfirmModal';
 import LoadingScreen from '@/components/LoadingScreen';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import {
   Award,
   Plus,

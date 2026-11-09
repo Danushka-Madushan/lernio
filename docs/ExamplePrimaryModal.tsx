@@ -1,4 +1,4 @@
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import { Loader2, Plus, UserPlus, X } from 'lucide-react';
 
 /**

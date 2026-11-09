@@ -1,7 +1,7 @@
 "use client";
 
 import { generatePassword } from '@/lib/utils';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import { AlertTriangle, Check, Loader2, RefreshCw, Share2, X } from 'lucide-react';
 import { useEffect, useRef } from 'react';
 

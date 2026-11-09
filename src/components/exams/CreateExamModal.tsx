@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Grade } from '@/generated/client/enums';
 import { getTeacherGrades } from '@/lib/constants';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import { X, Award, Plus, Calendar, Layers, FileText, ChevronDown, Loader2 } from 'lucide-react';
 
 interface CreateExamModalProps {

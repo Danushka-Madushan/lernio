@@ -5,7 +5,7 @@ import { Grade } from '@/generated/client/enums';
 import { BookOpen, Check, ChevronDown, Clock, Loader2, Lock, UserCheck, X } from 'lucide-react';
 import { useState } from 'react';
 import DateTimePicker from './DateTimePicker';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 
 type AccessMode = 'GRADE' | 'CUSTOM';
 

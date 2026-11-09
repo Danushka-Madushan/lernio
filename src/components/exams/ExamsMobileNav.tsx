@@ -22,7 +22,7 @@ import {
   Tv,
   Users,
 } from 'lucide-react';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import { createPortal } from 'react-dom';
 
 /* ─── Types & Helpers ────────────────────────────────────────────────────────── */

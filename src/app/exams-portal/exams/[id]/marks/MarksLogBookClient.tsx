@@ -5,7 +5,7 @@ import Link from 'next/link';
 import MarkLogBookTable, { RosterStudent } from '@/components/exams/MarkLogBookTable';
 import LoadingScreen from '@/components/LoadingScreen';
 import { ArrowLeft, TrendingUp, Loader2, AlertCircle } from 'lucide-react';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 
 interface MarksLogBookClientProps {
   examId: string;

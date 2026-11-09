@@ -1,7 +1,7 @@
 "use client";
 
 import { Grade } from '@/generated/client/enums';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import { AlertTriangle, Loader2, Trash, Trash2, X } from 'lucide-react';
 
 type AccessMode = 'GRADE' | 'CUSTOM';

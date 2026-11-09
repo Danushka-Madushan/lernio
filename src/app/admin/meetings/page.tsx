@@ -18,7 +18,7 @@ import {
   Link as LinkIcon,
   Repeat,
 } from 'lucide-react';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import { notoSans } from '@/lib/fonts';
 import ShareMeetingModal from '@/components/ShareMeetingModal';
 import AddMeetingModal from '@/components/AddMeetingModal';

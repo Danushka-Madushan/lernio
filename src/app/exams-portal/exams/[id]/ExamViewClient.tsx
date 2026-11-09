@@ -8,7 +8,7 @@ import ExamStatsOverview from '@/components/exams/ExamStatsOverview';
 import { getGradeLabel } from '@/lib/constants';
 import { evaluateStudentMark } from '@/lib/exams';
 import LoadingScreen from '@/components/LoadingScreen';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import {
   Award,
   ArrowLeft,

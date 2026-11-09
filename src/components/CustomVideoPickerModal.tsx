@@ -3,7 +3,7 @@
 import { GRADE_COLORS, GRADE_LABELS } from '@/lib/constants';
 import { Grade } from '@/generated/client/enums';
 import { notoSans } from '@/lib/fonts';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import { Check, Film, Globe, Loader2, Lock, Search, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 

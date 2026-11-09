@@ -2,7 +2,7 @@
 
 import { Grade } from '@/generated/client/enums';
 import { generatePassword } from '@/lib/utils';
-import { Button } from '@heroui/react';
+import Button from '@/components/ui/Button';
 import { Check, Key, Loader2, RefreshCw, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 

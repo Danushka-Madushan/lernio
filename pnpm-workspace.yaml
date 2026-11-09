@@ -1,0 +1,8 @@
+allowBuilds:
+  '@prisma/engines': true
+  prisma: true
+
+minimumReleaseAgeExclude:
+  - oxlint
+  - '@oxlint/*'
+  - jose

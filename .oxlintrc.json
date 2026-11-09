@@ -1,0 +1,28 @@
+{
+  "plugins": [
+    "typescript",
+    "unicorn",
+    "oxc",
+    "react",
+    "nextjs"
+  ],
+  "rules": {
+    "no-unused-vars": "off",
+    "typescript/no-explicit-any": "off",
+    "react-hooks/exhaustive-deps": "off",
+    "react/set-state-in-effect": "off",
+    "prefer-const": "off",
+    "typescript/no-require-imports": "off",
+    "react/purity": "off"
+  },
+  "ignorePatterns": [
+    ".next/**",
+    "out/**",
+    "build/**",
+    "next-env.d.ts",
+    "src/generated/**",
+    "docs/**",
+    "prisma/migration.tenant.js",
+    "scripts/**"
+  ]
+}
