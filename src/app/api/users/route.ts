@@ -30,9 +30,9 @@ export async function GET(request: Request) {
     // TEACHER only sees their own assigned students.
     // ADMIN can see all or filter by specific teacher.
     if (user.role === 'TEACHER') {
-      where.teacherId = user.id;
+      where.teacherEnrollments = { some: { teacherId: user.id } };
     } else if (teacherParam) {
-      where.teacherId = teacherParam;
+      where.teacherEnrollments = { some: { teacherId: teacherParam } };
     }
 
     if (gradeParam && Object.values(Grade).includes(gradeParam as Grade)) {
@@ -51,7 +51,7 @@ export async function GET(request: Request) {
       ];
     }
 
-    const students = await db.user.findMany({
+    const rawStudents = await db.user.findMany({
       where,
       select: {
         id: true,
@@ -61,18 +61,30 @@ export async function GET(request: Request) {
         activeFrom: true,
         activeTo: true,
         accessMode: true,
-        teacherId: true,
-        teacher: {
+        teacherEnrollments: {
           select: {
-            id: true,
-            username: true,
-            allowedGrades: true,
-            gradeAliases: true,
+            teacher: {
+              select: {
+                id: true,
+                username: true,
+                allowedGrades: true,
+                gradeAliases: true,
+              },
+            },
           },
+          orderBy: { createdAt: 'asc' },
         },
         createdAt: true,
       },
       orderBy: { createdAt: 'desc' },
+    });
+
+    const students = rawStudents.map((s) => {
+      const teachers = s.teacherEnrollments.map((e) => e.teacher).filter(Boolean);
+      return {
+        ...s,
+        teachers,
+      };
     });
 
     return NextResponse.json({ students });
@@ -96,8 +108,8 @@ export async function POST(request: Request) {
   }
 
   try {
-    const { username, password, grade, activeFrom, activeTo, accessMode, teacherId } =
-      await request.json();
+    const body = await request.json();
+    const { username, password, grade, activeFrom, activeTo, accessMode, teacherId, teacherIds } = body;
 
     if (!username || !password || username.trim().length < 3 || password.length < 4) {
       return NextResponse.json(
@@ -127,58 +139,86 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Username is already taken' }, { status: 400 });
     }
 
-    // Resolve teacher assignment (default to current admin if not provided)
-    let assignedTeacherId = teacherId || user.id;
+    // Resolve teacher IDs (accepts array teacherIds or single teacherId)
+    let assignedIds: string[] = [];
+    if (Array.isArray(teacherIds) && teacherIds.length > 0) {
+      assignedIds = Array.from(new Set(teacherIds.filter((id: unknown) => typeof id === 'string' && (id as string).trim().length > 0)));
+    } else if (teacherId) {
+      assignedIds = [teacherId];
+    }
 
-    const teacherUser = await db.user.findUnique({
-      where: { id: assignedTeacherId },
-      select: { id: true, role: true, allowedGrades: true },
+    if (assignedIds.length === 0) {
+      assignedIds = [user.id];
+    }
+
+    // Validate that all assigned teacher IDs exist with role ADMIN or TEACHER
+    const validTeachers = await db.user.findMany({
+      where: {
+        id: { in: assignedIds },
+        role: { in: ['ADMIN', 'TEACHER'] },
+      },
+      select: { id: true, username: true, allowedGrades: true },
     });
 
-    if (!teacherUser || (teacherUser.role !== 'ADMIN' && teacherUser.role !== 'TEACHER')) {
-      // Fallback to the creating admin if invalid teacher selected
-      assignedTeacherId = user.id;
-    } else if (grade && teacherUser.allowedGrades && teacherUser.allowedGrades.length > 0) {
-      if (!teacherUser.allowedGrades.includes(grade as Grade)) {
+    if (validTeachers.length === 0) {
+      return NextResponse.json({ error: 'At least one valid teacher must be assigned.' }, { status: 400 });
+    }
+
+    // If grade is specified, verify at least one assigned teacher allows this grade
+    if (grade) {
+      const anyTeacherSupportsGrade = validTeachers.some(
+        (t) => !t.allowedGrades || t.allowedGrades.length === 0 || t.allowedGrades.includes(grade as Grade)
+      );
+      if (!anyTeacherSupportsGrade) {
         return NextResponse.json(
-          { error: 'Selected grade is not permitted for the assigned teacher.' },
+          { error: 'Selected grade is not permitted for the assigned teacher(s).' },
           { status: 400 }
         );
       }
     }
 
+    const primaryTeacherId = validTeachers[0].id;
     const hashedPassword = await bcrypt.hash(password, 10);
-    const newStudent = await db.user.create({
-      data: {
-        username: trimmedUsername,
-        hashedPassword,
-        role: 'STUDENT',
-        grade: grade ? (grade as Grade) : null,
-        activeFrom: activeFrom ? new Date(activeFrom) : null,
-        activeTo: activeTo ? new Date(activeTo) : null,
-        accessMode: accessMode ? (accessMode as AccessMode) : 'GRADE',
-        teacherId: assignedTeacherId,
-      },
-      select: {
-        id: true,
-        username: true,
-        role: true,
-        grade: true,
-        activeFrom: true,
-        activeTo: true,
-        accessMode: true,
-        teacherId: true,
-        teacher: {
-          select: {
-            id: true,
-            username: true,
-          },
+
+    const newStudent = await db.$transaction(async (tx) => {
+      const student = await tx.user.create({
+        data: {
+          username: trimmedUsername,
+          hashedPassword,
+          role: 'STUDENT',
+          grade: grade ? (grade as Grade) : null,
+          activeFrom: activeFrom ? new Date(activeFrom) : null,
+          activeTo: activeTo ? new Date(activeTo) : null,
+          accessMode: accessMode ? (accessMode as AccessMode) : 'GRADE',
         },
-        createdAt: true,
-      },
+      });
+
+      await tx.studentTeacher.createMany({
+        data: validTeachers.map((t) => ({
+          studentId: student.id,
+          teacherId: t.id,
+        })),
+        skipDuplicates: true,
+      });
+
+      return student;
     });
 
-    return NextResponse.json({ success: true, user: newStudent });
+    return NextResponse.json({
+      success: true,
+      user: {
+        id: newStudent.id,
+        username: newStudent.username,
+        role: newStudent.role,
+        grade: newStudent.grade,
+        activeFrom: newStudent.activeFrom,
+        activeTo: newStudent.activeTo,
+        accessMode: newStudent.accessMode,
+        teacherId: primaryTeacherId,
+        teachers: validTeachers,
+        createdAt: newStudent.createdAt,
+      },
+    });
   } catch (error: unknown) {
     console.error('Create student error:', error);
     return NextResponse.json({ error: 'Failed to create student account' }, { status: 500 });

@@ -251,10 +251,39 @@ export async function DELETE(
 
     // ─── 4. Atomic Database Cleanup ────────────────────────────────────
     await db.$transaction(async (tx) => {
-      // Reassign assigned students to current admin so students are not left orphaned
-      await tx.user.updateMany({
+      // Reassign assigned students in StudentTeacher so students are not left orphaned without any teacher
+      const enrolledStudentIds = (
+        await tx.studentTeacher.findMany({
+          where: { teacherId: id },
+          select: { studentId: true },
+        })
+      ).map((e) => e.studentId);
+
+      for (const sId of enrolledStudentIds) {
+        // If student only had this teacher, ensure they are enrolled with admin
+        const otherCount = await tx.studentTeacher.count({
+          where: { studentId: sId, teacherId: { not: id } },
+        });
+        if (otherCount === 0) {
+          await tx.studentTeacher.upsert({
+            where: {
+              studentId_teacherId: {
+                studentId: sId,
+                teacherId: adminUser.id,
+              },
+            },
+            create: {
+              studentId: sId,
+              teacherId: adminUser.id,
+            },
+            update: {},
+          });
+        }
+      }
+
+      // Remove the teacher's StudentTeacher links
+      await tx.studentTeacher.deleteMany({
         where: { teacherId: id },
-        data: { teacherId: adminUser.id },
       });
 
       // Reassign exams and exam groups to current admin so student exam history and marks remain intact

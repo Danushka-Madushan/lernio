@@ -57,7 +57,7 @@ const VideoPage = async ({
   if (user.role === 'STUDENT') {
     const studentRecord = await db.user.findUnique({
       where: { id: user.id },
-      select: { grade: true, activeFrom: true, activeTo: true, accessMode: true, teacherId: true },
+      select: { grade: true, activeFrom: true, activeTo: true, accessMode: true },
     });
 
     if (!studentRecord) notFound();
@@ -71,8 +71,19 @@ const VideoPage = async ({
       redirect('/login?error=account_inactive');
     }
 
-    // Strict Teacher Isolation: student can only watch videos from their assigned teacher
-    if (!studentRecord.teacherId || video.teacherId !== studentRecord.teacherId) {
+    // Strict Teacher Isolation: student can only watch videos from an enrolled teacher
+    const isEnrolledWithVideoTeacher = video.teacherId
+      ? await db.studentTeacher.findUnique({
+          where: {
+            studentId_teacherId: {
+              studentId: user.id,
+              teacherId: video.teacherId,
+            },
+          },
+        })
+      : null;
+
+    if (!isEnrolledWithVideoTeacher) {
       notFound();
     }
 

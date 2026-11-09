@@ -12,6 +12,7 @@ import {
   Video,
   Shield,
   ExternalLink,
+  Users,
 } from 'lucide-react';
 import RepoVersionBadge from '@/components/RepoVersionBadge';
 
@@ -21,9 +22,15 @@ interface UserMenuDropdownProps {
     username: string;
     role: 'ADMIN' | 'TEACHER' | 'STUDENT';
   };
+  hasMultipleTeachers?: boolean;
+  activeTeacherName?: string | null;
 }
 
-export default function UserMenuDropdown({ user }: UserMenuDropdownProps) {
+export default function UserMenuDropdown({
+  user,
+  hasMultipleTeachers,
+  activeTeacherName,
+}: UserMenuDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
   const [logoutLoading, setLogoutLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -142,6 +149,29 @@ export default function UserMenuDropdown({ user }: UserMenuDropdownProps) {
             <p className="px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-gray-400">
               Platform Switcher
             </p>
+
+            {hasMultipleTeachers && (
+              <Link
+                href="/teacher-select"
+                onClick={() => setIsOpen(false)}
+                className="flex items-center justify-between px-3 py-2.5 rounded-xl text-gray-700 hover:text-indigo-600 hover:bg-indigo-50/70 transition-colors group"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition-colors shrink-0">
+                    <Users size={16} />
+                  </div>
+                  <div>
+                    <p className="text-[13px] font-semibold text-gray-900 group-hover:text-indigo-600 transition-colors">
+                      Switch Classroom
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      {activeTeacherName ? `Current: ${activeTeacherName}` : 'Select teacher'}
+                    </p>
+                  </div>
+                </div>
+                <ExternalLink size={13} className="text-gray-400 group-hover:text-indigo-600" />
+              </Link>
+            )}
 
             <Link
               href="/"

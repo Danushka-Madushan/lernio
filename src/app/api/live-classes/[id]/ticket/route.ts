@@ -36,7 +36,6 @@ export async function GET(request: Request, context: RouteContext) {
           grade: true,
           activeFrom: true,
           activeTo: true,
-          teacherId: true,
         },
       });
 
@@ -52,7 +51,18 @@ export async function GET(request: Request, context: RouteContext) {
         return NextResponse.json({ error: 'Account inactive' }, { status: 403 });
       }
 
-      if (liveClass.teacherId !== studentRecord.teacherId) {
+      const isEnrolledWithTeacher = liveClass.teacherId
+        ? await db.studentTeacher.findUnique({
+            where: {
+              studentId_teacherId: {
+                studentId: user.id,
+                teacherId: liveClass.teacherId,
+              },
+            },
+          })
+        : null;
+
+      if (!isEnrolledWithTeacher) {
         return NextResponse.json({ error: 'Access denied' }, { status: 403 });
       }
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { GRADE_LABELS, getTeacherGrades } from '@/lib/constants';
+import { ALL_GRADES, GRADE_LABELS, getTeacherGrades } from '@/lib/constants';
 import { Grade } from '@/generated/client/enums';
 import { BookOpen, Check, ChevronDown, Clock, Loader2, Lock, UserCheck, X } from 'lucide-react';
 import { useState } from 'react';
@@ -31,6 +31,7 @@ interface Student {
     allowedGrades?: Grade[];
     gradeAliases?: Record<string, string> | null;
   } | null;
+  teachers?: TeacherOption[];
   createdAt: string;
 }
 
@@ -51,7 +52,7 @@ const EditStudentModal = ({
     activeTo: string,
     accessMode: AccessMode,
     grade: Grade | '',
-    teacherId?: string
+    teacherIds?: string[]
   ) => void;
   onCancel: () => void;
 }) => {
@@ -71,15 +72,37 @@ const EditStudentModal = ({
   );
   const [accessMode, setAccessMode] = useState<AccessMode>(student.accessMode);
   const [grade, setGrade] = useState<Grade | ''>(student.grade || '');
-  const [teacherId, setTeacherId] = useState<string>(student.teacherId || student.teacher?.id || '');
 
-  const activeTeacher = isAdmin
-    ? teachers.find((t) => t.id === teacherId) || student.teacher
-    : student.teacher;
+  const initialTeacherIds =
+    student.teachers && student.teachers.length > 0
+      ? student.teachers.map((t) => t.id)
+      : student.teacherId
+      ? [student.teacherId]
+      : [];
+  const [selectedTeacherIds, setSelectedTeacherIds] = useState<string[]>(initialTeacherIds);
 
-  const gradeOptions = activeTeacher
-    ? getTeacherGrades(activeTeacher.allowedGrades, activeTeacher.gradeAliases as Record<string, string>)
-    : getTeacherGrades();
+  const toggleTeacher = (id: string) => {
+    if (selectedTeacherIds.includes(id)) {
+      if (selectedTeacherIds.length > 1) {
+        setSelectedTeacherIds(selectedTeacherIds.filter((tid) => tid !== id));
+      }
+    } else {
+      setSelectedTeacherIds([...selectedTeacherIds, id]);
+    }
+  };
+
+  const selectedTeachers = teachers.filter((t) => selectedTeacherIds.includes(t.id));
+  const combinedAllowedGrades = selectedTeachers.reduce<Grade[]>((acc, t) => {
+    if (!t.allowedGrades || t.allowedGrades.length === 0) {
+      return ALL_GRADES;
+    }
+    return Array.from(new Set([...acc, ...t.allowedGrades]));
+  }, []);
+
+  const gradeOptions = getTeacherGrades(
+    combinedAllowedGrades.length > 0 ? combinedAllowedGrades : ALL_GRADES,
+    selectedTeachers[0]?.gradeAliases as Record<string, string>
+  );
 
   const hasCurrentGradeOption = !grade || gradeOptions.some((g) => g.value === grade);
 
@@ -115,44 +138,59 @@ const EditStudentModal = ({
           {/* Assigned Teacher Section */}
           {isAdmin ? (
             <div>
-              <label className="mb-1.5 block text-xs font-medium text-[#5f6368]">
-                Assigned Teacher
-              </label>
-              <div className="relative">
-                <select
-                  value={teacherId}
-                  onChange={(e) => {
-                    const newTId = e.target.value;
-                    setTeacherId(newTId);
-                    const selected = teachers.find((t) => t.id === newTId);
-                    if (selected && grade && selected.allowedGrades && !selected.allowedGrades.includes(grade as Grade)) {
-                      setGrade('');
-                    }
-                  }}
-                  disabled={loading}
-                  className="w-full appearance-none rounded-lg border border-[#dadce0] bg-white px-3.5 py-2.5 text-sm text-[#202124] outline-none transition-all hover:border-[#c4c7cc] focus:ring-2 focus:ring-blue-500/20"
-                >
-                  <option value="">- Unassigned -</option>
-                  {teachers.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.username} {t.role === 'ADMIN' ? '(Admin Teacher)' : '(Teacher)'}
-                    </option>
-                  ))}
-                </select>
-                <ChevronDown
-                  size={13}
-                  className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-[#5f6368]"
-                />
+              <div className="mb-1.5 flex items-center justify-between">
+                <label className="text-xs font-medium text-[#5f6368]">
+                  Assigned Teacher(s) <span className="text-red-500">*</span>
+                </label>
+                <span className="text-[11px] text-[#9aa0a6]">{selectedTeacherIds.length} selected</span>
+              </div>
+              <div className="max-h-36 overflow-y-auto rounded-lg border border-[#dadce0] bg-white p-1.5 space-y-1">
+                {teachers.map((t) => {
+                  const isChecked = selectedTeacherIds.includes(t.id);
+                  return (
+                    <label
+                      key={t.id}
+                      className={`flex items-center justify-between px-2.5 py-1.5 rounded-md border text-xs cursor-pointer transition-colors ${
+                        isChecked
+                          ? 'border-blue-300 bg-blue-50/70 text-blue-900 font-medium'
+                          : 'border-transparent text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={() => toggleTeacher(t.id)}
+                          disabled={loading || (isChecked && selectedTeacherIds.length === 1)}
+                          className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                        />
+                        <span className="truncate">{t.username}</span>
+                      </div>
+                      <span className="text-[10px] text-gray-500 shrink-0 ml-2">
+                        {t.role === 'ADMIN' ? 'Admin Teacher' : 'Teacher'}
+                      </span>
+                    </label>
+                  );
+                })}
               </div>
               <p className="mt-1 text-[11px] text-[#9aa0a6]">
-                Reassigning this student will immediately scope their videos and meetings to the selected teacher.
+                Assigned teachers can see this student and student can switch between their classrooms.
               </p>
             </div>
           ) : (
-            student.teacher && (
-              <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-blue-50 border border-blue-100 text-xs text-blue-700">
-                <UserCheck size={14} />
-                <span>Assigned to Teacher: <strong>{student.teacher.username}</strong></span>
+            (student.teachers && student.teachers.length > 0 ? student.teachers : student.teacher ? [student.teacher] : []).length > 0 && (
+              <div className="flex flex-col gap-1 px-3 py-2 rounded-lg bg-blue-50 border border-blue-100 text-xs text-blue-700">
+                <div className="flex items-center gap-1.5 font-medium">
+                  <UserCheck size={14} />
+                  <span>Assigned Teachers:</span>
+                </div>
+                <div className="flex flex-wrap gap-1 mt-1">
+                  {(student.teachers && student.teachers.length > 0 ? student.teachers : student.teacher ? [student.teacher] : []).map((t) => (
+                    <span key={t.id} className="px-2 py-0.5 rounded bg-blue-100 text-blue-800 text-[11px]">
+                      {t.username}
+                    </span>
+                  ))}
+                </div>
               </div>
             )
           )}
@@ -236,7 +274,7 @@ const EditStudentModal = ({
           </Button>
           <Button
             isPending={loading}
-            onPress={() => onConfirm(activeFrom, activeTo, accessMode, grade, isAdmin ? teacherId : undefined)}
+            onPress={() => onConfirm(activeFrom, activeTo, accessMode, grade, isAdmin ? selectedTeacherIds : undefined)}
             isDisabled={loading}
           >
             {({ isPending }) => (

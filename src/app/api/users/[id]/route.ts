@@ -25,7 +25,7 @@ export async function PUT(
   try {
     const student = await db.user.findUnique({
       where: { id },
-      select: { id: true, role: true, teacherId: true, grade: true },
+      select: { id: true, role: true, grade: true },
     });
 
     if (!student || student.role !== 'STUDENT') {
@@ -33,7 +33,7 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { password, grade, activeFrom, activeTo, accessMode, teacherId } = body;
+    const { password, grade, activeFrom, activeTo, accessMode, teacherId, teacherIds } = body;
 
     const updateData: any = {};
 
@@ -69,38 +69,72 @@ export async function PUT(
       updateData.accessMode = accessMode as AccessMode;
     }
 
-    // Teacher reassignment (ADMIN only)
-    if (teacherId !== undefined && user.role === 'ADMIN') {
-      const targetTeacher = await db.user.findUnique({
-        where: { id: teacherId },
-        select: { id: true, role: true },
-      });
-      if (targetTeacher && (targetTeacher.role === 'ADMIN' || targetTeacher.role === 'TEACHER')) {
-        updateData.teacherId = teacherId;
-        // If teacher is being changed, clear custom video access to prevent stale cross-tenant access
-        if (student.teacherId !== teacherId) {
-          await db.customVideoAccess.deleteMany({ where: { userId: id } });
-        }
-      } else {
-        return NextResponse.json({ error: 'Invalid teacher specified' }, { status: 400 });
+    // Teacher assignments update (ADMIN only)
+    let assignedTeacherIds: string[] | null = null;
+    if (Array.isArray(teacherIds)) {
+      assignedTeacherIds = Array.from(
+        new Set(teacherIds.filter((t: unknown) => typeof t === 'string' && (t as string).trim().length > 0))
+      );
+      if (assignedTeacherIds.length === 0) {
+        return NextResponse.json({ error: 'At least one teacher must be assigned.' }, { status: 400 });
       }
+    } else if (teacherId !== undefined) {
+      assignedTeacherIds = [teacherId];
     }
 
-    // Validate that student's final grade is within the assigned teacher's allowedGrades
-    const resolvedTeacherId = updateData.teacherId ?? student.teacherId;
+    if (assignedTeacherIds && user.role === 'ADMIN') {
+      const targetTeachers = await db.user.findMany({
+        where: {
+          id: { in: assignedTeacherIds },
+          role: { in: ['ADMIN', 'TEACHER'] },
+        },
+        select: { id: true, username: true, allowedGrades: true },
+      });
+
+      if (targetTeachers.length !== assignedTeacherIds.length) {
+        return NextResponse.json({ error: 'One or more invalid teachers specified' }, { status: 400 });
+      }
+
+      // Sync StudentTeacher records
+      await db.studentTeacher.deleteMany({
+        where: {
+          studentId: id,
+          teacherId: { notIn: assignedTeacherIds },
+        },
+      });
+
+      await db.studentTeacher.createMany({
+        data: assignedTeacherIds.map((tid) => ({
+          studentId: id,
+          teacherId: tid,
+        })),
+        skipDuplicates: true,
+      });
+
+      // Clear custom video access for removed teachers to prevent stale access
+      await db.customVideoAccess.deleteMany({
+        where: {
+          userId: id,
+          video: {
+            teacherId: { notIn: assignedTeacherIds },
+          },
+        },
+      });
+    }
+
+    // Validate that student's final grade is within the assigned teachers' allowedGrades
     const resolvedGrade = updateData.grade !== undefined ? updateData.grade : student.grade;
-    if (resolvedGrade && resolvedTeacherId) {
-      const teacherUser = await db.user.findUnique({
-        where: { id: resolvedTeacherId },
+    if (resolvedGrade && assignedTeacherIds) {
+      const teachers = await db.user.findMany({
+        where: { id: { in: assignedTeacherIds } },
         select: { allowedGrades: true },
       });
-      if (
-        teacherUser?.allowedGrades &&
-        teacherUser.allowedGrades.length > 0 &&
-        !teacherUser.allowedGrades.includes(resolvedGrade)
-      ) {
+      const anyAllows = teachers.some(
+        (t) => !t.allowedGrades || t.allowedGrades.length === 0 || t.allowedGrades.includes(resolvedGrade)
+      );
+      if (!anyAllows) {
         return NextResponse.json(
-          { error: 'Selected grade is not permitted for the assigned teacher.' },
+          { error: 'Selected grade is not permitted for the assigned teacher(s).' },
           { status: 400 }
         );
       }
@@ -116,17 +150,31 @@ export async function PUT(
         activeFrom: true,
         activeTo: true,
         accessMode: true,
-        teacherId: true,
-        teacher: {
+        teacherEnrollments: {
           select: {
-            id: true,
-            username: true,
+            teacher: {
+              select: {
+                id: true,
+                username: true,
+                allowedGrades: true,
+                gradeAliases: true,
+              },
+            },
           },
+          orderBy: { createdAt: 'asc' },
         },
       },
     });
 
-    return NextResponse.json({ success: true, user: updated });
+    const enrolledTeachers = updated.teacherEnrollments.map((e) => e.teacher).filter(Boolean);
+
+    return NextResponse.json({
+      success: true,
+      user: {
+        ...updated,
+        teachers: enrolledTeachers,
+      },
+    });
   } catch (error: unknown) {
     console.error('Update student error:', error);
     return NextResponse.json({ error: 'Failed to update student' }, { status: 500 });
@@ -161,6 +209,8 @@ export async function DELETE(
     }
 
     await db.$transaction(async (tx) => {
+      // Purge student's teacher assignments
+      await tx.studentTeacher.deleteMany({ where: { studentId: id } });
       // Purge student's marks from all exams
       await tx.examMark.deleteMany({ where: { studentId: id } });
       // Purge student's custom video access permissions

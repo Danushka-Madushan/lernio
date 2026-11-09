@@ -36,13 +36,6 @@ const DashboardPage = async ({
         activeFrom: true,
         activeTo: true,
         accessMode: true,
-        teacherId: true,
-        teacher: {
-          select: {
-            allowedGrades: true,
-            gradeAliases: true,
-          },
-        },
       },
     });
 
@@ -56,12 +49,47 @@ const DashboardPage = async ({
       );
     }
 
+    // Resolve active teacher from cookie or student's enrollments
+    const activeTeacherCookie = cookieStore.get('active_teacher_id')?.value;
+    let effectiveTeacherId: string | null = null;
+
+    if (activeTeacherCookie) {
+      const match = await db.studentTeacher.findUnique({
+        where: {
+          studentId_teacherId: {
+            studentId: sessionUser.id,
+            teacherId: activeTeacherCookie,
+          },
+        },
+      });
+      if (match) {
+        effectiveTeacherId = activeTeacherCookie;
+      }
+    }
+
+    if (!effectiveTeacherId) {
+      // Fallback: pick first enrollment
+      const firstEnrollment = await db.studentTeacher.findFirst({
+        where: { studentId: sessionUser.id },
+        select: { teacherId: true },
+        orderBy: { createdAt: 'asc' },
+      });
+      effectiveTeacherId = firstEnrollment?.teacherId || null;
+    }
+
+    const teacherRecord = effectiveTeacherId
+      ? await db.user.findUnique({
+          where: { id: effectiveTeacherId },
+          select: { allowedGrades: true, gradeAliases: true },
+        })
+      : null;
+
     // Resolve student's teacher grades and aliases
     const baseTeacherGrades = getTeacherGrades(
-      studentRecord.teacher?.allowedGrades,
-      studentRecord.teacher?.gradeAliases as Record<string, string>
+      teacherRecord?.allowedGrades,
+      teacherRecord?.gradeAliases as Record<string, string>
     );
-    const teacherAliases = (studentRecord.teacher?.gradeAliases as Record<string, string>) || {};
+    const teacherAliases = (teacherRecord?.gradeAliases as Record<string, string>) || {};
 
     // Ensure student's own enrolled grade is included in tabs even if teacher profile removed it
     let teacherGrades = baseTeacherGrades;
@@ -76,7 +104,7 @@ const DashboardPage = async ({
     }
 
     // If student has no assigned teacher, return empty feed
-    if (!studentRecord.teacherId) {
+    if (!effectiveTeacherId) {
       return (
         <div className="min-h-screen bg-[#f8f9fa] px-4 py-8 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-6xl space-y-6">
@@ -93,7 +121,7 @@ const DashboardPage = async ({
         where: {
           userId: sessionUser.id,
           video: {
-            teacherId: studentRecord.teacherId,
+            teacherId: effectiveTeacherId,
           },
         },
         include: {
@@ -124,7 +152,7 @@ const DashboardPage = async ({
 
     // GRADE mode: PUBLIC + grade-matched GRADE videos (scoped strictly to assigned teacher)
     const whereClause: any = {
-      teacherId: studentRecord.teacherId,
+      teacherId: effectiveTeacherId,
       OR: [
         { visibility: VideoVisibility.PUBLIC },
         ...(studentRecord.grade

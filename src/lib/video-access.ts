@@ -83,8 +83,19 @@ export async function verifyVideoAccess(
       return { allowed: false, reason: 'account_inactive' };
     }
 
-    // Must belong to the student's assigned teacher
-    if (!student.teacherId || video.teacherId !== student.teacherId) {
+    // Must belong to one of the student's assigned teachers
+    const isEnrolledWithTeacher = video.teacherId
+      ? await db.studentTeacher.findUnique({
+          where: {
+            studentId_teacherId: {
+              studentId: user.id,
+              teacherId: video.teacherId,
+            },
+          },
+        })
+      : null;
+
+    if (!isEnrolledWithTeacher && video.teacherId !== student.teacherId) {
       return { allowed: false, reason: 'forbidden' };
     }
 

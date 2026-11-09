@@ -35,8 +35,35 @@ export async function GET(request: Request) {
       );
     }
 
+    // Resolve active teacher from cookie or student's enrollments
+    const activeTeacherCookie = cookieStore.get('active_teacher_id')?.value;
+    let effectiveTeacherId: string | null = null;
+
+    if (activeTeacherCookie) {
+      const match = await db.studentTeacher.findUnique({
+        where: {
+          studentId_teacherId: {
+            studentId: user.id,
+            teacherId: activeTeacherCookie,
+          },
+        },
+      });
+      if (match) {
+        effectiveTeacherId = activeTeacherCookie;
+      }
+    }
+
+    if (!effectiveTeacherId) {
+      const firstEnrollment = await db.studentTeacher.findFirst({
+        where: { studentId: user.id },
+        select: { teacherId: true },
+        orderBy: { createdAt: 'asc' },
+      });
+      effectiveTeacherId = firstEnrollment?.teacherId || null;
+    }
+
     // If student has no assigned teacher, they have no meetings
-    if (!student.teacherId) {
+    if (!effectiveTeacherId) {
       return NextResponse.json({ meetings: [] });
     }
 
@@ -45,7 +72,7 @@ export async function GET(request: Request) {
     const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
 
     const whereClause: any = {
-      teacherId: student.teacherId,
+      teacherId: effectiveTeacherId,
       OR: [
         { grade: null },
         ...(student.grade ? [{ grade: student.grade }] : []),
